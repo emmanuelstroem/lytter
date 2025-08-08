@@ -101,6 +101,17 @@ struct ContentView: View {
             #endif
         }
         
+    #elseif os(tvOS)
+        tvOSHomeView(
+            serviceManager: serviceManager,
+            selectionState: selectionState,
+            deepLinkHandler: deepLinkHandler
+        )
+        .environmentObject(serviceManager)
+        .environmentObject(selectionState)
+        .onOpenURL { url in
+            deepLinkHandler.handleDeepLink(url)
+        }
     #endif
     }
 }
