@@ -7,6 +7,7 @@
 
 import SwiftUI
 
+#if os(iOS)
 // MARK: - Search View
 struct SearchView: View {
     @ObservedObject var serviceManager: DRServiceManager
@@ -60,3 +61,4 @@ struct SearchView: View {
         deepLinkHandler.clearTarget()
     }
 } 
+#endif

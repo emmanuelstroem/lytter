@@ -7,6 +7,7 @@
 
 import SwiftUI
 
+#if os(iOS)
 struct HomeView: View {
     @ObservedObject var serviceManager: DRServiceManager
     @ObservedObject var selectionState: SelectionState
@@ -106,6 +107,8 @@ struct HomeView: View {
         deepLinkHandler.clearTarget()
     }
 }
+
+#endif
 
 // MARK: - Loading View
 struct LoadingView: View {
@@ -426,10 +429,6 @@ struct GroupedChannelCard: View {
         }
     }
 }
-
-
-
-
 
 // MARK: - Playback Error Alert
 struct PlaybackErrorAlert: View {

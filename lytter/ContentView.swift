@@ -32,7 +32,7 @@ struct ContentView: View {
                         HomeView(serviceManager: serviceManager, selectionState: selectionState, deepLinkHandler: deepLinkHandler)
                     }
                     Tab("Radio", systemImage: "antenna.radiowaves.left.and.right", value: 1) {
-                        RadioView(serviceManager: serviceManager, selectionState: selectionState, deepLinkHandler: deepLinkHandler)
+                        iOSRadioView(serviceManager: serviceManager, selectionState: selectionState, deepLinkHandler: deepLinkHandler)
                     }
                     Tab("Search", systemImage: "magnifyingglass", value: 2, role: .search) {
                         SearchView(serviceManager: serviceManager, selectionState: selectionState, deepLinkHandler: deepLinkHandler)
@@ -63,7 +63,7 @@ struct ContentView: View {
                         }
                     
                     // Radio Tab
-                    RadioView(serviceManager: serviceManager, selectionState: selectionState, deepLinkHandler: deepLinkHandler)
+                    iOSRadioView(serviceManager: serviceManager, selectionState: selectionState, deepLinkHandler: deepLinkHandler)
                         .tabItem {
                             Image(systemName: "antenna.radiowaves.left.and.right")
                             Text("Radio")

@@ -9,6 +9,7 @@ import SwiftUI
 import Intents
 import IntentsUI
 
+#if os(iOS)
 struct ShortcutsView: View {
     @EnvironmentObject var siriShortcutsService: SiriShortcutsService
     @StateObject private var serviceManager = DRServiceManager()
@@ -277,3 +278,5 @@ struct ShortcutConfigurationView: View {
     ShortcutsView()
         .environmentObject(SiriShortcutsService.shared)
 } 
+
+#endif

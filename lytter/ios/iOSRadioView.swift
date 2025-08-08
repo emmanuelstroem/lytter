@@ -7,7 +7,8 @@
 
 import SwiftUI
 
-struct RadioView: View {
+#if os(iOS)
+struct iOSRadioView: View {
     @ObservedObject var serviceManager: DRServiceManager
     @ObservedObject var selectionState: SelectionState
     @ObservedObject var deepLinkHandler: DeepLinkHandler
@@ -66,7 +67,7 @@ struct RadioView: View {
                         ScrollView {
                             LazyVStack(spacing: 12) {
                                 ForEach(filteredGroupedChannels) { groupedChannel in
-                                    GroupedRadioChannelCard(
+                                    iOSGroupedRadioChannelCard(
                                         groupedChannel: groupedChannel,
                                         serviceManager: serviceManager,
                                         onTap: { channel in
@@ -115,7 +116,7 @@ struct RadioView: View {
 
 
 // MARK: - Grouped Radio Channel Card
-struct GroupedRadioChannelCard: View {
+struct iOSGroupedRadioChannelCard: View {
     let groupedChannel: GroupedChannel
     let serviceManager: DRServiceManager
     let onTap: (DRChannel) -> Void
@@ -270,56 +271,15 @@ struct GroupedRadioChannelCard: View {
     }
 }
 
-
-
-
-
-
-
-
-
 #Preview {
-    RadioView(
+    iOSRadioView(
         serviceManager: DRServiceManager(),
         selectionState: SelectionState(),
         deepLinkHandler: DeepLinkHandler()
     )
 }
+#endif
 
 
 
 
-
-// MARK: - KnockoutTextView Components
-struct KnockoutTextView: View {
-    var text: String
-    var backgroundColor: Color = .blue
-    
-    var body: some View {
-        ZStack {
-            // Square with transparent text
-            TextMaskView(text: text, backgroundColor: backgroundColor)
-        }
-    }
-}
-
-struct TextMaskView: View {
-    var text: String
-    var backgroundColor: Color
-    
-    var body: some View {
-        // Solid color square
-        backgroundColor
-            .overlay {
-                // Transparent text mask - using fixed size instead of GeometryReader
-                Text(text)
-                    .font(.system(size: 24, weight: .black, design: .default))
-                    .minimumScaleFactor(0.1)
-                    .lineLimit(1)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .foregroundColor(.black)
-                    .blendMode(.destinationOut) // Punch out the text
-            }
-            .compositingGroup() // Required for destinationOut to work properly
-    }
-} 
