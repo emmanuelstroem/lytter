@@ -7,6 +7,7 @@
 
 import SwiftUI
 
+#if os(iOS)
 struct iOSFullPlayerSheet: View {
     @ObservedObject var serviceManager: DRServiceManager
     @ObservedObject var selectionState: SelectionState
@@ -78,7 +79,6 @@ struct iOSFullPlayerSheet: View {
     }
     
     var body: some View {
-        #if os(iOS)
         NavigationView {
             ZStack {
                 // Background gradient
@@ -229,11 +229,9 @@ struct iOSFullPlayerSheet: View {
                 }
             }
         }
-        #endif
     }
 }
 
-#if os(iOS)
 struct iOSProgramDescriptionSheet: View {
     let channel: DRChannel?
     let currentProgram: DREpisode?
@@ -301,8 +299,8 @@ struct iOSProgramDescriptionSheet: View {
         }
     }
 }
-#endif
 
 #Preview {
     iOSFullPlayerSheet(serviceManager: DRServiceManager(), selectionState: SelectionState())
 }
+#endif

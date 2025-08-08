@@ -39,9 +39,9 @@
 				ios/ChannelView.swift = (ios, );
 				ios/DistrictSelectionSheet.swift = (ios, );
 				ios/HomeView.swift = (ios, );
-				ios/RadioView.swift = (ios, );
 				ios/SearchView.swift = (ios, );
 				ios/ShortcutsView.swift = (ios, );
+				ios/iOSRadioView.swift = (ios, );
 				shared/player/full/tvOSFullPlayer.swift = (tvos, );
 				shared/service/SiriShortcutsService.swift = (ios, macos, );
 			};

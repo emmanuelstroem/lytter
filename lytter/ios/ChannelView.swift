@@ -7,6 +7,7 @@
 
 import SwiftUI
 
+#if os(iOS)
 struct ChannelView: View {
     @ObservedObject var serviceManager: DRServiceManager
     @ObservedObject var selectionState: SelectionState
@@ -192,3 +193,5 @@ struct SearchBar: View {
         selectionState: SelectionState()
     )
 } 
+
+#endif

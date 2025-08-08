@@ -1,5 +1,6 @@
 import SwiftUI
 
+#if os(iOS)
 // MARK: - District Selection Sheet
 struct DistrictSelectionSheet: View {
     let groupedChannel: GroupedChannel
@@ -56,3 +57,4 @@ struct DistrictSelectionSheet: View {
         .presentationDragIndicator(.visible)
     }
 } 
+#endif
