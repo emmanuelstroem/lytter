@@ -11,54 +11,100 @@ import SwiftData
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var items: [Item]
-
+    
+    @StateObject private var serviceManager = DRServiceManager()
+    @StateObject private var selectionState = SelectionState()
+    @SceneStorage("selectedTab") private var selectedTabIndex = 0
+    
+    @EnvironmentObject var deepLinkHandler: DeepLinkHandler
+    
+    #if os(iOS) || os(macOS)
+    @EnvironmentObject var siriShortcutsService: SiriShortcutsService
+    #endif
+    
     var body: some View {
-        NavigationSplitView {
-            List {
-                ForEach(items) { item in
-                    NavigationLink {
-                        Text("Item at \(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))")
-                    } label: {
-                        Text(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))
+        #if os(iOS)
+        ZStack {
+            // Main TabView with TabBarMinimizeBehavior
+            if #available(iOS 26.0, *) {
+                TabView(selection: $selectedTabIndex) {
+                    Tab("Home", systemImage: "house", value: 0) {
+                        HomeView(serviceManager: serviceManager, selectionState: selectionState, deepLinkHandler: deepLinkHandler)
+                    }
+                    Tab("Radio", systemImage: "antenna.radiowaves.left.and.right", value: 1) {
+                        RadioView(serviceManager: serviceManager, selectionState: selectionState, deepLinkHandler: deepLinkHandler)
+                    }
+                    Tab("Search", systemImage: "magnifyingglass", value: 2, role: .search) {
+                        SearchView(serviceManager: serviceManager, selectionState: selectionState, deepLinkHandler: deepLinkHandler)
+                    }
+                    Tab("Shortcuts", systemImage: "mic.circle", value: 3) {
+                        ShortcutsView()
+                            #if os(iOS) || os(macOS)
+                            .environmentObject(siriShortcutsService)
+                            #endif
                     }
                 }
-                .onDelete(perform: deleteItems)
-            }
-#if os(macOS)
-            .navigationSplitViewColumnWidth(min: 180, ideal: 200)
-#endif
-            .toolbar {
-#if os(iOS)
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    EditButton()
-                }
-#endif
-                ToolbarItem {
-                    Button(action: addItem) {
-                        Label("Add Item", systemImage: "plus")
-                    }
+                .tabBarMinimizeBehavior(.onScrollDown)
+                .accentColor(.purple)
+                .tabViewBottomAccessory {
+                    MiniPlayer()
+                        .environmentObject(serviceManager)
+                        .environmentObject(selectionState)
                 }
             }
-        } detail: {
-            Text("Select an item")
-        }
-    }
-
-    private func addItem() {
-        withAnimation {
-            let newItem = Item(timestamp: Date())
-            modelContext.insert(newItem)
-        }
-    }
-
-    private func deleteItems(offsets: IndexSet) {
-        withAnimation {
-            for index in offsets {
-                modelContext.delete(items[index])
+            else {
+                // Fallback on earlier versions
+                TabView {
+                    // Home Tab
+                    HomeView(serviceManager: serviceManager, selectionState: selectionState, deepLinkHandler: deepLinkHandler)
+                        .tabItem {
+                            Image(systemName: "house")
+                            Text("Home")
+                        }
+                    
+                    // Radio Tab
+                    RadioView(serviceManager: serviceManager, selectionState: selectionState, deepLinkHandler: deepLinkHandler)
+                        .tabItem {
+                            Image(systemName: "antenna.radiowaves.left.and.right")
+                            Text("Radio")
+                        }
+                    
+                    // Search Tab
+                    SearchView(serviceManager: serviceManager, selectionState: selectionState, deepLinkHandler: deepLinkHandler)
+                        .tabItem {
+                            Image(systemName: "magnifyingglass")
+                            Text("Search")
+                        }
+                    
+                    // Shortcuts Tab
+                    #if os(iOS) || os(macOS)
+                    ShortcutsView()
+                        .environmentObject(siriShortcutsService)
+                        .tabItem {
+                            Image(systemName: "mic.circle")
+                            Text("Shortcuts")
+                        }
+                    #endif
+                }
+                .accentColor(.purple)
+                
+                // MiniPlayer positioned above TabView
+                MiniPlayer()
+                    .environmentObject(serviceManager)
+                    .environmentObject(selectionState)
+                    .frame(alignment: .bottom)
             }
         }
+        .onContinueUserActivity("PlayChannelActivity") { userActivity in
+            #if os(iOS) || os(macOS)
+            siriShortcutsService.handleUserActivity(userActivity)
+            #endif
+        }
+        
+    #endif
     }
 }
+
 
 #Preview {
     ContentView()
