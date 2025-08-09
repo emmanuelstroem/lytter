@@ -112,31 +112,7 @@ struct ContentView: View {
         .onOpenURL { url in
             deepLinkHandler.handleDeepLink(url)
         }
-        .overlay(alignment: .topTrailing) {
-            // Debug overlay to show Top Shelf extension heartbeat via App Group
-            VStack(alignment: .trailing, spacing: 4) {
-                if let defaults = UserDefaults(suiteName: "group.com.eopio.lytter") {
-                    let ts = defaults.double(forKey: "TopShelfLastRun")
-                    let count = defaults.integer(forKey: "TopShelfItemCount")
-                    if ts > 0 {
-                        Text("TopShelf: \(Date(timeIntervalSince1970: ts).formatted())")
-                            .font(.caption2)
-                            .foregroundColor(.white)
-                        Text("Items: \(count)")
-                            .font(.caption2)
-                            .foregroundColor(.white)
-                    } else {
-                        Text("TopShelf: no heartbeat")
-                            .font(.caption2)
-                            .foregroundColor(.white)
-                    }
-                }
-            }
-            .padding(8)
-            .background(Color.black.opacity(0.4))
-            .clipShape(RoundedRectangle(cornerRadius: 6))
-            .padding(8)
-        }
+
     #endif
     }
 }
