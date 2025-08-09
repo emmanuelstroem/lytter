@@ -52,6 +52,8 @@ struct tvOSChannelCard: View {
         .buttonStyle(.card)
         .clipShape(RoundedRectangle(cornerRadius: 22))
         .shadow(radius: 12)
+        .focusable(true)
+        .padding(.vertical, 10)
     }
 }
 

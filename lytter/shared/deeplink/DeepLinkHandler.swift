@@ -16,7 +16,7 @@ class DeepLinkHandler: ObservableObject {
     
     func handleDeepLink(_ url: URL) {
         print("🔗 DeepLinkHandler: Received URL: \(url)")
-        guard url.scheme == "lyt" else { 
+        guard url.scheme == "lyt" || url.scheme == "lytter" else { 
             print("🔗 DeepLinkHandler: Invalid scheme: \(url.scheme ?? "nil")")
             return 
         }
@@ -29,10 +29,31 @@ class DeepLinkHandler: ObservableObject {
         print("🔗 DeepLinkHandler: Filtered path components: \(pathComponents)")
         print("🔗 DeepLinkHandler: Full path: \(components?.path ?? "nil")")
         
-        // Handle both formats: /channel/id and channel/id
+        // Handle different path structures: /channel/id, channel/id, and radio/channel/id
         if pathComponents.count >= 2 && pathComponents[0] == "channel" {
             let channelId = pathComponents[1]
             print("🔗 DeepLinkHandler: Processing channel ID: \(channelId)")
+            
+            // Store the pending channel ID for retry if needed
+            self.pendingChannelId = channelId
+            
+            // Create a placeholder channel that will be replaced with the actual channel
+            // when the app finds it in the available channels
+            DispatchQueue.main.async {
+                self.targetChannel = DRChannel(
+                    id: channelId,
+                    title: "Channel \(channelId)",
+                    slug: channelId,
+                    type: "Channel",
+                    presentationUrl: nil
+                )
+                self.shouldNavigateToChannel = true
+                print("🔗 DeepLinkHandler: Set target channel and shouldNavigateToChannel = true")
+            }
+        } else if pathComponents.count >= 3 && pathComponents[0] == "radio" && pathComponents[1] == "channel" {
+            // Handle TopShelf format: /radio/channel/id
+            let channelId = pathComponents[2]
+            print("🔗 DeepLinkHandler: Processing TopShelf channel ID: \(channelId)")
             
             // Store the pending channel ID for retry if needed
             self.pendingChannelId = channelId

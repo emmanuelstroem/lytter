@@ -6,7 +6,19 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		1470660F2E47F55200574321 /* TVServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 147063492E46DE8C00574321 /* TVServices.framework */; };
+		147066162E47F55200574321 /* TopShelfExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 1470660E2E47F55200574321 /* TopShelfExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
+		147066142E47F55200574321 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 14B52D1F2E44D1AB00E8476E /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 1470660D2E47F55200574321;
+			remoteInfo = TopShelfExtension;
+		};
 		14B52D392E44D1AD00E8476E /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 14B52D1F2E44D1AB00E8476E /* Project object */;
@@ -23,13 +35,36 @@
 		};
 /* End PBXContainerItemProxy section */
 
+/* Begin PBXCopyFilesBuildPhase section */
+		14CA69232E46D32B001C4592 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 12;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				147066162E47F55200574321 /* TopShelfExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
+		147063492E46DE8C00574321 /* TVServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = TVServices.framework; path = Platforms/AppleTVOS.platform/Developer/SDKs/AppleTVOS26.0.sdk/System/Library/Frameworks/TVServices.framework; sourceTree = DEVELOPER_DIR; };
+		1470660E2E47F55200574321 /* TopShelfExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = TopShelfExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		14B52D272E44D1AB00E8476E /* lytter.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = lytter.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		14B52D382E44D1AD00E8476E /* lytterTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = lytterTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		14B52D422E44D1AD00E8476E /* lytterUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = lytterUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		1470661A2E47F55200574321 /* Exceptions for "TopShelfExtension" folder in "TopShelfExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 1470660D2E47F55200574321 /* TopShelfExtension */;
+		};
 		14B52D4A2E44D1AD00E8476E /* Exceptions for "lytter" folder in "lytter" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -50,6 +85,19 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		147065FE2E47F44D00574321 /* TopShelfExtension */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = TopShelfExtension;
+			sourceTree = "<group>";
+		};
+		147066102E47F55200574321 /* TopShelfExtension */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				1470661A2E47F55200574321 /* Exceptions for "TopShelfExtension" folder in "TopShelfExtension" target */,
+			);
+			path = TopShelfExtension;
+			sourceTree = "<group>";
+		};
 		14B52D292E44D1AB00E8476E /* lytter */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
@@ -71,6 +119,14 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		1470660B2E47F55200574321 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1470660F2E47F55200574321 /* TVServices.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		14B52D242E44D1AB00E8476E /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -101,7 +157,11 @@
 				14B52D292E44D1AB00E8476E /* lytter */,
 				14B52D3B2E44D1AD00E8476E /* lytterTests */,
 				14B52D452E44D1AD00E8476E /* lytterUITests */,
+				147065FE2E47F44D00574321 /* TopShelfExtension */,
+				147066102E47F55200574321 /* TopShelfExtension */,
+				14CA66FD2E46CF01001C4592 /* Frameworks */,
 				14B52D282E44D1AB00E8476E /* Products */,
+				14CA689E2E46D200001C4592 /* Recovered References */,
 			);
 			sourceTree = "<group>";
 		};
@@ -111,13 +171,51 @@
 				14B52D272E44D1AB00E8476E /* lytter.app */,
 				14B52D382E44D1AD00E8476E /* lytterTests.xctest */,
 				14B52D422E44D1AD00E8476E /* lytterUITests.xctest */,
+				1470660E2E47F55200574321 /* TopShelfExtension.appex */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		14CA66FD2E46CF01001C4592 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				147063492E46DE8C00574321 /* TVServices.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		14CA689E2E46D200001C4592 /* Recovered References */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = "Recovered References";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		1470660D2E47F55200574321 /* TopShelfExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 147066172E47F55200574321 /* Build configuration list for PBXNativeTarget "TopShelfExtension" */;
+			buildPhases = (
+				1470660A2E47F55200574321 /* Sources */,
+				1470660B2E47F55200574321 /* Frameworks */,
+				1470660C2E47F55200574321 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				147066102E47F55200574321 /* TopShelfExtension */,
+			);
+			name = TopShelfExtension;
+			packageProductDependencies = (
+			);
+			productName = TopShelfExtension;
+			productReference = 1470660E2E47F55200574321 /* TopShelfExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		14B52D262E44D1AB00E8476E /* lytter */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 14B52D4B2E44D1AD00E8476E /* Build configuration list for PBXNativeTarget "lytter" */;
@@ -125,10 +223,12 @@
 				14B52D232E44D1AB00E8476E /* Sources */,
 				14B52D242E44D1AB00E8476E /* Frameworks */,
 				14B52D252E44D1AB00E8476E /* Resources */,
+				14CA69232E46D32B001C4592 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				147066152E47F55200574321 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				14B52D292E44D1AB00E8476E /* lytter */,
@@ -196,6 +296,9 @@
 				LastSwiftUpdateCheck = 2600;
 				LastUpgradeCheck = 2600;
 				TargetAttributes = {
+					1470660D2E47F55200574321 = {
+						CreatedOnToolsVersion = 26.0;
+					};
 					14B52D262E44D1AB00E8476E = {
 						CreatedOnToolsVersion = 26.0;
 					};
@@ -226,11 +329,19 @@
 				14B52D262E44D1AB00E8476E /* lytter */,
 				14B52D372E44D1AD00E8476E /* lytterTests */,
 				14B52D412E44D1AD00E8476E /* lytterUITests */,
+				1470660D2E47F55200574321 /* TopShelfExtension */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		1470660C2E47F55200574321 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		14B52D252E44D1AB00E8476E /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -255,6 +366,13 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		1470660A2E47F55200574321 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		14B52D232E44D1AB00E8476E /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -279,6 +397,11 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		147066152E47F55200574321 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 1470660D2E47F55200574321 /* TopShelfExtension */;
+			targetProxy = 147066142E47F55200574321 /* PBXContainerItemProxy */;
+		};
 		14B52D3A2E44D1AD00E8476E /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 14B52D262E44D1AB00E8476E /* lytter */;
@@ -292,6 +415,67 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		147066182E47F55200574321 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = A9Q5VPE9WX;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = TopShelfExtension/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = TopShelfExtension;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.eopio.lytter.TopShelfExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = appletvos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 3;
+				TVOS_DEPLOYMENT_TARGET = 26.0;
+			};
+			name = Debug;
+		};
+		147066192E47F55200574321 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = A9Q5VPE9WX;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = TopShelfExtension/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = TopShelfExtension;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.eopio.lytter.TopShelfExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = appletvos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 3;
+				TVOS_DEPLOYMENT_TARGET = 26.0;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
 		14B52D4C2E44D1AD00E8476E /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -324,7 +508,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 14.6;
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.eopio.lytter;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
@@ -375,7 +559,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 14.6;
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.eopio.lytter;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
@@ -615,6 +799,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		147066172E47F55200574321 /* Build configuration list for PBXNativeTarget "TopShelfExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				147066182E47F55200574321 /* Debug */,
+				147066192E47F55200574321 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		14B52D222E44D1AB00E8476E /* Build configuration list for PBXProject "lytter" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

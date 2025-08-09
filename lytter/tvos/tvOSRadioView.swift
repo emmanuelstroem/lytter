@@ -52,21 +52,23 @@ struct tvOSRadioView: View {
                                             .foregroundColor(.white)
 
                                         ScrollView(.horizontal) {
-                                            LazyHGrid(rows: [GridItem(.fixed(300))], spacing: 40) {
+                                            LazyHGrid(rows: [GridItem(.fixed(300))], spacing: 60) {
                                                 ForEach(group.channels, id: \.id) { channel in
                                                     tvOSChannelCard(channel: channel) {
                                                         serviceManager.playChannel(channel)
                                                         selectionState.selectChannel(channel)
                                                     }
                                                     .frame(width: 460, height: 300)
+                                                    .padding(.trailing, 30)
                                                 }
                                             }
-                                            .padding(.horizontal, 10)
+                                            .padding(.horizontal, 30)
                                         }
                                     }
                                 }
                             }
                             .padding(.trailing, 60)
+                            .padding(.vertical, 10)
                         }
                     }
                 }

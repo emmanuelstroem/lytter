@@ -7,5 +7,16 @@
 		<string>remote-notification</string>
 		<string>audio</string>
 	</array>
+    <key>CFBundleURLTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleURLName</key>
+            <string>lytter</string>
+            <key>CFBundleURLSchemes</key>
+            <array>
+                <string>lytter</string>
+            </array>
+        </dict>
+    </array>
 </dict>
 </plist>
