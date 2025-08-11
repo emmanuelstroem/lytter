@@ -117,9 +117,9 @@ struct tvOSNowPlayingView: View {
                     HStack {
                         Button(action: { showingInfoSheet = true }) {
                             Label("", systemImage: "info.circle")
+                                .font(.title2)
                         }
-                        .buttonStyle(.bordered)
-
+                        
                         Spacer()
 
                         Button(action: {
@@ -128,8 +128,8 @@ struct tvOSNowPlayingView: View {
                             }
                         }) {
                             Label("", systemImage: "shareplay")
+                                .font(.title2)
                         }
-                        .buttonStyle(.bordered)
                     }
                     .padding(.horizontal, 20)
 
