@@ -6,53 +6,70 @@
 //
 
 import SwiftUI
+import TVUIKit
 
 #if os(tvOS)
+struct TVPosterViewRepresentable: UIViewRepresentable {
+    let title: String
+    let subtitle: String?
+    let imageURL: URL?
+    let onSelect: () -> Void
+    
+    func makeUIView(context: Context) -> TVPosterView {
+        let poster = TVPosterView()
+        poster.addGestureRecognizer(UITapGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.didSelect)))
+        poster.isUserInteractionEnabled = true
+        return poster
+    }
+    
+    func updateUIView(_ uiView: TVPosterView, context: Context) {
+        uiView.title = title
+        uiView.subtitle = subtitle
+        if let url = imageURL {
+            URLSession.shared.dataTask(with: url) { data, _, _ in
+                guard let data = data, let image = UIImage(data: data) else { return }
+                DispatchQueue.main.async {
+                    uiView.image = image
+                    uiView.contentMode = .scaleAspectFit
+//                    uiview.image.clipsToBounds = true
+                }
+            }.resume()
+        } else {
+            uiView.image = nil
+        }
+    }
+    
+    func makeCoordinator() -> Coordinator {
+        Coordinator(onSelect: onSelect)
+    }
+    
+    class Coordinator: NSObject {
+        let onSelect: () -> Void
+        init(onSelect: @escaping () -> Void) { self.onSelect = onSelect }
+        @objc func didSelect() { onSelect() }
+    }
+}
+#endif
+
 struct tvOSChannelCard: View {
     let channel: DRChannel
     let onSelect: () -> Void
     @EnvironmentObject private var serviceManager: DRServiceManager
-
+    
     var body: some View {
-        Button(action: onSelect) {
-            ZStack(alignment: .bottomLeading) {
+        FocusableLockupView(
+            title: channel.title,
+            subtitle: serviceManager.getCurrentProgram(for: channel)?.cleanTitle(),
+            imageURL: {
                 if let program = serviceManager.getCurrentProgram(for: channel),
-                   let urlString = program.landscapeImageURL ?? program.primaryImageURL,
-                   let url = URL(string: urlString) {
-                    CachedAsyncImage(url: url) { image in
-                        image.resizable().aspectRatio(contentMode: .fill)
-                    } placeholder: {
-                        RoundedRectangle(cornerRadius: 22).fill(.gray.opacity(0.2))
-                    }
-                } else {
-                    RoundedRectangle(cornerRadius: 22)
-                        .fill(LinearGradient(colors: [.purple.opacity(0.7), .blue.opacity(0.6)], startPoint: .topLeading, endPoint: .bottomTrailing))
-                        .overlay(alignment: .center) {
-                            Image(systemName: "antenna.radiowaves.left.and.right").font(.system(size: 72)).foregroundColor(.white)
-                        }
+                   let urlString = program.landscapeImageURL ?? program.primaryImageURL {
+                    return URL(string: urlString)
                 }
-
-                LinearGradient(colors: [.black.opacity(0.0), .black.opacity(0.65)], startPoint: .center, endPoint: .bottom)
-                    .clipShape(RoundedRectangle(cornerRadius: 22))
-
-                VStack(alignment: .leading, spacing: 6) {
-                    Text(channel.title)
-                        .font(.title3).bold().foregroundColor(.white)
-                        .lineLimit(1)
-                    if let program = serviceManager.getCurrentProgram(for: channel) {
-                        Text(program.cleanTitle())
-                            .font(.callout)
-                            .foregroundColor(.white.opacity(0.9))
-                            .lineLimit(1)
-                    }
-                }
-                .padding(20)
-            }
-        }
-        .buttonStyle(.card)
-        .clipShape(RoundedRectangle(cornerRadius: 22))
-        .shadow(radius: 12)
-        .focusable(true)
+                return nil
+            }(),
+            onSelect: onSelect
+        )
+        .frame(height: 300)
         .padding(.vertical, 10)
     }
 }
@@ -74,6 +91,7 @@ struct tvOSSearchField: View {
             Button(action: { isFocused = true }) { // focus to enable dictation via remote mic
                 Image(systemName: "mic.fill")
             }
+            .buttonStyle(.borderless) // avoid extra highlight styling
         }
         .padding(16)
         .background(.ultraThinMaterial)
@@ -81,5 +99,152 @@ struct tvOSSearchField: View {
         .foregroundColor(.white)
     }
 }
-#endif
 
+#if os(tvOS)
+import SwiftUI
+import UIKit
+
+struct FocusableLockupView: UIViewRepresentable {
+    let title: String
+    let subtitle: String?
+    let imageURL: URL?
+    let onSelect: () -> Void
+    
+    func makeUIView(context: Context) -> FocusableLockupUIView {
+        let view = FocusableLockupUIView()
+        view.onSelect = onSelect
+        return view
+    }
+    
+    func updateUIView(_ uiView: FocusableLockupUIView, context: Context) {
+        uiView.setContent(title: title, subtitle: subtitle, imageURL: imageURL)
+    }
+}
+
+class FocusableLockupUIView: UIView {
+    private let containerView = UIView()
+    private let imageView = UIImageView()
+    private let titleLabel = UILabel()
+    private let subtitleLabel = UILabel()
+    
+    private var parallaxGroup: UIMotionEffectGroup?
+    var onSelect: (() -> Void)?
+    
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        
+        // Container with rounded corners
+        containerView.layer.cornerRadius = 20
+        containerView.clipsToBounds = true
+        containerView.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(containerView)
+        
+        NSLayoutConstraint.activate([
+            containerView.topAnchor.constraint(equalTo: topAnchor),
+            containerView.leadingAnchor.constraint(equalTo: leadingAnchor),
+            containerView.trailingAnchor.constraint(equalTo: trailingAnchor),
+            containerView.bottomAnchor.constraint(equalTo: bottomAnchor)
+        ])
+        
+        // Image
+        imageView.contentMode = .scaleAspectFill
+        imageView.clipsToBounds = true
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        imageView.alpha = 0.6 // default opacity
+        containerView.addSubview(imageView)
+        
+        NSLayoutConstraint.activate([
+            imageView.topAnchor.constraint(equalTo: containerView.topAnchor),
+            imageView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
+            imageView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor),
+            imageView.heightAnchor.constraint(equalTo: containerView.heightAnchor, multiplier: 0.75)
+        ])
+        
+        // Labels
+        titleLabel.font = UIFont.systemFont(ofSize: 28, weight: .bold)
+        titleLabel.textColor = .white
+        titleLabel.translatesAutoresizingMaskIntoConstraints = false
+        
+        subtitleLabel.font = UIFont.systemFont(ofSize: 20, weight: .regular)
+        subtitleLabel.textColor = .lightGray
+        subtitleLabel.translatesAutoresizingMaskIntoConstraints = false
+        
+        containerView.addSubview(titleLabel)
+        containerView.addSubview(subtitleLabel)
+        
+        NSLayoutConstraint.activate([
+            titleLabel.topAnchor.constraint(equalTo: imageView.bottomAnchor, constant: 8),
+            titleLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 8),
+            titleLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -8),
+            
+            subtitleLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 4),
+            subtitleLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 8),
+            subtitleLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -8),
+            subtitleLabel.bottomAnchor.constraint(lessThanOrEqualTo: containerView.bottomAnchor, constant: -8)
+        ])
+        
+        // Tap gesture
+        addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(didTap)))
+    }
+    
+    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+    
+    func setContent(title: String, subtitle: String?, imageURL: URL?) {
+        titleLabel.text = title
+        subtitleLabel.text = subtitle
+        if let url = imageURL {
+            URLSession.shared.dataTask(with: url) { [weak self] data, _, _ in
+                guard let self = self, let data = data, let image = UIImage(data: data) else { return }
+                DispatchQueue.main.async { self.imageView.image = image }
+            }.resume()
+        } else {
+            imageView.image = nil
+        }
+    }
+    
+    override var canBecomeFocused: Bool { true }
+    
+    override func didUpdateFocus(in context: UIFocusUpdateContext, with coordinator: UIFocusAnimationCoordinator) {
+        let isFocusing = (context.nextFocusedView == self)
+        
+        if isFocusing {
+            // Animate ONLY the image on gaining focus
+            UIViewPropertyAnimator(duration: 0.4, curve: .easeInOut) {
+                self.imageView.transform = CGAffineTransform(scaleX: 1.05, y: 1.05)
+                self.imageView.alpha = 1.0
+            }.startAnimation()
+            addParallax()
+        } else if context.previouslyFocusedView == self {
+            // Instantly reset image on losing focus
+            imageView.transform = .identity
+            imageView.alpha = 0.6
+            removeParallax()
+        }
+    }
+    
+    private func addParallax() {
+        guard parallaxGroup == nil else { return }
+        let horizontal = UIInterpolatingMotionEffect(keyPath: "center.x", type: .tiltAlongHorizontalAxis)
+        horizontal.minimumRelativeValue = -10
+        horizontal.maximumRelativeValue = 10
+        
+        let vertical = UIInterpolatingMotionEffect(keyPath: "center.y", type: .tiltAlongVerticalAxis)
+        vertical.minimumRelativeValue = -10
+        vertical.maximumRelativeValue = 10
+        
+        let group = UIMotionEffectGroup()
+        group.motionEffects = [horizontal, vertical]
+        addMotionEffect(group)
+        parallaxGroup = group
+    }
+    
+    private func removeParallax() {
+        if let group = parallaxGroup {
+            removeMotionEffect(group)
+            parallaxGroup = nil
+        }
+    }
+    
+    @objc private func didTap() { onSelect?() }
+}
+#endif
