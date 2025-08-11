@@ -217,8 +217,10 @@ struct tvOSChannelCard: View {
     @EnvironmentObject private var serviceManager: DRServiceManager
     
     var body: some View {
+        // For districtized channels (e.g., "P4 Bornholm"), show only the base name ("P4")
+        let displayTitle = (channel.district != nil) ? channel.name : channel.title
         FocusableLockupView(
-            title: channel.title,
+            title: displayTitle,
             subtitle: serviceManager.getCurrentProgram(for: channel)?.cleanTitle(),
             imageURL: {
                 if let program = serviceManager.getCurrentProgram(for: channel),
@@ -259,3 +261,42 @@ struct tvOSSearchField: View {
         .foregroundColor(.white)
     }
 }
+
+#if os(tvOS)
+struct tvOSDistrictSelectionSheet: View {
+    let primaryName: String
+    let variants: [DRChannel]
+    let onSelect: (DRChannel) -> Void
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            Text("Select \(primaryName) district")
+                .font(.title2)
+                .bold()
+                .foregroundColor(.white)
+            
+            ScrollView {
+                LazyVStack(spacing: 16) {
+                    ForEach(variants, id: \.id) { channel in
+                        Button(action: {
+                            onSelect(channel)
+                            dismiss()
+                        }) {
+                            Text(channel.district ?? channel.title)
+                            .font(.title3)
+                            .background(.ultraThinMaterial)
+                        }
+                    }
+                }
+            }
+        }
+        .background(
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .fill(.ultraThinMaterial)
+        )
+//        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+//        .padding()
+    }
+}
+#endif

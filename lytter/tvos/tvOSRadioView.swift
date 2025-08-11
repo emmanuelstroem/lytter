@@ -11,13 +11,19 @@ import SwiftUI
 struct tvOSRadioView: View {
     @ObservedObject var serviceManager: DRServiceManager
     @ObservedObject var selectionState: SelectionState
+    @State private var showingDistrictsForChannel: DRChannel?
 
-    private var groupedChannels: [(name: String, channels: [DRChannel])] {
-        let channels = serviceManager.availableChannels
-        let grouped = Dictionary(grouping: channels) { $0.name }
-        let groups = grouped.map { (key: $0.key, value: $0.value) }
-            .sorted { $0.key < $1.key }
-        return groups.map { (name: $0.key, channels: $0.value) }
+    // One representative per base channel (deduped by name)
+    private var primaryChannels: [DRChannel] {
+        let grouped = Dictionary(grouping: serviceManager.availableChannels, by: { $0.name })
+        let representatives: [DRChannel] = grouped.values.compactMap { group in
+            // Prefer the variant without a district if it exists; otherwise pick the first by title
+            if let noDistrict = group.first(where: { $0.district == nil }) {
+                return noDistrict
+            }
+            return group.sorted { $0.title < $1.title }.first
+        }
+        return representatives.sorted { $0.title < $1.title }
     }
 
     var body: some View {
@@ -40,34 +46,20 @@ struct tvOSRadioView: View {
                             Text(error).foregroundColor(.white)
                             Button("Retry") { serviceManager.loadChannels() }
                         }
-                    } else if groupedChannels.isEmpty {
+                    } else if primaryChannels.isEmpty {
                         Text("No channels").foregroundColor(.white)
                     } else {
-                        ScrollView(.vertical) {
-                            LazyVStack(alignment: .leading, spacing: 40) {
-                                ForEach(groupedChannels, id: \.name) { group in
-                                    VStack(alignment: .leading, spacing: 16) {
-                                        Text(group.name)
-                                            .font(.title2)
-                                            .foregroundColor(.white)
-
-                                        ScrollView(.horizontal) {
-                                            LazyHGrid(rows: [GridItem(.fixed(300))], spacing: 60) {
-                                                ForEach(group.channels, id: \.id) { channel in
-                                                    tvOSChannelCard(channel: channel) {
-                                                        serviceManager.playChannel(channel)
-                                                        selectionState.selectChannel(channel)
-                                                    }
-                                                    .frame(width: 460, height: 300)
-                                                    .padding(.trailing, 30)
-                                                }
-                                            }
-                                            .padding(.horizontal, 30)
-                                        }
+                        // Single horizontal list of primary channels
+                        ScrollView(.horizontal) {
+                            LazyHStack(spacing: 60) {
+                                ForEach(primaryChannels, id: \.id) { channel in
+                                    tvOSChannelCard(channel: channel) {
+                                        handleChannelSelection(channel)
                                     }
+                                    .frame(width: 460, height: 300)
                                 }
                             }
-                            .padding(.trailing, 60)
+                            .padding(.horizontal, 30)
                             .padding(.vertical, 10)
                         }
                     }
@@ -78,6 +70,26 @@ struct tvOSRadioView: View {
         }
         .onAppear {
             if serviceManager.availableChannels.isEmpty { serviceManager.loadChannels() }
+        }
+        .sheet(item: $showingDistrictsForChannel) { primary in
+            tvOSDistrictSelectionSheet(
+                primaryName: primary.name,
+                variants: serviceManager.availableChannels.filter { $0.name == primary.name }
+            ) { selected in
+                serviceManager.playChannel(selected)
+                selectionState.selectChannel(selected)
+            }
+        }
+    }
+
+    private func handleChannelSelection(_ channel: DRChannel) {
+        // Find all variants for this base name
+        let variants = serviceManager.availableChannels.filter { $0.name == channel.name }
+        if variants.count <= 1 {
+            serviceManager.playChannel(channel)
+            selectionState.selectChannel(channel)
+        } else {
+            showingDistrictsForChannel = channel
         }
     }
 }
