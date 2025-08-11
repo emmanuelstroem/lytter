@@ -72,11 +72,13 @@ struct tvOSRadioView: View {
                                                 }) {
                                                     Text(variant.district ?? variant.title)
                                                 }
+                                                .buttonStyle(.card)
                                             }
                                         } label: {
                                             tvOSChannelCard(channel: channel)
                                                 .frame(width: 460, height: 300)
                                         }
+                                        .focusEffectDisabled()
                                     }
                                 }
                             }

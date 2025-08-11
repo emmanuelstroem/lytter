@@ -42,11 +42,15 @@ struct tvOSSearchView: View {
                     ScrollView {
                         LazyVGrid(columns: Array(repeating: GridItem(.flexible(minimum: 320), spacing: 40), count: 3), spacing: 40) {
                             ForEach(results, id: \.id) { channel in
-                                tvOSChannelCard(channel: channel) {
+                                Button {
                                     serviceManager.playChannel(channel)
                                     selectionState.selectChannel(channel)
+                                } label: {
+                                    tvOSChannelCard(channel: channel)
+                                        .frame(height: 260)
                                 }
-                                .frame(height: 260)
+                                .buttonStyle(.plain)
+                                .focusEffectDisabled()
                             }
                         }
                         .padding(.trailing, 60)
