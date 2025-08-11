@@ -20,33 +20,39 @@ struct tvOSNowPlayingView: View {
                 VStack(spacing: 40) {
                     tvOSNowPlayingArtwork(channel: channel)
 
+                    // Live progress bar with centered LIVE label (visual only for live streams)
                     VStack(spacing: 8) {
-                        Text(channel.title)
-                            .font(.title)
-                            .foregroundColor(.white)
-                        if let program = serviceManager.getCurrentProgram(for: channel) {
-                            Text(program.cleanTitle())
-                                .font(.title3)
-                                .foregroundColor(.white.opacity(0.8))
+                        GeometryReader { geometry in
+                            ZStack {
+                                ProgressView(value: 0.5, total: 1.0)
+                                    .progressViewStyle(LinearProgressViewStyle(tint: .white))
+                                    .scaleEffect(y: 2)
+                                    .frame(maxWidth: .infinity)
+                                    .mask(
+                                        RadialGradient(
+                                            colors: [
+                                                Color.black.opacity(0.0),
+                                                Color.black.opacity(0.5),
+                                                Color.black.opacity(1.0)
+                                            ],
+                                            center: .center,
+                                            startRadius: 0,
+                                            endRadius: geometry.size.width * 0.5 // 3/4 of half width
+                                        )
+                                    )
+
+                                Text("LIVE")
+                                    .font(.caption)
+                                    .fontWeight(.bold)
+                                    .foregroundColor(.white)
+                                    .opacity(0.8)
+                            }
                         }
-                        if let track = serviceManager.currentTrack, track.isCurrentlyPlaying {
-                            Text(track.displayText)
-                                .font(.callout)
-                                .foregroundColor(.white.opacity(0.8))
-                        }
+                        .frame(height: 20)
+                        .padding(.horizontal, 20)
                     }
 
-                    HStack(spacing: 40) {
-                        Button(action: { serviceManager.togglePlayback(for: channel) }) {
-                            Label(serviceManager.isPlaying ? "Pause" : "Play", systemImage: serviceManager.isPlaying ? "pause.fill" : "play.fill")
-                        }
-                        .buttonStyle(.borderedProminent)
-
-                        Button(action: { serviceManager.stopPlayback() }) {
-                            Label("Stop", systemImage: "stop.fill")
-                        }
-                        .buttonStyle(.bordered)
-                    }
+                    // Playback is controlled exclusively via the tvOS remote
                 }
                 .padding(.horizontal, 80)
             } else {
@@ -77,20 +83,65 @@ private struct tvOSNowPlayingArtwork: View {
             return nil
         }()
 
-        ZStack {
-            if let url = imageURL {
-                CachedAsyncImage(url: url) { image in
-                    image.resizable().aspectRatio(contentMode: .fit)
-                } placeholder: {
-                    RoundedRectangle(cornerRadius: 30).fill(.gray.opacity(0.2))
-                }
-            } else {
-                RoundedRectangle(cornerRadius: 30)
-                    .fill(LinearGradient(colors: [.purple.opacity(0.7), .blue.opacity(0.6)], startPoint: .topLeading, endPoint: .bottomTrailing))
-                    .overlay {
-                        Image(systemName: "antenna.radiowaves.left.and.right").font(.system(size: 120)).foregroundColor(.white)
+        ZStack(alignment: .bottomLeading) {
+            // Artwork with rounded corners
+            Group {
+                if let url = imageURL {
+                    CachedAsyncImage(url: url) { image in
+                        image
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                    } placeholder: {
+                        Color.gray.opacity(0.2)
                     }
+                } else {
+                    LinearGradient(
+                        colors: [.purple.opacity(0.7), .blue.opacity(0.6)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                }
             }
+            .frame(maxWidth: 1200, maxHeight: 680)
+            .clipped()
+
+            // Bottom gradient overlay for text readability
+            LinearGradient(
+                colors: [Color.black.opacity(0.0), Color.black.opacity(0.6), Color.black.opacity(0.9)],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .frame(height: 160)
+            .frame(maxWidth: .infinity, alignment: .bottom)
+            .allowsHitTesting(false)
+
+            // Text overlays with marquee
+            VStack(alignment: .leading, spacing: 6) {
+                MarqueeText(
+                    text: channel.title,
+                    font: .system(size: 42, weight: .bold),
+                    leftFade: 16,
+                    rightFade: 16,
+                    startDelay: 1.0,
+                    alignment: .leading
+                )
+                .foregroundColor(.white)
+
+                if let program = serviceManager.getCurrentProgram(for: channel) {
+                    MarqueeText(
+                        text: program.cleanTitle(),
+                        font: .system(size: 28, weight: .semibold),
+                        leftFade: 16,
+                        rightFade: 16,
+                        startDelay: 1.5,
+                        alignment: .leading
+                    )
+                    .foregroundColor(.white.opacity(0.9))
+                    .padding(.top, 10)
+                }
+            }
+            .padding(.horizontal, 24)
+            .padding(.bottom, 24)
         }
         .frame(maxWidth: 1200, maxHeight: 680)
         .clipShape(RoundedRectangle(cornerRadius: 30))
