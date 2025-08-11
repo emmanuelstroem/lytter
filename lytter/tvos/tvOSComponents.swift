@@ -55,14 +55,12 @@ struct FocusableLockupView: UIViewRepresentable {
     let title: String
     let subtitle: String?
     let imageURL: URL?
-    let onSelect: () -> Void
-    
+
     func makeUIView(context: Context) -> FocusableLockupUIView {
         let view = FocusableLockupUIView()
-        view.onSelect = onSelect
         return view
     }
-    
+
     func updateUIView(_ uiView: FocusableLockupUIView, context: Context) {
         uiView.setContent(title: title, subtitle: subtitle, imageURL: imageURL)
     }
@@ -75,7 +73,6 @@ class FocusableLockupUIView: UIView {
     private let subtitleLabel = UILabel()
     
     private var parallaxGroup: UIMotionEffectGroup?
-    var onSelect: (() -> Void)?
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -130,14 +127,8 @@ class FocusableLockupUIView: UIView {
             subtitleLabel.bottomAnchor.constraint(lessThanOrEqualTo: containerView.bottomAnchor, constant: -8)
         ])
         
-        // Tap gesture
-        let tap = UITapGestureRecognizer(target: self, action: #selector(didTap))
-#if os(tvOS)
-        // Ensure the Siri Remote select press triggers the gesture on tvOS
-        tap.allowedPressTypes = [NSNumber(value: UIPress.PressType.select.rawValue)]
-#endif
-        isUserInteractionEnabled = true
-        addGestureRecognizer(tap)
+        // Make non-interactive; wrapping SwiftUI containers (e.g., Button/Menu) handle input
+        isUserInteractionEnabled = false
     }
     
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
@@ -155,25 +146,8 @@ class FocusableLockupUIView: UIView {
         }
     }
     
-    override var canBecomeFocused: Bool { true }
-    
-    override func didUpdateFocus(in context: UIFocusUpdateContext, with coordinator: UIFocusAnimationCoordinator) {
-        let isFocusing = (context.nextFocusedView == self)
-        
-        if isFocusing {
-            // Animate ONLY the image on gaining focus
-            UIViewPropertyAnimator(duration: 0.4, curve: .easeInOut) {
-                self.imageView.transform = CGAffineTransform(scaleX: 1.05, y: 1.05)
-                self.imageView.alpha = 1.0
-            }.startAnimation()
-            addParallax()
-        } else if context.previouslyFocusedView == self {
-            // Instantly reset image on losing focus
-            imageView.transform = .identity
-            imageView.alpha = 0.6
-            removeParallax()
-        }
-    }
+    // Non-focusable; focus is managed by SwiftUI wrappers
+    override var canBecomeFocused: Bool { false }
     
     private func addParallax() {
         guard parallaxGroup == nil else { return }
@@ -198,22 +172,12 @@ class FocusableLockupUIView: UIView {
         }
     }
     
-    @objc private func didTap() { onSelect?() }
-    
-    // Extra safety: handle primary select via pressesEnded as well
-    override func pressesEnded(_ presses: Set<UIPress>, with event: UIPressesEvent?) {
-        if presses.contains(where: { $0.type == .select }) {
-            onSelect?()
-        } else {
-            super.pressesEnded(presses, with: event)
-        }
-    }
+    // Gestures and presses intentionally not handled here
 }
 #endif
 
 struct tvOSChannelCard: View {
     let channel: DRChannel
-    let onSelect: () -> Void
     @EnvironmentObject private var serviceManager: DRServiceManager
     
     var body: some View {
@@ -228,8 +192,7 @@ struct tvOSChannelCard: View {
                     return URL(string: urlString)
                 }
                 return nil
-            }(),
-            onSelect: onSelect
+            }()
         )
         .frame(height: 300)
         .padding(.vertical, 10)
@@ -271,32 +234,42 @@ struct tvOSDistrictSelectionSheet: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
-            Text("Select \(primaryName) district")
-                .font(.title2)
-                .bold()
-                .foregroundColor(.white)
-            
-            ScrollView {
-                LazyVStack(spacing: 16) {
-                    ForEach(variants, id: \.id) { channel in
-                        Button(action: {
-                            onSelect(channel)
-                            dismiss()
-                        }) {
-                            Text(channel.district ?? channel.title)
-                            .font(.title3)
-                            .background(.ultraThinMaterial)
+            Menu {
+                ForEach(variants, id: \.id) { channel in
+                    Button(action: {
+                        onSelect(channel)
+                        dismiss()
+                    }) {
+                        Text(channel.district ?? channel.title)
+                    }
+                }
+            } label: {
+                // Use a representative channel card as the visual label for the menu button
+                Group {
+                    if let representative = (variants.first { $0.district == nil } ?? variants.sorted { $0.title < $1.title }.first) {
+                        tvOSChannelCard(channel: representative)
+                            .frame(height: 300)
+                    } else {
+                        HStack {
+                            Text("Choose district")
+                                .font(.title3)
+                            Spacer()
+                            Image(systemName: "chevron.down")
                         }
+                        .foregroundColor(.white)
+                        .padding(.vertical, 14)
+                        .padding(.horizontal, 20)
+                        .background(.ultraThinMaterial)
+                        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                     }
                 }
             }
         }
+        .padding(30)
         .background(
             RoundedRectangle(cornerRadius: 24, style: .continuous)
                 .fill(.ultraThinMaterial)
         )
-//        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
-//        .padding()
     }
 }
 #endif
