@@ -6,10 +6,71 @@
 //
 
 import SwiftUI
+#if canImport(GroupActivities)
+import GroupActivities
+#endif
+
+// MARK: - Info Sheet
+#if os(tvOS)
+struct tvOSNowPlayingInfoSheet: View {
+    let channel: DRChannel
+    let program: DREpisode?
+    let track: DRTrack?
+
+    var body: some View {
+        let descriptionText = program?.description
+//            .replacingOccurrences(of: "\n\n", with: "\n")
+//            .replacingOccurrences(of: "\n", with: "\n\n") // add spacing between paragraphs
+            ?? "No description available."
+
+        ZStack {
+            VStack(alignment: .leading, spacing: 24) {
+                if let title = program?.cleanTitle(), !title.isEmpty {
+                    Text(title)
+                        .font(.title2)
+                        .bold()
+                        .foregroundColor(.white)
+                }
+
+                ScrollView(showsIndicators: true) {
+                    VStack(alignment: .leading, spacing: 16) {
+                        // Ensure long content is fully visible within scroll container
+                        Text(descriptionText)
+                            .font(.title3)
+                            .foregroundColor(.white.opacity(0.65))
+                            .multilineTextAlignment(.leading)
+                            .lineSpacing(8)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .minimumScaleFactor(0.2)
+                    }
+                }
+                Spacer(minLength: 0)
+            }
+//            .padding(EdgeInsets(top: 36, leading: 36, bottom: 36, trailing: 36))
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            .background(
+                Group {
+                    if #available(tvOS 17.0, *) {
+                        RoundedRectangle(cornerRadius: 28, style: .continuous)
+                            .fill(.ultraThinMaterial)
+                    } else {
+                        RoundedRectangle(cornerRadius: 28, style: .continuous)
+                            .fill(Color.black.opacity(0.7))
+                    }
+                }
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+//            .shadow(color: .black.opacity(0.35), radius: 22, x: 0, y: 10)
+            .padding(40)
+        }
+    }
+}
+#endif
 
 #if os(tvOS)
 struct tvOSNowPlayingView: View {
     @ObservedObject var serviceManager: DRServiceManager
+    @State private var showingInfoSheet = false
 
     var body: some View {
         ZStack {
@@ -52,9 +113,38 @@ struct tvOSNowPlayingView: View {
                         .padding(.horizontal, 20)
                     }
 
+                    // Info and SharePlay actions
+                    HStack {
+                        Button(action: { showingInfoSheet = true }) {
+                            Label("", systemImage: "info.circle")
+                        }
+                        .buttonStyle(.bordered)
+
+                        Spacer()
+
+                        Button(action: {
+                            if let channel = serviceManager.playingChannel {
+                                startSharePlay(for: channel)
+                            }
+                        }) {
+                            Label("", systemImage: "shareplay")
+                        }
+                        .buttonStyle(.bordered)
+                    }
+                    .padding(.horizontal, 20)
+
                     // Playback is controlled exclusively via the tvOS remote
                 }
                 .padding(.horizontal, 80)
+                .sheet(isPresented: $showingInfoSheet) {
+                    if let channel = serviceManager.playingChannel {
+                        tvOSNowPlayingInfoSheet(
+                            channel: channel,
+                            program: serviceManager.getCurrentProgram(for: channel),
+                            track: serviceManager.currentTrack
+                        )
+                    }
+                }
             } else {
                 VStack(spacing: 20) {
                     Image(systemName: "play.circle").font(.system(size: 100)).foregroundColor(.white.opacity(0.9))
@@ -72,6 +162,36 @@ struct tvOSNowPlayingView: View {
         }
     }
 }
+
+#if canImport(GroupActivities)
+@available(tvOS 15.0, *)
+extension tvOSNowPlayingView {
+    private func startSharePlay(for channel: DRChannel) {
+        // Simple GroupActivity representing listening together to a channel
+        struct RadioShareActivity: GroupActivity {
+            static let activityIdentifier = "com.eopio.lytter.shareplay.radio"
+            let channelId: String
+            let channelTitle: String
+
+            var metadata: GroupActivityMetadata {
+                var data = GroupActivityMetadata()
+                data.title = channelTitle
+                data.type = .watchTogether
+                return data
+            }
+        }
+
+        let activity = RadioShareActivity(channelId: channel.id, channelTitle: channel.title)
+        Task {
+            do {
+                _ = try await activity.activate()
+            } catch {
+                // No-op: activation may fail in simulator or without entitlement
+            }
+        }
+    }
+}
+#endif
 
 private struct tvOSNowPlayingArtwork: View {
     let channel: DRChannel
