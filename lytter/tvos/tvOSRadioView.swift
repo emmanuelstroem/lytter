@@ -53,10 +53,11 @@ struct tvOSRadioView: View {
                         ScrollView(.horizontal) {
                             LazyHStack(spacing: 60) {
                                 ForEach(primaryChannels, id: \.id) { channel in
-                                    tvOSChannelCard(channel: channel) {
-                                        handleChannelSelection(channel)
+                                    Button(action: { handleChannelSelection(channel) }) {
+                                        tvOSChannelCard(channel: channel)
+                                            .frame(width: 460, height: 300)
                                     }
-                                    .frame(width: 460, height: 300)
+                                    .buttonStyle(.card)
                                 }
                             }
                             .padding(.horizontal, 30)
