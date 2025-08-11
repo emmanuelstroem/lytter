@@ -184,7 +184,13 @@ class FocusableLockupUIView: UIView {
         ])
         
         // Tap gesture
-        addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(didTap)))
+        let tap = UITapGestureRecognizer(target: self, action: #selector(didTap))
+        #if os(tvOS)
+        // Ensure the Siri Remote select press triggers the gesture on tvOS
+        tap.allowedPressTypes = [NSNumber(value: UIPress.PressType.select.rawValue)]
+        #endif
+        isUserInteractionEnabled = true
+        addGestureRecognizer(tap)
     }
     
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
@@ -246,5 +252,16 @@ class FocusableLockupUIView: UIView {
     }
     
     @objc private func didTap() { onSelect?() }
+
+    #if os(tvOS)
+    // Extra safety: handle primary select via pressesEnded as well
+    override func pressesEnded(_ presses: Set<UIPress>, with event: UIPressesEvent?) {
+        if presses.contains(where: { $0.type == .select }) {
+            onSelect?()
+        } else {
+            super.pressesEnded(presses, with: event)
+        }
+    }
+    #endif
 }
 #endif
