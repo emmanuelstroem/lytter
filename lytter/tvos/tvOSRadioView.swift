@@ -11,7 +11,7 @@ import SwiftUI
 struct tvOSRadioView: View {
     @ObservedObject var serviceManager: DRServiceManager
     @ObservedObject var selectionState: SelectionState
-    @State private var showingDistrictsForChannel: DRChannel?
+    // Sheet removed; districts are presented via Menu wrapping the channel card
 
     // One representative per base channel (deduped by name)
     private var primaryChannels: [DRChannel] {
@@ -53,11 +53,31 @@ struct tvOSRadioView: View {
                         ScrollView(.horizontal) {
                             LazyHStack(spacing: 60) {
                                 ForEach(primaryChannels, id: \.id) { channel in
-                                    Button(action: { handleChannelSelection(channel) }) {
-                                        tvOSChannelCard(channel: channel)
-                                            .frame(width: 460, height: 300)
+                                    let variants = serviceManager.availableChannels.filter { $0.name == channel.name }
+                                    if variants.count <= 1 {
+                                        Button {
+                                            serviceManager.playChannel(channel)
+                                            selectionState.selectChannel(channel)
+                                        } label: {
+                                            tvOSChannelCard(channel: channel)
+                                                .frame(width: 460, height: 300)
+                                        }
+                                        .buttonStyle(.card)
+                                    } else {
+                                        Menu {
+                                            ForEach(variants, id: \.id) { variant in
+                                                Button(action: {
+                                                    serviceManager.playChannel(variant)
+                                                    selectionState.selectChannel(variant)
+                                                }) {
+                                                    Text(variant.district ?? variant.title)
+                                                }
+                                            }
+                                        } label: {
+                                            tvOSChannelCard(channel: channel)
+                                                .frame(width: 460, height: 300)
+                                        }
                                     }
-                                    .buttonStyle(.card)
                                 }
                             }
                             .padding(.horizontal, 30)
@@ -72,27 +92,11 @@ struct tvOSRadioView: View {
         .onAppear {
             if serviceManager.availableChannels.isEmpty { serviceManager.loadChannels() }
         }
-        .sheet(item: $showingDistrictsForChannel) { primary in
-            tvOSDistrictSelectionSheet(
-                primaryName: primary.name,
-                variants: serviceManager.availableChannels.filter { $0.name == primary.name }
-            ) { selected in
-                serviceManager.playChannel(selected)
-                selectionState.selectChannel(selected)
-            }
-        }
+        // District selection is handled inline via Menu; no sheet presentation
     }
 
-    private func handleChannelSelection(_ channel: DRChannel) {
-        // Find all variants for this base name
-        let variants = serviceManager.availableChannels.filter { $0.name == channel.name }
-        if variants.count <= 1 {
-            serviceManager.playChannel(channel)
-            selectionState.selectChannel(channel)
-        } else {
-            showingDistrictsForChannel = channel
-        }
-    }
+    // Selection is handled inline in the list via Button/Menu
+    private func handleChannelSelection(_ channel: DRChannel) { }
 }
 #endif
 
