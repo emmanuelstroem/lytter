@@ -7,6 +7,7 @@
 
 import SwiftUI
 import TVUIKit
+import UIKit
 
 #if os(tvOS)
 struct TVPosterViewRepresentable: UIViewRepresentable {
@@ -49,60 +50,6 @@ struct TVPosterViewRepresentable: UIViewRepresentable {
         @objc func didSelect() { onSelect() }
     }
 }
-#endif
-
-struct tvOSChannelCard: View {
-    let channel: DRChannel
-    let onSelect: () -> Void
-    @EnvironmentObject private var serviceManager: DRServiceManager
-    
-    var body: some View {
-        FocusableLockupView(
-            title: channel.title,
-            subtitle: serviceManager.getCurrentProgram(for: channel)?.cleanTitle(),
-            imageURL: {
-                if let program = serviceManager.getCurrentProgram(for: channel),
-                   let urlString = program.landscapeImageURL ?? program.primaryImageURL {
-                    return URL(string: urlString)
-                }
-                return nil
-            }(),
-            onSelect: onSelect
-        )
-        .frame(height: 300)
-        .padding(.vertical, 10)
-    }
-}
-
-struct tvOSSearchField: View {
-    @Binding var text: String
-    @FocusState private var isFocused: Bool
-
-    var body: some View {
-        HStack(spacing: 12) {
-            Image(systemName: "magnifyingglass")
-            TextField("Search radios", text: $text)
-                .focused($isFocused)
-                .textInputAutocapitalization(.never)
-                .submitLabel(.search)
-            if !text.isEmpty {
-                Button(action: { text = "" }) { Image(systemName: "xmark.circle.fill") }
-            }
-            Button(action: { isFocused = true }) { // focus to enable dictation via remote mic
-                Image(systemName: "mic.fill")
-            }
-            .buttonStyle(.borderless) // avoid extra highlight styling
-        }
-        .padding(16)
-        .background(.ultraThinMaterial)
-        .clipShape(RoundedRectangle(cornerRadius: 18))
-        .foregroundColor(.white)
-    }
-}
-
-#if os(tvOS)
-import SwiftUI
-import UIKit
 
 struct FocusableLockupView: UIViewRepresentable {
     let title: String
@@ -185,10 +132,10 @@ class FocusableLockupUIView: UIView {
         
         // Tap gesture
         let tap = UITapGestureRecognizer(target: self, action: #selector(didTap))
-        #if os(tvOS)
+#if os(tvOS)
         // Ensure the Siri Remote select press triggers the gesture on tvOS
         tap.allowedPressTypes = [NSNumber(value: UIPress.PressType.select.rawValue)]
-        #endif
+#endif
         isUserInteractionEnabled = true
         addGestureRecognizer(tap)
     }
@@ -252,8 +199,7 @@ class FocusableLockupUIView: UIView {
     }
     
     @objc private func didTap() { onSelect?() }
-
-    #if os(tvOS)
+    
     // Extra safety: handle primary select via pressesEnded as well
     override func pressesEnded(_ presses: Set<UIPress>, with event: UIPressesEvent?) {
         if presses.contains(where: { $0.type == .select }) {
@@ -262,6 +208,54 @@ class FocusableLockupUIView: UIView {
             super.pressesEnded(presses, with: event)
         }
     }
-    #endif
 }
 #endif
+
+struct tvOSChannelCard: View {
+    let channel: DRChannel
+    let onSelect: () -> Void
+    @EnvironmentObject private var serviceManager: DRServiceManager
+    
+    var body: some View {
+        FocusableLockupView(
+            title: channel.title,
+            subtitle: serviceManager.getCurrentProgram(for: channel)?.cleanTitle(),
+            imageURL: {
+                if let program = serviceManager.getCurrentProgram(for: channel),
+                   let urlString = program.landscapeImageURL ?? program.primaryImageURL {
+                    return URL(string: urlString)
+                }
+                return nil
+            }(),
+            onSelect: onSelect
+        )
+        .frame(height: 300)
+        .padding(.vertical, 10)
+    }
+}
+
+struct tvOSSearchField: View {
+    @Binding var text: String
+    @FocusState private var isFocused: Bool
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "magnifyingglass")
+            TextField("Search radios", text: $text)
+                .focused($isFocused)
+                .textInputAutocapitalization(.never)
+                .submitLabel(.search)
+            if !text.isEmpty {
+                Button(action: { text = "" }) { Image(systemName: "xmark.circle.fill") }
+            }
+            Button(action: { isFocused = true }) { // focus to enable dictation via remote mic
+                Image(systemName: "mic.fill")
+            }
+            .buttonStyle(.borderless) // avoid extra highlight styling
+        }
+        .padding(16)
+        .background(.ultraThinMaterial)
+        .clipShape(RoundedRectangle(cornerRadius: 18))
+        .foregroundColor(.white)
+    }
+}
