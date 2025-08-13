@@ -194,8 +194,8 @@ struct tvOSChannelCard: View {
                 return nil
             }()
         )
-        .frame(height: 300)
-        .padding(.vertical, 10)
+//        .frame(height: 300)
+//        .padding(.vertical, 10)
     }
 }
 
