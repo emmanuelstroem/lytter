@@ -6,7 +6,9 @@
 //
 
 import SwiftUI
+#if os(tvOS)
 import TVUIKit
+#endif
 import UIKit
 
 #if os(tvOS)
@@ -176,6 +178,7 @@ class FocusableLockupUIView: UIView {
 }
 #endif
 
+#if os(tvOS)
 struct tvOSChannelCard: View {
     let channel: DRChannel
     @EnvironmentObject private var serviceManager: DRServiceManager
@@ -224,3 +227,4 @@ struct tvOSSearchField: View {
         .foregroundColor(.white)
     }
 }
+#endif

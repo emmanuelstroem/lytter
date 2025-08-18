@@ -93,7 +93,7 @@ struct iOSRadioView: View {
                 serviceManager.loadChannels()
             }
         }
-        .onChange(of: deepLinkHandler.shouldNavigateToChannel) { shouldNavigate in
+        .onChange(of: deepLinkHandler.shouldNavigateToChannel) { _, shouldNavigate in
             if shouldNavigate, let targetChannel = deepLinkHandler.targetChannel {
                 handleDeepLinkChannel(targetChannel)
             }

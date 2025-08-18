@@ -35,6 +35,10 @@ class AudioPlayerService: NSObject, ObservableObject {
         // Command Center properties
     private var commandCenter: MPRemoteCommandCenter?
     private var nowPlayingInfoCenter: MPNowPlayingInfoCenter?
+    #if os(tvOS)
+    // Bound only on tvOS 14+ to satisfy PineBoard playback queue callbacks
+    private var tvOSNowPlayingSession: MPNowPlayingSession?
+    #endif
     
     override init() {
         super.init()
@@ -221,29 +225,43 @@ class AudioPlayerService: NSObject, ObservableObject {
         // MARK: - Command Center Setup
     
     private func setupCommandCenter() {
-            // Get the shared command center
+        // Start with the shared center; on tvOS we rebind to MPNowPlayingSession when the player is created
         commandCenter = MPRemoteCommandCenter.shared()
         nowPlayingInfoCenter = MPNowPlayingInfoCenter.default()
-        
-            // Configure play command
+        configureRemoteCommandTargets()
+    }
+
+    private func configureRemoteCommandTargets() {
+        // Ensure we are starting clean for the current command center
+        commandCenter?.playCommand.removeTarget(nil)
+        commandCenter?.pauseCommand.removeTarget(nil)
+        commandCenter?.stopCommand.removeTarget(nil)
+        commandCenter?.togglePlayPauseCommand.removeTarget(nil)
+        commandCenter?.skipForwardCommand.removeTarget(nil)
+        commandCenter?.skipBackwardCommand.removeTarget(nil)
+        commandCenter?.seekForwardCommand.removeTarget(nil)
+        commandCenter?.seekBackwardCommand.removeTarget(nil)
+        commandCenter?.changePlaybackPositionCommand.removeTarget(nil)
+
+        // Configure play command
         commandCenter?.playCommand.addTarget { [weak self] _ in
             self?.resume()
             return .success
         }
-        
-            // Configure pause command
+
+        // Configure pause command
         commandCenter?.pauseCommand.addTarget { [weak self] _ in
             self?.pause()
             return .success
         }
-        
-            // Configure stop command (acts like pause for live radio)
+
+        // Configure stop command (acts like pause for live radio)
         commandCenter?.stopCommand.addTarget { [weak self] _ in
             self?.pause()
             return .success
         }
-        
-            // Configure toggle play/pause command
+
+        // Configure toggle play/pause command
         commandCenter?.togglePlayPauseCommand.addTarget { [weak self] _ in
             if self?.isPlaying == true {
                 self?.pause()
@@ -252,36 +270,34 @@ class AudioPlayerService: NSObject, ObservableObject {
             }
             return .success
         }
-        
-            // Configure skip backward command (1 second interval for live radio)
+
+        // Configure skip backward command (30 seconds)
         commandCenter?.skipBackwardCommand.preferredIntervals = [30]
         commandCenter?.skipBackwardCommand.isEnabled = true
-        commandCenter?.skipBackwardCommand.addTarget { [weak self] event in
+        commandCenter?.skipBackwardCommand.addTarget { [weak self] _ in
             self?.skipBackward(by: 30)
             return .success
         }
-        
-            // Configure skip forward command (1 second interval for live radio)
+
+        // Configure skip forward command (jump to live)
         commandCenter?.skipForwardCommand.preferredIntervals = [1]
         commandCenter?.skipForwardCommand.isEnabled = true
-        commandCenter?.skipForwardCommand.addTarget { [weak self] event in
+        commandCenter?.skipForwardCommand.addTarget { [weak self] _ in
             self?.skipForward()
             return .success
         }
-        
-            // Configure seeking commands for live radio
+
+        // Configure seeking commands for live radio
         commandCenter?.seekForwardCommand.isEnabled = true
         commandCenter?.seekBackwardCommand.isEnabled = true
         commandCenter?.changePlaybackPositionCommand.isEnabled = true
-        
-            // Set up seek forward command
-        commandCenter?.seekForwardCommand.addTarget { [weak self] event in
+
+        commandCenter?.seekForwardCommand.addTarget { [weak self] _ in
             self?.skipForward()
             return .success
         }
-        
-            // Set up seek backward command
-        commandCenter?.seekBackwardCommand.addTarget { [weak self] event in
+
+        commandCenter?.seekBackwardCommand.addTarget { [weak self] _ in
             self?.skipBackward(by: 30)
             return .success
         }
@@ -301,6 +317,25 @@ class AudioPlayerService: NSObject, ObservableObject {
             // Clear now playing info
         nowPlayingInfoCenter?.nowPlayingInfo = nil
     }
+
+    #if os(tvOS)
+    private func rebindCommandCenterToNowPlayingSessionIfNeeded(for player: AVPlayer) {
+        if #available(tvOS 14.0, *) {
+            // Create or update the tvOS Now Playing session so PineBoard can request the playback queue and artwork formats
+            let session = MPNowPlayingSession(players: [player])
+            tvOSNowPlayingSession = session
+
+            // Make the session active
+            session.becomeActiveIfPossible { _ in }
+
+            // Rebind centers to the session and configure commands
+            cleanupCommandCenter()
+            self.commandCenter = session.remoteCommandCenter
+            self.nowPlayingInfoCenter = session.nowPlayingInfoCenter
+            self.configureRemoteCommandTargets()
+        }
+    }
+    #endif
     
         // MARK: - Command Center Info Updates
     
@@ -458,8 +493,14 @@ class AudioPlayerService: NSObject, ObservableObject {
             // Remove existing time observer
         removeTimeObserver()
         
-            // Create new player
+        // Create new player
         player = AVPlayer(playerItem: playerItem)
+
+        #if os(tvOS)
+        if let player = player {
+            rebindCommandCenterToNowPlayingSessionIfNeeded(for: player)
+        }
+        #endif
         
             // Add time observer with longer interval to allow screen sleep
         let interval = CMTime(seconds: 5.0, preferredTimescale: CMTimeScale(NSEC_PER_SEC))

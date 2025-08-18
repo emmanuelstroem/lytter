@@ -1,0 +1,138 @@
+{
+  "fill" : {
+    "solid" : "srgb:0.83742,0.83744,0.83743,0.00000"
+  },
+  "groups" : [
+    {
+      "blend-mode" : "normal",
+      "blur-material" : 0.5,
+      "hidden" : false,
+      "layers" : [
+        {
+          "fill" : {
+            "solid" : "srgb:1.00000,1.00000,1.00000,1.00000"
+          },
+          "image-name" : "dash.svg",
+          "name" : "dash",
+          "position" : {
+            "scale" : 0.95,
+            "translation-in-points" : [
+              -8.78125,
+              -101.0703125
+            ]
+          }
+        },
+        {
+          "fill" : {
+            "solid" : "srgb:1.00000,1.00000,1.00000,1.00000"
+          },
+          "image-name" : "dash.svg",
+          "name" : "dash",
+          "position" : {
+            "scale" : 0.95,
+            "translation-in-points" : [
+              -13.3984375,
+              22.953125
+            ]
+          }
+        },
+        {
+          "fill" : {
+            "solid" : "srgb:1.00000,1.00000,1.00000,1.00000"
+          },
+          "image-name" : "circle.svg",
+          "name" : "circle",
+          "position" : {
+            "scale" : 0.95,
+            "translation-in-points" : [
+              8.0390625,
+              -5.0078125
+            ]
+          }
+        }
+      ],
+      "lighting" : "individual",
+      "name" : "Front",
+      "shadow" : {
+        "kind" : "neutral",
+        "opacity" : 0.5
+      },
+      "specular" : true,
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.5
+      }
+    },
+    {
+      "blend-mode" : "normal",
+      "blur-material" : 0.5,
+      "hidden" : false,
+      "layers" : [
+        {
+          "fill" : {
+            "solid" : "srgb:1.00000,0.14913,0.00000,1.00000"
+          },
+          "hidden" : false,
+          "image-name" : "cover.svg",
+          "name" : "cover",
+          "position" : {
+            "scale" : 0.95,
+            "translation-in-points" : [
+              0,
+              0
+            ]
+          }
+        }
+      ],
+      "name" : "Middle",
+      "shadow" : {
+        "kind" : "neutral",
+        "opacity" : 0.5
+      },
+      "specular" : true,
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.5
+      }
+    },
+    {
+      "blur-material" : 0.5,
+      "hidden" : false,
+      "layers" : [
+        {
+          "blend-mode" : "normal",
+          "fill" : {
+            "solid" : "srgb:1.00000,0.14913,0.00000,1.00000"
+          },
+          "hidden" : false,
+          "image-name" : "antenna.svg",
+          "name" : "antenna",
+          "opacity" : 0.75,
+          "position" : {
+            "scale" : 0.95,
+            "translation-in-points" : [
+              -10.3671875,
+              15.359375
+            ]
+          }
+        }
+      ],
+      "name" : "Back",
+      "shadow" : {
+        "kind" : "neutral",
+        "opacity" : 0.5
+      },
+      "specular" : true,
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.5
+      }
+    }
+  ],
+  "supported-platforms" : {
+    "circles" : [
+      "watchOS"
+    ],
+    "squares" : "shared"
+  }
+}
