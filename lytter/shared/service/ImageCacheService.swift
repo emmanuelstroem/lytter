@@ -334,7 +334,7 @@ struct CachedAsyncImage<Content: View, Placeholder: View>: View {
                     }
             }
         }
-        .onChange(of: url?.absoluteString) { _,_ in
+        .onChange(of: url?.absoluteString) { _, _ in
             loadImage()
         }
     }

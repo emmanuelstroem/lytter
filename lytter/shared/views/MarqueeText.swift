@@ -197,12 +197,13 @@ extension String {
 }
 
 extension View {
-    /// A backwards compatible wrapper for iOS 14 `onChange`
+    /// Backwards-compatible wrapper for value change handling
     @ViewBuilder func onValueChanged<T: Equatable>(of value: T, perform onChange: @escaping (T, T) -> Void) -> some View {
         if #available(tvOS 17, iOS 17, macOS 14, *) {
-            self.onChange(of: value, onChange)
-        }
-        else {
+            self.onChange(of: value) { oldValue, newValue in
+                onChange(oldValue, newValue)
+            }
+        } else {
             self.onReceive(Just(value)) { newValue in
                 onChange(value, newValue)
             }

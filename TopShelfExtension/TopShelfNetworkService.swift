@@ -7,6 +7,7 @@
 
 import Foundation
 
+#if os(tvOS)
 // MARK: - TopShelf API Configuration
 struct TopShelfAPIConfig {
     static let baseURL = "https://api.dr.dk/radio/v4"
@@ -126,3 +127,5 @@ enum TopShelfError: Error {
     case decodingError
     case noData
 }
+
+#endif

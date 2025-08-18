@@ -8,6 +8,7 @@
 import TVServices
 import Foundation
 
+#if os(tvOS)
 class ContentProvider: TVTopShelfContentProvider {
     private let networkService = TopShelfNetworkService()
 
@@ -77,7 +78,7 @@ class ContentProvider: TVTopShelfContentProvider {
             // Priority order: P1, P2, P3, P4 (prefer København), P5 (prefer København)
             if consolidatedChannels[channelName] == nil {
                 consolidatedChannels[channelName] = episode
-            } else if let existing = consolidatedChannels[channelName] {
+            } else if consolidatedChannels[channelName] != nil {
                 // For P4 and P5, prefer København district
                 if (channelName == "P4" || channelName == "P5") && 
                    episode.channel.district?.lowercased().contains("københavn") == true {
@@ -124,7 +125,7 @@ class ContentProvider: TVTopShelfContentProvider {
             ("p5kbh", "DR P5 København", "P5KBH")
         ]
         
-        for (channelId, title, imageName) in fallbackChannels {
+        for (channelId, title, _) in fallbackChannels {
             let item = TVTopShelfSectionedItem(identifier: channelId)
             item.title = title
             
@@ -151,3 +152,4 @@ class ContentProvider: TVTopShelfContentProvider {
     }
 
 }
+#endif

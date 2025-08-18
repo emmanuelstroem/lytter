@@ -38,7 +38,7 @@ struct tvOSHomeView: View {
         .tint(.white)
         .environmentObject(serviceManager)
         .environmentObject(selectionState)
-        .onChange(of: deepLinkHandler.shouldNavigateToChannel) { shouldNavigate in
+        .onChange(of: deepLinkHandler.shouldNavigateToChannel) { _, shouldNavigate in
             if shouldNavigate, let targetChannel = deepLinkHandler.targetChannel {
                 handleDeepLinkChannel(targetChannel)
             }
