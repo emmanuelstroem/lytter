@@ -18,51 +18,63 @@ struct tvOSNowPlayingInfoSheet: View {
     let track: DRTrack?
 
     var body: some View {
-        let descriptionText = program?.description
-//            .replacingOccurrences(of: "\n\n", with: "\n")
-//            .replacingOccurrences(of: "\n", with: "\n\n") // add spacing between paragraphs
-            ?? "No description available."
+        let descriptionText = program?.description ?? "No description available."
 
-        ZStack {
-            VStack(alignment: .leading, spacing: 24) {
-                if let title = program?.cleanTitle(), !title.isEmpty {
-                    Text(title)
-                        .font(.title2)
-                        .bold()
-                        .foregroundColor(.white)
-                }
-
-                ScrollView(showsIndicators: true) {
-                    VStack(alignment: .leading, spacing: 16) {
-                        // Ensure long content is fully visible within scroll container
-                        Text(descriptionText)
-                            .font(.title3)
-                            .foregroundColor(.white.opacity(0.65))
-                            .multilineTextAlignment(.leading)
-                            .lineSpacing(8)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .minimumScaleFactor(0.2)
+        ScrollView(showsIndicators: false) {
+            VStack(alignment: .leading, spacing: 32) {
+                // Header with channel and program info
+                VStack(alignment: .leading, spacing: 16) {
+                    // Channel name
+                    Text(channel.title)
+                        .font(.largeTitle)
+                        .fontWeight(.bold)
+                        .foregroundColor(.primary)
+                    
+                    // Program title
+                    if let programTitle = program?.cleanTitle(), !programTitle.isEmpty {
+                        Text(programTitle)
+                            .font(.title2)
+                            .fontWeight(.semibold)
+                            .foregroundColor(.secondary)
+                    }
+                    
+                    // Current track info
+                    if let track = track {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Now Playing")
+                                .font(.headline)
+                                .foregroundColor(.secondary)
+                            
+                            Text(track.displayText)
+                                .font(.title3)
+                                .foregroundColor(.primary)
+                        }
+                        .padding(.top, 8)
                     }
                 }
-                Spacer(minLength: 0)
+                
+                // Description
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Description")
+                        .font(.headline)
+                        .foregroundColor(.secondary)
+                    
+                    Text(descriptionText)
+                        .font(.body)
+                        .foregroundColor(.primary)
+                        .multilineTextAlignment(.leading)
+                        .lineSpacing(4)
+                }
             }
-//            .padding(EdgeInsets(top: 36, leading: 36, bottom: 36, trailing: 36))
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-            .background(
-                Group {
-                    if #available(tvOS 17.0, *) {
-                        RoundedRectangle(cornerRadius: 28, style: .continuous)
-                            .fill(.ultraThinMaterial)
-                    } else {
-                        RoundedRectangle(cornerRadius: 28, style: .continuous)
-                            .fill(Color.black.opacity(0.7))
-                    }
-                }
-            )
-            .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
-//            .shadow(color: .black.opacity(0.35), radius: 22, x: 0, y: 10)
-            .padding(40)
+            .padding(48)
         }
+        .frame(maxWidth: 800, maxHeight: 600)
+        .background(
+            RoundedRectangle(cornerRadius: 32, style: .continuous)
+                .fill(.ultraThinMaterial)
+                .shadow(color: .black.opacity(0.3), radius: 20, x: 0, y: 10)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 32, style: .continuous))
     }
 }
 #endif
@@ -74,68 +86,33 @@ struct tvOSNowPlayingView: View {
 
     var body: some View {
         ZStack {
-            LinearGradient(colors: [.black, .black.opacity(0.95)], startPoint: .top, endPoint: .bottom)
-                .ignoresSafeArea()
+            // Apple-style background gradient
+            LinearGradient(
+                colors: [.black, .black.opacity(0.8)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
 
             if let channel = serviceManager.playingChannel {
-                VStack(spacing: 40) {
+                VStack(spacing: 60) {
+                    // Main artwork section
                     tvOSNowPlayingArtwork(channel: channel)
-
-                    // Live progress bar with centered LIVE label (visual only for live streams)
-                    VStack(spacing: 8) {
-                        GeometryReader { geometry in
-                            ZStack {
-                                ProgressView(value: 0.5, total: 1.0)
-                                    .progressViewStyle(LinearProgressViewStyle(tint: .white))
-                                    .scaleEffect(y: 2)
-                                    .frame(maxWidth: .infinity)
-                                    .mask(
-                                        RadialGradient(
-                                            colors: [
-                                                Color.black.opacity(0.0),
-                                                Color.black.opacity(0.5),
-                                                Color.black.opacity(1.0)
-                                            ],
-                                            center: .center,
-                                            startRadius: 0,
-                                            endRadius: geometry.size.width * 0.5 // 3/4 of half width
-                                        )
-                                    )
-
-                                Text("LIVE")
-                                    .font(.caption)
-                                    .fontWeight(.bold)
-                                    .foregroundColor(.white)
-                                    .opacity(0.8)
-                            }
-                        }
-                        .frame(height: 20)
-                        .padding(.horizontal, 20)
-                    }
-
-                    // Info and SharePlay actions
-                    HStack {
-                        Button(action: { showingInfoSheet = true }) {
-                            Label("", systemImage: "info.circle")
-                                .font(.title2)
-                        }
+                    
+                    // Content section with proper spacing
+                    VStack(spacing: 40) {
+                        // Live indicator with Apple-style design
+                        tvOSLiveIndicator()
                         
-                        Spacer()
-
-                        Button(action: {
-                            if let channel = serviceManager.playingChannel {
-                                startSharePlay(for: channel)
-                            }
-                        }) {
-                            Label("", systemImage: "shareplay")
-                                .font(.title2)
-                        }
+                        // Action buttons aligned with artwork width
+                        tvOSActionButtons(
+                            showingInfoSheet: $showingInfoSheet,
+                            serviceManager: serviceManager
+                        )
+                        .frame(maxWidth: 1000) // Same width as artwork
                     }
-                    .padding(.horizontal, 20)
-
-                    // Playback is controlled exclusively via the tvOS remote
                 }
-                .padding(.horizontal, 80)
+                .padding(.vertical, 60)
                 .sheet(isPresented: $showingInfoSheet) {
                     if let channel = serviceManager.playingChannel {
                         tvOSNowPlayingInfoSheet(
@@ -146,18 +123,207 @@ struct tvOSNowPlayingView: View {
                     }
                 }
             } else {
-                VStack(spacing: 20) {
-                    Image(systemName: "play.circle").font(.system(size: 100)).foregroundColor(.white.opacity(0.9))
-                    Text("Nothing Playing")
-                        .font(.title)
-                        .foregroundColor(.white)
-                    if let first = serviceManager.availableChannels.first {
-                        Button("Play \(first.title)") {
-                            serviceManager.playChannel(first)
-                        }
-                        .buttonStyle(.borderedProminent)
-                    }
+                // Empty state with Apple-style design
+                tvOSEmptyState(serviceManager: serviceManager)
+            }
+        }
+    }
+}
+
+// MARK: - Live Indicator
+struct tvOSLiveIndicator: View {
+    var body: some View {
+        HStack(spacing: 20) {
+            // Left decorative line with fade - extends to artwork width
+            Rectangle()
+                .fill(
+                    LinearGradient(
+                        colors: [.clear, .white.opacity(0.6)],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
+                .frame(height: 3)
+                .frame(maxWidth: .infinity)
+            
+            // Live indicator content
+            Text("LIVE")
+                .foregroundColor(.white)
+                .padding(.horizontal, 24)
+                .padding(.vertical, 12)
+                .background(
+                    RoundedRectangle(cornerRadius: 20, style: .continuous)
+                        .fill(.ultraThinMaterial)
+                        .shadow(color: .black.opacity(0.2), radius: 8, x: 0, y: 4)
+                )
+            
+            // Right decorative line with fade - extends to artwork width
+            Rectangle()
+                .fill(
+                    LinearGradient(
+                        colors: [.white.opacity(0.6), .clear],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
+                .frame(height: 3)
+                .frame(maxWidth: .infinity)
+        }
+        .frame(maxWidth: 1000) // Same width as artwork
+    }
+}
+
+// MARK: - Action Buttons
+struct tvOSActionButtons: View {
+    @Binding var showingInfoSheet: Bool
+    @ObservedObject var serviceManager: DRServiceManager
+    @FocusState private var focusedButton: ButtonType?
+    
+    enum ButtonType: Hashable {
+        case info, shareplay
+    }
+    
+    var body: some View {
+        HStack(spacing: 40) {
+            // Info button
+            Button(action: { showingInfoSheet = true }) {
+                HStack(spacing: 12) {
+                    Image(systemName: "info.circle.fill")
+                        .font(.title2)
+                    Text("Info")
+                        .font(.headline)
+                        .fontWeight(.semibold)
                 }
+                .foregroundColor(.white)
+                .padding(.horizontal, 32)
+                .padding(.vertical, 16)
+                .background(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .fill(.ultraThinMaterial)
+                        .shadow(
+                            color: focusedButton == .info ? .white.opacity(0.3) : .black.opacity(0.2), 
+                            radius: focusedButton == .info ? 12 : 8, 
+                            x: 0, 
+                            y: focusedButton == .info ? 6 : 4
+                        )
+                        .scaleEffect(focusedButton == .info ? 1.05 : 1.0)
+                        .animation(.easeInOut(duration: 0.2), value: focusedButton)
+                )
+            }
+            .buttonStyle(.plain)
+            .focused($focusedButton, equals: .info)
+            
+            Spacer()
+            
+            // SharePlay button
+            Button(action: {
+                if let channel = serviceManager.playingChannel {
+                    startSharePlay(for: channel)
+                }
+            }) {
+                HStack(spacing: 12) {
+                    Image(systemName: "shareplay")
+                        .font(.title2)
+                    Text("SharePlay")
+                        .font(.headline)
+                        .fontWeight(.semibold)
+                }
+                .foregroundColor(.white)
+                .padding(.horizontal, 32)
+                .padding(.vertical, 16)
+                .background(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .fill(.ultraThinMaterial)
+                        .shadow(
+                            color: focusedButton == .shareplay ? .white.opacity(0.3) : .black.opacity(0.2), 
+                            radius: focusedButton == .shareplay ? 12 : 8, 
+                            x: 0, 
+                            y: focusedButton == .shareplay ? 6 : 4
+                        )
+                        .scaleEffect(focusedButton == .shareplay ? 1.05 : 1.0)
+                        .animation(.easeInOut(duration: 0.2), value: focusedButton)
+                )
+            }
+            .buttonStyle(.plain)
+            .focused($focusedButton, equals: .shareplay)
+        }
+    }
+    
+    private func startSharePlay(for channel: DRChannel) {
+        #if canImport(GroupActivities)
+        if #available(tvOS 15.0, *) {
+            // Simple GroupActivity representing listening together to a channel
+            struct RadioShareActivity: GroupActivity {
+                static let activityIdentifier = "com.eopio.lytter.shareplay.radio"
+                let channelId: String
+                let channelTitle: String
+
+                var metadata: GroupActivityMetadata {
+                    var data = GroupActivityMetadata()
+                    data.title = channelTitle
+                    data.type = .watchTogether
+                    return data
+                }
+            }
+
+            let activity = RadioShareActivity(channelId: channel.id, channelTitle: channel.title)
+            Task {
+                do {
+                    _ = try await activity.activate()
+                } catch {
+                    // No-op: activation may fail in simulator or without entitlement
+                }
+            }
+        }
+        #endif
+    }
+}
+
+// MARK: - Empty State
+struct tvOSEmptyState: View {
+    @ObservedObject var serviceManager: DRServiceManager
+    
+    var body: some View {
+        VStack(spacing: 40) {
+            // Icon with Apple-style treatment
+            ZStack {
+                Circle()
+                    .fill(.ultraThinMaterial)
+                    .frame(width: 120, height: 120)
+                    .shadow(color: .black.opacity(0.3), radius: 20, x: 0, y: 10)
+                
+                Image(systemName: "play.circle.fill")
+                    .font(.system(size: 60))
+                    .foregroundColor(.white)
+            }
+            
+            VStack(spacing: 16) {
+                Text("Nothing Playing")
+                    .font(.largeTitle)
+                    .fontWeight(.bold)
+                    .foregroundColor(.white)
+                
+                Text("Select a channel to start listening")
+                    .font(.title3)
+                    .foregroundColor(.white.opacity(0.7))
+            }
+            
+            if let first = serviceManager.availableChannels.first {
+                Button("Play \(first.title)") {
+                    serviceManager.playChannel(first)
+                }
+                .font(.headline)
+                .fontWeight(.semibold)
+                .foregroundColor(.black)
+                .padding(.horizontal, 40)
+                .padding(.vertical, 16)
+                .background(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .fill(.white)
+                        .shadow(color: .black.opacity(0.2), radius: 8, x: 0, y: 4)
+                )
+                .buttonStyle(.plain)
+                .focusable()
             }
         }
     }
@@ -199,73 +365,115 @@ private struct tvOSNowPlayingArtwork: View {
 
     var body: some View {
         let imageURL: URL? = {
-            if let program = serviceManager.getCurrentProgram(for: channel), let url = program.landscapeImageURL ?? program.primaryImageURL { return URL(string: url) }
+            if let program = serviceManager.getCurrentProgram(for: channel), 
+               let url = program.landscapeImageURL ?? program.primaryImageURL { 
+                return URL(string: url) 
+            }
             return nil
         }()
 
         ZStack(alignment: .bottomLeading) {
-            // Artwork with rounded corners
+            // Main artwork container with Apple-style proportions
             Group {
                 if let url = imageURL {
                     CachedAsyncImage(url: url) { image in
                         image
                             .resizable()
                             .aspectRatio(contentMode: .fill)
+                            .opacity(0.7) // Dim artwork by 30%
                     } placeholder: {
-                        Color.gray.opacity(0.2)
+                        // Apple-style placeholder with subtle animation
+                        ZStack {
+                            LinearGradient(
+                                colors: [.purple.opacity(0.8), .blue.opacity(0.7)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                            
+                            Image(systemName: "music.note")
+                                .font(.system(size: 80))
+                                .foregroundColor(.white.opacity(0.3))
+                        }
                     }
                 } else {
                     LinearGradient(
-                        colors: [.purple.opacity(0.7), .blue.opacity(0.6)],
+                        colors: [.purple.opacity(0.8), .blue.opacity(0.7)],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
                 }
             }
-            .frame(maxWidth: 1200, maxHeight: 680)
+            .frame(maxWidth: 1000, maxHeight: 600)
             .clipped()
 
-            // Bottom gradient overlay for text readability
+            // Apple-style gradient overlay for text readability
             LinearGradient(
-                colors: [Color.black.opacity(0.0), Color.black.opacity(0.6), Color.black.opacity(0.9)],
+                colors: [
+                    Color.clear,
+                    Color.black.opacity(0.3),
+                    Color.black.opacity(0.7),
+                    Color.black.opacity(0.9)
+                ],
                 startPoint: .top,
                 endPoint: .bottom
             )
-            .frame(height: 160)
+            .frame(height: 200)
             .frame(maxWidth: .infinity, alignment: .bottom)
             .allowsHitTesting(false)
 
-            // Text overlays with marquee
-            VStack(alignment: .leading, spacing: 6) {
+            // Text overlays with improved Apple-style typography
+            VStack(alignment: .leading, spacing: 12) {
+                // Channel title with proper hierarchy
                 MarqueeText(
                     text: channel.title,
-                    font: .system(size: 42, weight: .bold),
-                    leftFade: 16,
-                    rightFade: 16,
+                    font: .system(size: 48, weight: .bold, design: .default),
+                    leftFade: 20,
+                    rightFade: 20,
                     startDelay: 1.0,
                     alignment: .leading
                 )
                 .foregroundColor(.white)
+                .shadow(color: .black.opacity(0.5), radius: 2, x: 0, y: 1)
 
+                // Program title with secondary styling
                 if let program = serviceManager.getCurrentProgram(for: channel) {
                     MarqueeText(
                         text: program.cleanTitle(),
-                        font: .system(size: 28, weight: .semibold),
-                        leftFade: 16,
-                        rightFade: 16,
+                        font: .system(size: 32, weight: .semibold, design: .default),
+                        leftFade: 20,
+                        rightFade: 20,
                         startDelay: 1.5,
                         alignment: .leading
                     )
                     .foregroundColor(.white.opacity(0.9))
-                    .padding(.top, 10)
+                    .shadow(color: .black.opacity(0.5), radius: 2, x: 0, y: 1)
+                }
+                
+                // Current track info if available
+                if let track = serviceManager.currentTrack {
+                    MarqueeText(
+                        text: track.displayText,
+                        font: .system(size: 24, weight: .medium, design: .default),
+                        leftFade: 20,
+                        rightFade: 20,
+                        startDelay: 2.0,
+                        alignment: .leading
+                    )
+                    .foregroundColor(.white.opacity(0.8))
+                    .shadow(color: .black.opacity(0.5), radius: 2, x: 0, y: 1)
                 }
             }
-            .padding(.horizontal, 24)
-            .padding(.bottom, 24)
+            .padding(.horizontal, 32)
+            .padding(.bottom, 32)
         }
-        .frame(maxWidth: 1200, maxHeight: 680)
-        .clipShape(RoundedRectangle(cornerRadius: 30))
-        .shadow(radius: 18)
+        .frame(maxWidth: 1000, maxHeight: 600)
+        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .shadow(color: .black.opacity(0.4), radius: 24, x: 0, y: 12)
+        .overlay(
+            // Subtle border for definition
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .stroke(.white.opacity(0.1), lineWidth: 1)
+        )
     }
 }
 #endif
