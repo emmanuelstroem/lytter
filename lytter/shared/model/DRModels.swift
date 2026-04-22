@@ -15,7 +15,12 @@ import Combine
 struct DRAPIConfig {
     static let baseURL = "https://api.dr.dk/radio/v4"
     static let assetBaseURL = "https://asset.dr.dk/drlyd/images"
-    
+
+    /// Optional Azure API Management subscription key (Ocp-Apim-Subscription-Key).
+    /// Set this if the DR Radio API starts requiring authentication.
+    /// Register at https://developer.dr.dk to obtain a key.
+    static var subscriptionKey: String? = nil
+
     // API Endpoints
     static let schedulesAllNow = "\(baseURL)/schedules/all/now"
     static let scheduleSnapshot = "\(baseURL)/schedules/snapshot"
@@ -581,9 +586,10 @@ class DRServiceManager: ObservableObject {
         audioPlayer.$isPlaying
             .assign(to: \.isPlaying, on: self)
             .store(in: &cancellables)
-        
+
+        // Route audio errors to playbackError, not the general error shown in the channel list
         audioPlayer.$error
-            .assign(to: \.error, on: self)
+            .assign(to: \.playbackError, on: self)
             .store(in: &cancellables)
     }
     
