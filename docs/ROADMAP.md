@@ -316,10 +316,13 @@ Ordered by expected impact. The top three are, together, most of the cold-launch
         requests are unbounded;
       - `AudioPlayerService.loadImageForCommandCenter` — its own `dataTask` per metadata update.
 
-- [ ] **P5. Fix the Combine subscription leak in `AudioPlayerService`.** Every `play(url:)`
-      stores two new publishers in the same `cancellables` set and never clears it. After
-      *n* channel switches there are *2n* live sinks all writing `isPlaying` / `isLoading`.
-      Call `cancellables.removeAll()` at the top of `play(url:)`.
+- [x] ~~**P5. Fix the Combine subscription leak in `AudioPlayerService`.**~~ Done in #10.
+      The set is now `playerObservations`, cleared in `play(url:)` and `stop()`. Worse than
+      the memory alone: the sinks captured their `AVPlayerItem` and subscribed to their
+      `AVPlayer`, so each channel switch retained one of each *and* left it writing
+      `isPlaying` on the live service — a discarded player reaching `.paused` could flip
+      the UI to paused during playback. Fixed alongside it: `stop()` nilled the player
+      before `removeTimeObserver()`, so the periodic observer was never actually removed.
 
 ### P1
 
