@@ -767,7 +767,30 @@ class DRServiceManager: ObservableObject {
     func getCachedPrograms(for channel: DRChannel) -> [DREpisode] {
         return cachedSchedules.filter { $0.channel.id == channel.id }
     }
-    
+
+    // MARK: - Deep Link Resolution
+
+    /// Resolves the identifier carried by a deep link to a real channel.
+    ///
+    /// Two link formats exist and they do not agree on what identifies a channel:
+    ///
+    ///   - `DeepLinkHandler.generateDeepLinkURL` emits `lyt:///channel/<id>`, where id is
+    ///     an opaque URN such as `urn:dr:radio:channel:5fa156d1da351264f87b462d`.
+    ///   - The Top Shelf extension emits `lytter://radio/channel/<slug>`, where slug is
+    ///     the short form such as `p1`.
+    ///
+    /// Callers previously matched on `id` only, so every Top Shelf play action silently
+    /// did nothing. Accepting either form fixes that without changing the URLs already
+    /// baked into the Top Shelf items the system may have cached.
+    func channel(forDeepLinkIdentifier identifier: String) -> DRChannel? {
+        if let byId = availableChannels.first(where: { $0.id == identifier }) {
+            return byId
+        }
+        return availableChannels.first {
+            $0.slug.caseInsensitiveCompare(identifier) == .orderedSame
+        }
+    }
+
     // MARK: - Last Played Channel Management
     
     private func restoreLastPlayedChannel() {
