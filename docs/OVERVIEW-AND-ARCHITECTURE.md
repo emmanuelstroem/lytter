@@ -222,11 +222,16 @@ These are described here as facts about the design; fixes and priorities live in
    `cleanTitle()` doing `replacingOccurrences` of the channel title out of the programme
    title, and a 25-branch `categoryIcon` keyword matcher all sit on the DTOs.
 
-5. **Dead and duplicated view code.** `tvOSNowPlayingView.swift`, `…V1.swift` and
-   `…V2.swift` are all compiled but only `V3` is referenced. `ChannelView.swift` is a
-   complete, unreferenced iOS screen. `AppState` and `ProgramDescriptionSheet` are
-   unused shells. `Item.swift` + the SwiftData `ModelContainer` are template leftovers
-   that nonetheless gate the entire app's first render.
+5. **Dead view code.** `ChannelView.swift` is a complete, unreferenced iOS screen.
+   `AppState` and `ProgramDescriptionSheet` are unused shells. `Item.swift` + the
+   SwiftData `ModelContainer` are template leftovers that nonetheless gate the entire
+   app's first render.
+
+   _Partly resolved in #2:_ the three unused tvOS Now Playing variants
+   (`tvOSNowPlayingView.swift`, `…V1.swift`, `…V2.swift` — 1,432 lines) were removed and
+   the surviving `V3` renamed to `tvOSNowPlayingView`. The underlying cause remains:
+   because the target uses folder-synced groups, any file left on disk is compiled, so
+   dead code has to be deleted rather than merely unreferenced.
 
 6. **No adaptivity primitives.** Zero uses of `horizontalSizeClass` / `verticalSizeClass`,
    seven uses of the deprecated `NavigationView`, ~30 hardcoded `.frame(width:)` values

@@ -78,11 +78,12 @@ scenes; the recogniser is installed per view appearance with no de-duplication.
 
 Three parallel now-playing designs (side-by-side / full-bleed artwork / centred card).
 **V3 won** — it is the one wired into `tvOSHomeView`. V1, V2 and the original
-`tvOSNowPlayingView.swift` are all still compiled into the tvOS binary and referenced by
+`tvOSNowPlayingView.swift` were all still compiled into the tvOS binary and referenced by
 nothing.
 
-> **Decision needed:** commit V1/V2 as documented alternatives, or delete all three dead
-> variants. Leaving them untracked is the worst of both.
+> **Resolved.** V1 and V2 were committed in `e1d7bd6` so the exploration survives in
+> history, then all three dead variants were deleted and `V3` renamed to the canonical
+> `tvOSNowPlayingView` in #2 — 1,432 lines out of the tvOS build.
 
 ---
 
@@ -134,8 +135,9 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
       resolves with `availableChannels.first { $0.**id** == targetChannel.id }`. Unless DR
       returns `id == slug`, every Top Shelf play action silently no-ops. Verify against a
       live payload, then match on slug (or carry both).
-- [ ] **F4. Decide the fate of `tvOSNowPlayingView` V1/V2/original.** Delete or commit —
-      they are compiled dead weight today.
+- [x] ~~**F4. Decide the fate of `tvOSNowPlayingView` V1/V2/original.**~~ Done in #2:
+      V1/V2 preserved in `e1d7bd6`, then all three dead variants deleted and `V3` renamed
+      to `tvOSNowPlayingView`. −1,432 lines.
 - [ ] **F5. Remove the SwiftData launch gate.** `Item.swift` and the `ModelContainer` are
       template leftovers, yet `lytterApp` shows `ProgressView("Starting app...")` until the
       container initialises and an error screen if it fails. Delete both.
@@ -332,7 +334,7 @@ Ordered by expected impact. The top three are, together, most of the cold-launch
 ## 8. Suggested sequence
 
 **Sprint 1 — clean slate (≈2 days)**
-S3 (extension target) → F2 (tvOS icons) → F5, F6, F4 (delete dead code) → S2 (entitlements)
+~~F4~~ (done) → S3 (extension target) → F2 (tvOS icons) → F5, F6 (delete dead code) → S2 (entitlements)
 → commit the WIP → F14 (README). *Result: a submittable tvOS build and a clean tree.*
 
 **Sprint 2 — foundation (≈3 days)**
