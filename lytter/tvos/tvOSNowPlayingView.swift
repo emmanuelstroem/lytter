@@ -1,5 +1,5 @@
 //
-//  tvOSNowPlayingViewV3.swift
+//  tvOSNowPlayingView.swift
 //  lytter
 //
 
@@ -107,7 +107,7 @@ private func setTabBarVisible(_ visible: Bool) {
 }
 
 // MARK: - Now Playing
-struct tvOSNowPlayingViewV3: View {
+struct tvOSNowPlayingView: View {
     @ObservedObject var serviceManager: DRServiceManager
     @State private var showingInfoSheet = false
     @State private var controlsVisible = true
@@ -117,14 +117,14 @@ struct tvOSNowPlayingViewV3: View {
         ZStack {
             if let channel = serviceManager.playingChannel {
                 // Full-screen blurred artwork background
-                tvOSNowPlayingBackgroundV3(channel: channel, serviceManager: serviceManager)
+                tvOSNowPlayingBackground(channel: channel, serviceManager: serviceManager)
                     .ignoresSafeArea()
 
                 VStack(spacing: 0) {
                     Spacer()
 
                     // Artwork — centred, large
-                    tvOSNowPlayingArtworkCardV3(channel: channel, serviceManager: serviceManager)
+                    tvOSNowPlayingArtworkCard(channel: channel, serviceManager: serviceManager)
 
                     Spacer().frame(height: 36)
 
@@ -153,7 +153,7 @@ struct tvOSNowPlayingViewV3: View {
 
                     // Controls row: Info | Play/Pause | SharePlay
                     HStack(spacing: 40) {
-                        tvOSNowPlayingControlsV3(
+                        tvOSNowPlayingControls(
                             serviceManager: serviceManager,
                             showingInfoSheet: $showingInfoSheet,
                             channel: channel,
@@ -172,7 +172,7 @@ struct tvOSNowPlayingViewV3: View {
                 .background(RemoteInteractionDetector(onInteraction: wakeControls))
                 .sheet(isPresented: $showingInfoSheet) {
                     if let ch = serviceManager.playingChannel {
-                        tvOSNowPlayingInfoSheetV3(
+                        tvOSNowPlayingInfoSheet(
                             channel: ch,
                             program: serviceManager.getCurrentProgram(for: ch),
                             track: serviceManager.currentTrack
@@ -181,7 +181,7 @@ struct tvOSNowPlayingViewV3: View {
                     }
                 }
             } else {
-                tvOSEmptyStateV3(serviceManager: serviceManager)
+                tvOSEmptyState(serviceManager: serviceManager)
             }
         }
         .onAppear { startHideTimer() }
@@ -211,7 +211,7 @@ struct tvOSNowPlayingViewV3: View {
 }
 
 // MARK: - Blurred Background
-struct tvOSNowPlayingBackgroundV3: View {
+struct tvOSNowPlayingBackground: View {
     let channel: DRChannel
     @ObservedObject var serviceManager: DRServiceManager
 
@@ -253,7 +253,7 @@ struct tvOSNowPlayingBackgroundV3: View {
 }
 
 // MARK: - Artwork Card
-struct tvOSNowPlayingArtworkCardV3: View {
+struct tvOSNowPlayingArtworkCard: View {
     let channel: DRChannel
     @ObservedObject var serviceManager: DRServiceManager
     @State private var pillBackground: Color = Color.white.opacity(0.15)
@@ -359,7 +359,7 @@ struct tvOSNowPlayingArtworkCardV3: View {
 
 
 // MARK: - Controls Row (Info | Play/Pause | SharePlay)
-struct tvOSNowPlayingControlsV3: View {
+struct tvOSNowPlayingControls: View {
     @ObservedObject var serviceManager: DRServiceManager
     @Binding var showingInfoSheet: Bool
     let channel: DRChannel
@@ -463,7 +463,7 @@ struct tvOSNowPlayingControlsV3: View {
 }
 
 // MARK: - Empty State
-struct tvOSEmptyStateV3: View {
+struct tvOSEmptyState: View {
     @ObservedObject var serviceManager: DRServiceManager
 
     var body: some View {
@@ -491,7 +491,7 @@ struct tvOSEmptyStateV3: View {
 }
 
 // MARK: - Info Sheet
-struct tvOSNowPlayingInfoSheetV3: View {
+struct tvOSNowPlayingInfoSheet: View {
     let channel: DRChannel
     let program: DREpisode?
     let track: DRTrack?
@@ -603,9 +603,5 @@ struct tvOSNowPlayingInfoSheetV3: View {
         .shadow(color: .black.opacity(0.6), radius: 80, x: 0, y: 40)
         .padding(60)
     }
-}
-
-extension Font {
-    func heightOfFont() -> CGFloat { 28.0 * 1.4 }
 }
 #endif
