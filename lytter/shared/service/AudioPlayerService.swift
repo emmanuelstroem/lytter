@@ -248,9 +248,15 @@ class AudioPlayerService: NSObject, ObservableObject {
             guard let self else { return .commandFailed }
             if self.hasLoadedItem {
                 self.resume()
-            } else {
-                self.onRequestPlay?()
+                return .success
             }
+            // Nothing is loaded and nobody is listening for a request to start a
+            // stream, so playback cannot begin. Reporting .success here would make
+            // the system show a pause button for audio that never started.
+            guard let onRequestPlay = self.onRequestPlay else {
+                return .noActionableNowPlayingItem
+            }
+            onRequestPlay()
             return .success
         }
 
@@ -271,11 +277,16 @@ class AudioPlayerService: NSObject, ObservableObject {
             guard let self else { return .commandFailed }
             if self.isPlaying {
                 self.pause()
-            } else if self.hasLoadedItem {
-                self.resume()
-            } else {
-                self.onRequestPlay?()
+                return .success
             }
+            if self.hasLoadedItem {
+                self.resume()
+                return .success
+            }
+            guard let onRequestPlay = self.onRequestPlay else {
+                return .noActionableNowPlayingItem
+            }
+            onRequestPlay()
             return .success
         }
 
