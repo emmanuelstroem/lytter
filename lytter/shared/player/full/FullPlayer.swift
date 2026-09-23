@@ -85,31 +85,6 @@ struct FullPlayerSheet: View {
     }
 }
 
-// MARK: - Program Description Sheet
-struct ProgramDescriptionSheet: View {
-    let channel: DRChannel?
-    let currentProgram: DREpisode?
-    let programDescription: String
-    @Environment(\.dismiss) private var dismiss
-    
-    private var navigationTitle: String {
-        var title = channel?.title ?? "Unknown Channel"
-        if let currentProgram = currentProgram {
-            title += " - \(currentProgram.cleanTitle())"
-        }
-        return title
-    }
-    
-    var body: some View {
-        #if os(iOS) || os(macOS)
-        iOSFullPlayerSheet(
-            serviceManager: DRServiceManager(),
-            selectionState: SelectionState()
-        )
-        #endif
-    }
-}
-
 #Preview {
     FullPlayerSheet(
         serviceManager: DRServiceManager(),
