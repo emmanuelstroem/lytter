@@ -154,9 +154,10 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
 - [x] ~~**F4. Decide the fate of `tvOSNowPlayingView` V1/V2/original.**~~ Done in #2:
       V1/V2 preserved in `e1d7bd6`, then all three dead variants deleted and `V3` renamed
       to `tvOSNowPlayingView`. −1,432 lines.
-- [ ] **F5. Remove the SwiftData launch gate.** `Item.swift` and the `ModelContainer` are
-      template leftovers, yet `lytterApp` shows `ProgressView("Starting app...")` until the
-      container initialises and an error screen if it fails. Delete both.
+- [x] ~~**F5. Remove the SwiftData launch gate.**~~ Done in #9. `Item.swift`, the
+      `ModelContainer`, the `"Starting app..."` gate and its error screen are gone, along
+      with `@Query` / `@Environment(\.modelContext)` in `ContentView`. Nothing in the app
+      read any of it, yet it stood between launch and the first frame.
 - [ ] **F6. Delete or wire up `ChannelView.swift`.** A complete iOS screen referenced by
       nothing.
 - [ ] **F6b. Stop deriving channel identity from the display title.** `DRChannel.name` /
@@ -199,6 +200,20 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
 - [ ] **F20. Decide on macOS/visionOS.** Either implement `ContentView` branches and make
       `AudioPlayerService` platform-clean, or drop `macosx`/`xros` from `SUPPORTED_PLATFORMS`.
 - [ ] **F21. CarPlay.** A live-radio app without CarPlay is leaving its best use case unserved.
+- [ ] **F22. Move the iOS deep-link handler up to `ContentView`.** The
+      `.onChange(of: deepLinkHandler.shouldNavigateToChannel)` handlers live on `HomeView`,
+      `SearchView` and `iOSRadioView` individually, so a link arriving while the
+      **Shortcuts** tab is active is observed by nobody and silently dropped. Found by
+      testing `lytter://radio/channel/p3` on the simulator during #7: it did nothing until
+      the Radio tab was selected. tvOS is unaffected — `tvOSHomeView` attaches its handler
+      to the TabView itself. One handler on `ContentView` fixes it and removes three
+      copies of the same code.
+- [ ] **F23. Silence the `AppIcon.icon` actool warning.** Every build, on both platforms,
+      emits `None of the input catalogs contained a matching App Icon & Top Shelf Image
+      brand assets collection named "AppIcon"`, attributed to the Icon Composer file. It
+      declares `squares: shared` / `circles: watchOS` and cannot supply tvOS brand assets,
+      which now come from `Brand Assets.brandassets`. Likely fixed by excluding
+      `AppIcon.icon` from the tvOS target; needs care not to disturb the iOS icon.
 
 ---
 
@@ -211,12 +226,12 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
       Azure APIM key. If a key is ever assigned there it is committed to git and shipped in
       the binary. Move it to a gitignored `.xcconfig` (or, better, proxy the API server-side)
       and add a secret-scanning hook now.
-- [ ] **S2. Remove unused entitlements.** `lytter.entitlements` declares
-      `aps-environment: development`, a CloudKit container (`iCloud.Lytter`) and an app
-      group — none of which the app uses. `Info.plist` declares the `remote-notification`
-      background mode with no push registration anywhere. Unused background modes and a
-      development APNS entitlement are both App Review flags. Either use them (see S3) or
-      delete them.
+- [x] ~~**S2. Remove unused entitlements.**~~ Done in #9. Grepped first and found no
+      push, CloudKit or app-group code anywhere. Removed `aps-environment` (a *development*
+      APNS entitlement), the iCloud/CloudKit container, the app group, and the
+      `remote-notification` background mode. `com.apple.developer.siri` stays — the Siri
+      shortcuts are real. The app group should come back when the Top Shelf extension
+      actually shares the cached schedule (P14), not before.
 - [x] ~~**S3. Fix the extension deployment target.**~~ Done in #7: `TopShelfExtension`
       lowered from `TVOS_DEPLOYMENT_TARGET = 26.0` to `17.6` to match the host app. Verified
       in the built product — both `lytter.app` and `TopShelfExtension.appex` now report
@@ -255,8 +270,10 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
 - [ ] **S11. Document the DR API posture.** The app consumes an undocumented public API,
       hardcodes 24 DR stream URLs, and displays DR-supplied artwork and trademarks. Confirm
       terms of use and attribution requirements before submitting to the App Store.
-- [ ] **S12. Privacy manifest (`PrivacyInfo.xcprivacy`).** Required for App Store
-      submission. Declares the `UserDefaults` required-reason API among others.
+- [x] ~~**S12. Privacy manifest (`PrivacyInfo.xcprivacy`).**~~ Done in #9. Declares no
+      tracking and no collected data, plus the two required-reason APIs actually used:
+      `UserDefaults` (`CA92.1`, last played channel) and file timestamps (`DDA9.1`,
+      `ImageCacheService` evicting its own oldest cached artwork).
 - [ ] **S13. Purge the 32 MB `lytter.xcf` from git history.** `lytter/shared/icons/lytter.xcf`
       is a GIMP source file; the `AppIcon.icon` Icon Composer sources supersede it. It is
       the single largest object in the repo.
