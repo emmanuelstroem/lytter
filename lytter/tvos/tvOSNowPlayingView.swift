@@ -98,11 +98,15 @@ private func setTabBarVisible(_ visible: Bool) {
     }
     UIView.animate(withDuration: 0.4) {
         tbc.tabBar.alpha = visible ? 1 : 0
-    } completion: { _ in
-        if !visible {
-            // Disable after fade-out so the focus engine ignores it completely.
-            tbc.tabBar.isUserInteractionEnabled = false
-        }
+    } completion: { finished in
+        // A fade-out interrupted by a later setTabBarVisible(true) still runs this
+        // block, with finished == false. Disabling interaction then would leave a
+        // fully opaque tab bar that the focus engine ignores, which is the exact
+        // flicker this helper exists to prevent — so only act on a fade that ran
+        // to completion.
+        guard finished, !visible else { return }
+        // Disable after fade-out so the focus engine ignores it completely.
+        tbc.tabBar.isUserInteractionEnabled = false
     }
 }
 
