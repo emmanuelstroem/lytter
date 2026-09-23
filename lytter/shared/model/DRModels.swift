@@ -15,7 +15,12 @@ import Combine
 struct DRAPIConfig {
     static let baseURL = "https://api.dr.dk/radio/v4"
     static let assetBaseURL = "https://asset.dr.dk/drlyd/images"
-    
+
+    /// Optional Azure API Management subscription key (Ocp-Apim-Subscription-Key).
+    /// Set this if the DR Radio API starts requiring authentication.
+    /// Register at https://developer.dr.dk to obtain a key.
+    static var subscriptionKey: String? = nil
+
     // API Endpoints
     static let schedulesAllNow = "\(baseURL)/schedules/all/now"
     static let scheduleSnapshot = "\(baseURL)/schedules/snapshot"
@@ -543,6 +548,39 @@ struct ChannelRegion: Identifiable, Codable, Equatable {
     let channel: DRChannel
 }
 
+// MARK: - Local Disk Cache
+final class DRLocalCache {
+    static let shared = DRLocalCache()
+    private init() {}
+
+    private let fileName = "dr_schedules_cache.json"
+    private let encoder = JSONEncoder()
+    private let decoder = JSONDecoder()
+
+    private var cacheURL: URL? {
+        FileManager.default
+            .urls(for: .cachesDirectory, in: .userDomainMask)
+            .first?
+            .appendingPathComponent(fileName)
+    }
+
+    /// Persist schedules to disk. Call only after a successful API response.
+    func save(_ schedules: [DREpisode]) {
+        guard let url = cacheURL,
+              let data = try? encoder.encode(schedules) else { return }
+        try? data.write(to: url, options: .atomic)
+    }
+
+    /// Load schedules from disk. Returns an empty array if nothing is cached yet.
+    func load() -> [DREpisode] {
+        guard let url = cacheURL,
+              let data = try? Data(contentsOf: url),
+              let schedules = try? decoder.decode([DREpisode].self, from: data)
+        else { return [] }
+        return schedules
+    }
+}
+
 // MARK: - Service Manager
 class DRServiceManager: ObservableObject {
     // Direct observable properties
@@ -574,17 +612,37 @@ class DRServiceManager: ObservableObject {
     
     init() {
         setupBindings()
-        loadChannels()
+        loadDiskCache()   // Populate UI instantly from disk
+        loadChannels()    // Refresh from API in background
+    }
+
+    /// Synchronously loads the last persisted schedules so the UI is populated
+    /// immediately on launch without waiting for the network.
+    private func loadDiskCache() {
+        let schedules = DRLocalCache.shared.load()
+        guard !schedules.isEmpty else { return }
+        cachedSchedules = schedules
+        availableChannels = Array(Set(schedules.map { $0.channel }))
+            .sorted { $0.title < $1.title }
+        restoreLastPlayedChannel()
     }
     
     private func setupBindings() {
         audioPlayer.$isPlaying
             .assign(to: \.isPlaying, on: self)
             .store(in: &cancellables)
-        
+
+        // Route audio errors to playbackError, not the general error shown in the channel list
         audioPlayer.$error
-            .assign(to: \.error, on: self)
+            .assign(to: \.playbackError, on: self)
             .store(in: &cancellables)
+
+        // When the remote play command fires but no item is loaded (e.g. restored
+        // from cache), delegate back to playChannel so a fresh stream is started.
+        audioPlayer.onRequestPlay = { [weak self] in
+            guard let self, let channel = self.playingChannel else { return }
+            self.playChannel(channel)
+        }
     }
     
     private func isCacheValid() -> Bool {
@@ -593,36 +651,36 @@ class DRServiceManager: ObservableObject {
     }
     
     func loadChannels() {
-        // Check if we have valid cached data
-        if !cachedSchedules.isEmpty && isCacheValid() {
-            let channels = Array(Set(cachedSchedules.map { $0.channel })).sorted { $0.title < $1.title }
-            self.availableChannels = channels
-            return
-        }
-        
-        isLoading = true
+        // In-memory cache still valid — nothing to do
+        if !cachedSchedules.isEmpty && isCacheValid() { return }
+
+        // Only show loading spinner when there is no data at all (first launch)
+        isLoading = availableChannels.isEmpty
         error = nil
-        
+
         Task {
             do {
                 let schedules = try await networkService.fetchAllSchedules()
                 let channels = Array(Set(schedules.map { $0.channel })).sorted { $0.title < $1.title }
-                
+
                 await MainActor.run {
                     self.cachedSchedules = schedules
                     self.lastSchedulesUpdate = Date()
                     self.availableChannels = channels
                     self.isLoading = false
-                    
-                    // Restore last played channel if available and recent
                     self.restoreLastPlayedChannel()
                 }
-                
-                // Preload images for all channels
+
+                // Persist to disk only after a confirmed successful response
+                DRLocalCache.shared.save(schedules)
+
                 await self.preloadChannelImages(from: schedules)
             } catch {
                 await MainActor.run {
-                    self.error = error.localizedDescription
+                    // Surface the error only when we have no data to show
+                    if self.availableChannels.isEmpty {
+                        self.error = error.localizedDescription
+                    }
                     self.isLoading = false
                 }
             }
@@ -633,18 +691,16 @@ class DRServiceManager: ObservableObject {
         if playingChannel?.id == channel.id {
             if isPlaying {
                 audioPlayer.pause()
-                // Stop track polling when paused
                 stopTrackPolling()
-                // Update command center playback state
+                audioPlayer.updateCommandCenterPlaybackState()
+            } else if audioPlayer.hasLoadedItem {
+                // Player item exists — just resume from where it paused
+                audioPlayer.resume()
+                Task { await getCurrentTrack(for: channel) }
                 audioPlayer.updateCommandCenterPlaybackState()
             } else {
-                audioPlayer.resume()
-                // Restart track polling when resumed
-                Task {
-                    await getCurrentTrack(for: channel)
-                }
-                // Update command center playback state
-                audioPlayer.updateCommandCenterPlaybackState()
+                // Channel was restored from cache but never played this session — start fresh
+                playChannel(channel)
             }
         } else {
             playChannel(channel)

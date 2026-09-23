@@ -245,7 +245,12 @@ class AudioPlayerService: NSObject, ObservableObject {
 
         // Configure play command
         commandCenter?.playCommand.addTarget { [weak self] _ in
-            self?.resume()
+            guard let self else { return .commandFailed }
+            if self.hasLoadedItem {
+                self.resume()
+            } else {
+                self.onRequestPlay?()
+            }
             return .success
         }
 
@@ -263,10 +268,13 @@ class AudioPlayerService: NSObject, ObservableObject {
 
         // Configure toggle play/pause command
         commandCenter?.togglePlayPauseCommand.addTarget { [weak self] _ in
-            if self?.isPlaying == true {
-                self?.pause()
+            guard let self else { return .commandFailed }
+            if self.isPlaying {
+                self.pause()
+            } else if self.hasLoadedItem {
+                self.resume()
             } else {
-                self?.resume()
+                self.onRequestPlay?()
             }
             return .success
         }
@@ -574,6 +582,13 @@ class AudioPlayerService: NSObject, ObservableObject {
         updateCommandCenterPlaybackState()
     }
     
+    /// True when an AVPlayerItem is loaded (i.e. play(url:) has been called this session).
+    var hasLoadedItem: Bool { player?.currentItem != nil }
+
+    /// Called by DRServiceManager so the remote play/togglePlayPause commands
+    /// can start playback when no item is loaded (e.g. restored from cache).
+    var onRequestPlay: (() -> Void)?
+
     func resume() {
         player?.play()
         isPlaying = true
