@@ -139,10 +139,13 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
 
 - [ ] **F1. Implement iOS search.** Port `tvOSSearchView`'s filter logic behind
       `.searchable`. Replace the `"coming soon"` stub in `lytter/ios/SearchView.swift`.
-- [ ] **F2. Fill in the tvOS Brand Assets.** Every `Content.imageset` under
-      `lytter/Assets.xcassets/Brand Assets.brandassets` is empty — App Icon (400×240 and
-      1280×768 layered stacks), Top Shelf Image (1920×720), Top Shelf Image Wide
-      (2320×720). This is the build warning and a hard App Store rejection.
+- [x] ~~**F2. Fill in the tvOS Brand Assets.**~~ Done in #8, which grew to cover every
+      platform. All 27 images are rendered by `Tools/RenderBrandAssets.swift`, which draws
+      the transistor-radio mark with CoreGraphics so it stays vector-exact at any size.
+      Depth is baked for the flat icons and left to the system where the platform composites
+      it — tvOS parallax layers and Icon Composer both get material shading only. Also
+      fixed a latent App Store blocker: the iOS icons had transparent corners, which is a
+      rejection. Regenerate with `swift Tools/RenderBrandAssets.swift .`
 - [x] ~~**F3. Fix the TopShelf/deep-link identifier mismatch.**~~ Confirmed against the
       live v5 payload — `id` is `urn:dr:radio:channel:5fa156d1…` while `slug` is `p1`, so
       every Top Shelf play action was a no-op. Fixed in #7 with
