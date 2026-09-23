@@ -144,7 +144,17 @@ enum NetworkError: Error, LocalizedError {
             return "Could not reach the server. Please check your connection."
         case .httpError(let code):
             switch code {
-            case 401: return "API authentication required (401). Set DRAPIConfig.subscriptionKey with your key from developer.dr.dk"
+            case 401:
+                // api.dr.dk answers 401 for any path under /radio/ that it does not serve,
+                // so this nearly always means the API version was retired rather than that
+                // a key is missing. Lead with the likely cause.
+                return """
+                    DR's API rejected the request (401). The app is using API version \
+                    \(DRAPIConfig.apiVersion), which DR may have retired — check \
+                    https://www.dr.dk/lyd for the version currently in use and update \
+                    DRAPIConfig.apiVersion. If that version is correct, the API may now \
+                    require a subscription key from developer.dr.dk.
+                    """
             case 403: return "API access forbidden (403). Check your subscription key."
             case 404: return "Channel data not found (404). Try again later."
             case 429: return "Too many requests. Please wait a moment and retry."

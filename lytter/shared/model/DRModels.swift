@@ -13,12 +13,31 @@ import Combine
 
 // MARK: - API Configuration
 struct DRAPIConfig {
-    static let baseURL = "https://api.dr.dk/radio/v4"
+    /// The DR Radio API version this build targets.
+    ///
+    /// `api.dr.dk` serves exactly one public version at a time and answers **401** for
+    /// every other path under `/radio/` — retired versions and versions that do not exist
+    /// alike. So a sudden 401 across the whole app almost always means DR moved on, not
+    /// that a key is missing. v4 was retired in favour of v5 this way, and the app simply
+    /// stopped working.
+    ///
+    /// ⚠️ This value is duplicated in `TopShelfExtension/TopShelfNetworkService.swift`,
+    /// because the Top Shelf extension is a separate target that cannot see this type.
+    /// Change one and you must change the other, or Top Shelf will silently break while
+    /// the app keeps working. Sharing it properly needs the extension to stop duplicating
+    /// the model layer — tracked in docs/ROADMAP.md.
+    static let apiVersion = "v5"
+
+    static let baseURL = "https://api.dr.dk/radio/\(apiVersion)"
     static let assetBaseURL = "https://asset.dr.dk/drlyd/images"
 
     /// Optional Azure API Management subscription key (Ocp-Apim-Subscription-Key).
-    /// Set this if the DR Radio API starts requiring authentication.
-    /// Register at https://developer.dr.dk to obtain a key.
+    ///
+    /// The public API has not required one so far. Before setting this in response to a
+    /// 401, check `apiVersion` first — that is the far more likely cause.
+    ///
+    /// Never commit a real key here: this file is in source control and ships inside the
+    /// binary. Read it from a gitignored xcconfig or proxy the API instead.
     static var subscriptionKey: String? = nil
 
     // API Endpoints
@@ -237,21 +256,12 @@ struct DREpisode: Identifiable, Codable, Equatable {
     }
     
     var streamURL: String? {
-        guard let audioAssets = audioAssets, !audioAssets.isEmpty else {
-            // If no audio assets, try to construct a stream URL from the channel
-            return constructFallbackStreamURL()
-        }
+        guard let audioAssets = audioAssets, !audioAssets.isEmpty else { return nil }
         
-        // For live radio, we need to prioritize live streams
-        // First try to find a live stream (isStreamLive: true)
+        // For live radio, prioritise live streams. v5 returns HLS first, then ICY
+        // variants; AVPlayer handles either, and HLS adapts its bitrate.
         if let liveStream = audioAssets.first(where: { $0.isStreamLive == true }) {
             return liveStream.url
-        }
-        
-        // If no live stream found, check if this is a live radio program
-        if isLive {
-            // For live programs, use the fallback stream URL instead of on-demand content
-            return constructFallbackStreamURL()
         }
         
         // For on-demand content, try to find any stream with target "Stream"
@@ -266,42 +276,6 @@ struct DREpisode: Identifiable, Codable, Equatable {
         
         // Fallback to first available audio asset
         return audioAssets.first?.url
-    }
-    
-    private func constructFallbackStreamURL() -> String? {
-        // Construct a fallback stream URL based on the channel slug
-        // This is the standard pattern for DR radio live streams
-        let channelSlug = channel.slug.lowercased()
-        
-        // Map channel slugs to their correct stream URLs
-        let streamURLs: [String: String] = [
-            "p1": "https://live-icy.gss.dr.dk/AACP1",
-            "p2": "https://live-icy.gss.dr.dk/AACP2", 
-            "p3": "https://live-icy.gss.dr.dk/AACP3",
-            "p4kbh": "https://live-icy.gss.dr.dk/AACP4KBH",
-            "p4fyn": "https://live-icy.gss.dr.dk/AACP4FYN",
-            "p4sjaelland": "https://live-icy.gss.dr.dk/AACP4SJAEL",
-            "p4bornholm": "https://live-icy.gss.dr.dk/AACP4BORNH",
-            "p4trekanten": "https://live-icy.gss.dr.dk/AACP4TREK",
-            "p4vest": "https://live-icy.gss.dr.dk/AACP4VEST",
-            "p4syd": "https://live-icy.gss.dr.dk/AACP4SYD",
-            "p4nord": "https://live-icy.gss.dr.dk/AACP4NORD",
-            "p4aarhus": "https://live-icy.gss.dr.dk/AACP4AARHUS",
-            "p5bornholm": "https://live-icy.gss.dr.dk/AACP5BORNHOLM",
-            "p5esbjerg": "https://live-icy.gss.dr.dk/AACP5ESBJERG",
-            "p5fyn": "https://live-icy.gss.dr.dk/AACP5FYN",
-            "p5kbh": "https://live-icy.gss.dr.dk/AACP5KBH",
-            "p5vest": "https://live-icy.gss.dr.dk/AACP5VEST",
-            "p5nord": "https://live-icy.gss.dr.dk/AACP5NORD",
-            "p5sjaelland": "https://live-icy.gss.dr.dk/AACP5SJAELLAND",
-            "p5syd": "https://live-icy.gss.dr.dk/AACP5SYD",
-            "p5trekanten": "https://live-icy.gss.dr.dk/AACP5TREKANTEN",
-            "p5aarhus": "https://live-icy.gss.dr.dk/AACP5AARHUS",
-            "p6beat": "https://live-icy.gss.dr.dk/AACP6BEAT",
-            "p8jazz": "https://live-icy.gss.dr.dk/AACP8JAZZ"
-        ]
-        
-        return streamURLs[channelSlug] ?? "https://live-icy.gss.dr.dk/AAC\(channel.slug.uppercased())"
     }
     
     var primaryImageURL: String? {
@@ -759,11 +733,11 @@ class DRServiceManager: ObservableObject {
             streamURL = channelPrograms.first?.streamURL
         }
         
-        // If still no stream URL, construct a fallback URL using the known DR stream pattern
-        if streamURL == nil {
-            streamURL = "https://live-icy.gss.dr.dk/AAC\(channel.slug.uppercased())"
-        }
-        
+        // There is deliberately no hardcoded fallback here. The previous one guessed
+        // https://live-icy.gss.dr.dk/AAC<SLUG>, and every URL in that family now returns
+        // 404 — so it turned "we have no stream" into a stream that fails obscurely once
+        // playback had already started. Failing here gives the user an honest message.
+
         // Play the stream
         if let finalStreamURL = streamURL,
            let url = URL(string: finalStreamURL) {
