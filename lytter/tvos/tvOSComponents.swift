@@ -198,6 +198,11 @@ struct tvOSChannelCard: View {
         return URL(string: urlString)
     }
 
+    // Match by base channel name so any regional variant counts as "this" channel
+    private var isCurrentChannel: Bool {
+        serviceManager.playingChannel?.name == channel.name
+    }
+
     var body: some View {
         let displayTitle = (channel.district != nil) ? channel.name : channel.title
 
@@ -225,6 +230,12 @@ struct tvOSChannelCard: View {
                 RoundedRectangle(cornerRadius: 16)
                     .stroke(.white.opacity(isFocused ? 0.85 : 0), lineWidth: 0.5)
             )
+            .overlay(alignment: .topTrailing) {
+                if isCurrentChannel {
+                    NowPlayingBadge(isPlaying: serviceManager.isPlaying)
+                        .padding(10)
+                }
+            }
             .shadow(color: .white.opacity(isFocused ? 0.55 : 0), radius: 18, x: 0, y: 0)
             .animation(.spring(response: 0.28, dampingFraction: 0.72), value: isFocused)
 
@@ -246,7 +257,24 @@ struct tvOSChannelCard: View {
     }
 }
 
+/// Small badge shown on the top-right corner of a channel card when that channel is playing.
+struct NowPlayingBadge: View {
+    let isPlaying: Bool
+
+    var body: some View {
+        Image(systemName: isPlaying ? "waveform" : "pause.fill")
+            .font(.system(size: 13, weight: .bold))
+            .foregroundStyle(.white)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 7)
+            .background(.ultraThinMaterial, in: Capsule())
+            .symbolEffect(.variableColor.iterative.dimInactiveLayers, isActive: isPlaying)
+    }
+}
+
 /// Custom button style that scales and lifts the entire item (image + text) on focus.
+/// The system focus effect (which creates _UIReplicantView) is disabled because
+/// this style renders its own scale + shadow effects.
 struct tvOSMusicCardButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         tvOSMusicCardBody(configuration: configuration)
@@ -259,9 +287,11 @@ struct tvOSMusicCardButtonStyle: ButtonStyle {
         var body: some View {
             configuration.label
                 .scaleEffect(isFocused ? 1.1 : 1.0, anchor: .center)
-                // Depth shadow underneath for lift effect
                 .shadow(color: .black.opacity(isFocused ? 0.55 : 0), radius: 24, x: 0, y: 18)
                 .animation(.spring(response: 0.28, dampingFraction: 0.72), value: isFocused)
+                // Prevent tvOS from creating a _UIReplicantView for the default
+                // focus lift effect — we own all focus visuals above.
+                .focusEffectDisabled()
         }
     }
 }
