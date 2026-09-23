@@ -593,8 +593,18 @@ class AudioPlayerService: NSObject, ObservableObject {
         updateCommandCenterPlaybackState()
     }
     
-    /// True when an AVPlayerItem is loaded (i.e. play(url:) has been called this session).
-    var hasLoadedItem: Bool { player?.currentItem != nil }
+    /// True when a *usable* AVPlayerItem is loaded (i.e. play(url:) has been called this
+    /// session and the item has not failed).
+    ///
+    /// A failed item stays attached to the player, so checking only for a non-nil
+    /// currentItem would report true for a dead stream. Callers would then resume() a
+    /// player that can never produce audio, and because the channel still matches, every
+    /// following press would do the same — leaving no way to recover but switching
+    /// channels. Treating a failed item as "not loaded" restarts the stream instead.
+    var hasLoadedItem: Bool {
+        guard let item = player?.currentItem else { return false }
+        return item.status != .failed
+    }
 
     /// Called by DRServiceManager so the remote play/togglePlayPause commands
     /// can start playback when no item is loaded (e.g. restored from cache).
