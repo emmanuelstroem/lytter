@@ -29,14 +29,15 @@ struct TVPosterViewRepresentable: UIViewRepresentable {
         uiView.title = title
         uiView.subtitle = subtitle
         if let url = imageURL {
-            URLSession.shared.dataTask(with: url) { data, _, _ in
-                guard let data = data, let image = UIImage(data: data) else { return }
-                DispatchQueue.main.async {
-                    uiView.image = image
-                    uiView.contentMode = .scaleAspectFit
-//                    uiview.image.clipsToBounds = true
-                }
-            }.resume()
+            // updateUIView runs on every layout pass. Going through the cache means a
+            // repeat pass is a dictionary lookup rather than another download.
+            ImageCacheService.shared.loadImage(
+                from: url.absoluteString,
+                maxPixelSize: ImageCacheService.thumbnailMaxPixelSize) { image in
+                guard let image else { return }
+                uiView.image = image
+                uiView.contentMode = .scaleAspectFit
+            }
         } else {
             uiView.image = nil
         }
@@ -139,10 +140,12 @@ class FocusableLockupUIView: UIView {
         titleLabel.text = title
         subtitleLabel.text = subtitle
         if let url = imageURL {
-            URLSession.shared.dataTask(with: url) { [weak self] data, _, _ in
-                guard let self = self, let data = data, let image = UIImage(data: data) else { return }
-                DispatchQueue.main.async { self.imageView.image = image }
-            }.resume()
+            ImageCacheService.shared.loadImage(
+                from: url.absoluteString,
+                maxPixelSize: ImageCacheService.thumbnailMaxPixelSize) { [weak self] image in
+                guard let self, let image else { return }
+                self.imageView.image = image
+            }
         } else {
             imageView.image = nil
         }
@@ -208,19 +211,17 @@ struct tvOSChannelCard: View {
 
         VStack(alignment: .leading, spacing: 12) {
             // Square artwork
-            AsyncImage(url: artworkURL) { phase in
-                switch phase {
-                case .success(let image):
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                default:
-                    ZStack {
-                        Color.white.opacity(0.12)
-                        Image(systemName: "dot.radiowaves.left.and.right")
-                            .font(.system(size: 64))
-                            .foregroundStyle(.white.opacity(0.35))
-                    }
+            CachedAsyncImage(url: artworkURL,
+                             maxPixelSize: ImageCacheService.thumbnailMaxPixelSize) { image in
+                image
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+            } placeholder: {
+                ZStack {
+                    Color.white.opacity(0.12)
+                    Image(systemName: "dot.radiowaves.left.and.right")
+                        .font(.system(size: 64))
+                        .foregroundStyle(.white.opacity(0.35))
                 }
             }
             .frame(width: 300, height: 300)
