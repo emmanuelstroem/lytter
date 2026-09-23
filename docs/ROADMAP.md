@@ -1,6 +1,6 @@
 # Lytter — Status, Plan & Todo
 
-_Last updated: 2026-09-23. Assessed against `d6cc610` plus the uncommitted working tree._
+_Last updated: 2026-09-23. Baseline `50cc776` — PRs #1–#6 merged._
 _Companion docs: [OVERVIEW-AND-ARCHITECTURE.md](OVERVIEW-AND-ARCHITECTURE.md) · [IPHONE-DUO.md](IPHONE-DUO.md)_
 
 ---
@@ -14,6 +14,17 @@ localisation, accessibility, tests, icons, and a pass over the config that would
 pass App Review.
 
 Roughly: **feature-complete for "listen to a DR channel", ~40% of the way to shippable.**
+
+> **The v4 outage.** For some period before 2026-09-23 the app did not work at all: DR
+> retired API v4 and `api.dr.dk` answered 401 to everything, so no channel list and no
+> playback. All 24 hardcoded `live-icy.gss.dr.dk` stream URLs had also gone 404. Fixed in
+> #6 by moving to v5 and deleting the hardcoded fallbacks — v5 supplies working HLS and ICY
+> URLs in `audioAssets`.
+>
+> Nothing detected this; it was found by running the app. `api.dr.dk` answers 401 for any
+> version it does not serve, so the next bump will look identical. A scheduled job that
+> asserts a 200 **and** a successful decode is the standing gap — deliberately deferred,
+> not forgotten.
 
 ### Timeline read from git
 
@@ -30,9 +41,11 @@ uncommitted**.
 
 ---
 
-## 2. What was in progress (uncommitted)
+## 2. What was in progress
 
-Four related threads. All of them are worth keeping; none are finished.
+Four related threads found uncommitted in the working tree on 2026-09-23. **All are now
+merged** — #1 landed the first three, #2 resolved the fourth. Kept here as the record of
+what that change set was and what it left behind.
 
 ### 2.1 Offline-first cold start — `DRModels.swift`
 
@@ -130,11 +143,11 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
       `lytter/Assets.xcassets/Brand Assets.brandassets` is empty — App Icon (400×240 and
       1280×768 layered stacks), Top Shelf Image (1920×720), Top Shelf Image Wide
       (2320×720). This is the build warning and a hard App Store rejection.
-- [ ] **F3. Fix the TopShelf/deep-link identifier mismatch.** `ContentProvider` builds
-      its deep link from `episode.channel.**slug**`, but `tvOSHomeView.handleDeepLinkChannel`
-      resolves with `availableChannels.first { $0.**id** == targetChannel.id }`. Unless DR
-      returns `id == slug`, every Top Shelf play action silently no-ops. Verify against a
-      live payload, then match on slug (or carry both).
+- [x] ~~**F3. Fix the TopShelf/deep-link identifier mismatch.**~~ Confirmed against the
+      live v5 payload — `id` is `urn:dr:radio:channel:5fa156d1…` while `slug` is `p1`, so
+      every Top Shelf play action was a no-op. Fixed in #7 with
+      `DRServiceManager.channel(forDeepLinkIdentifier:)`, which accepts either form; all
+      four duplicated resolution sites now call it.
 - [x] ~~**F4. Decide the fate of `tvOSNowPlayingView` V1/V2/original.**~~ Done in #2:
       V1/V2 preserved in `e1d7bd6`, then all three dead variants deleted and `V3` renamed
       to `tvOSNowPlayingView`. −1,432 lines.
@@ -144,10 +157,13 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
 - [ ] **F6. Delete or wire up `ChannelView.swift`.** A complete iOS screen referenced by
       nothing.
 - [ ] **F6b. Stop deriving channel identity from the display title.** `DRChannel.name` /
-      `.district` split the title on the first space, so `"P6 Beat"` parses as name `P6`,
-      district `Beat` and `"P8 Jazz"` as name `P8`, district `Jazz` — both appear in the
-      app's own stream map, so they are live data. This mis-groups them as regional variants
-      on both platforms and breaks the tvOS now-playing badge. Key off `slug`.
+      `.district` split the title on the first space. Checked against the live v5 payload
+      (25 channels, 2026-09-23): every channel parses correctly today — `P6` and `P8` have
+      single-word titles despite the slugs `p6beat` / `p8jazz`. So this is **latent, not
+      currently broken**, and is lower priority than first recorded. It stays on the list
+      because the day DR renames a national channel to two words, tvOS grouping, the
+      variant overlay, the iOS grouped cards, Top Shelf consolidation and the now-playing
+      badge all mis-file it as a regional variant. Key off `slug`.
 
 ### P1 — quality of the core experience
 
@@ -198,10 +214,10 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
       background mode with no push registration anywhere. Unused background modes and a
       development APNS entitlement are both App Review flags. Either use them (see S3) or
       delete them.
-- [ ] **S3. Fix the extension deployment target.** `TopShelfExtension` is built at
-      `TVOS_DEPLOYMENT_TARGET = 26.0` while the host app is `17.6`. An app extension cannot
-      require a newer OS than its container — this fails installation on tvOS 17–25. Lower
-      the extension to 17.6, or raise the app.
+- [x] ~~**S3. Fix the extension deployment target.**~~ Done in #7: `TopShelfExtension`
+      lowered from `TVOS_DEPLOYMENT_TARGET = 26.0` to `17.6` to match the host app. Verified
+      in the built product — both `lytter.app` and `TopShelfExtension.appex` now report
+      `MinimumOSVersion 17.6`.
 - [ ] **S4. Replace `print()` with `os.Logger`.** 50+ call sites compiled into release
       builds, including `DeepLinkHandler` printing full incoming URLs and channel IDs to the
       device console. Use `Logger` with `privacy:` annotations, or strip in release.
@@ -334,8 +350,8 @@ Ordered by expected impact. The top three are, together, most of the cold-launch
 ## 8. Suggested sequence
 
 **Sprint 1 — clean slate (≈2 days)**
-~~F4~~ (done) → S3 (extension target) → F2 (tvOS icons) → F5, F6 (delete dead code) → S2 (entitlements)
-→ commit the WIP → F14 (README). *Result: a submittable tvOS build and a clean tree.*
+~~F4~~, ~~S3~~, ~~F3~~ (done) → F2 (tvOS icons) → F5, F6 (delete dead code) → S2 (entitlements)
+→ F14 (README). *Result: a submittable tvOS build and a clean tree.*
 
 **Sprint 2 — foundation (≈3 days)**
 P1 (single service manager) → extract protocols for the four services → S10 (Swift 6) →
