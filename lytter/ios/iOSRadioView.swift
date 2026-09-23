@@ -147,7 +147,8 @@ struct iOSGroupedRadioChannelCard: View {
         }) {
             HStack(spacing: 16) {
                 // Channel artwork with real image or fallback
-                AsyncImage(url: getChannelImageURL()) { image in
+                CachedAsyncImage(url: getChannelImageURL(),
+                                 maxPixelSize: ImageCacheService.thumbnailMaxPixelSize) { image in
                     image
                         .resizable()
                         .aspectRatio(contentMode: .fill)
