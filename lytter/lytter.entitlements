@@ -2,23 +2,20 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>aps-environment</key>
-	<string>development</string>
-	<key>com.apple.developer.aps-environment</key>
-	<string>development</string>
-	<key>com.apple.developer.icloud-container-identifiers</key>
-	<array>
-		<string>iCloud.Lytter</string>
-	</array>
-	<key>com.apple.developer.icloud-services</key>
-	<array>
-		<string>CloudKit</string>
-	</array>
+	<!-- Siri is genuinely used: SiriShortcutsService donates NSUserActivity
+	     shortcuts and ShortcutsView requests authorisation.
+
+	     Removed because nothing in the app used them, and unused entitlements are
+	     an App Review flag:
+	       aps-environment / com.apple.developer.aps-environment
+	         a *development* push entitlement, with no push registration anywhere
+	       com.apple.developer.icloud-* (container iCloud.Lytter, CloudKit)
+	         no CloudKit code; the SwiftData container it was presumably meant for
+	         has been removed
+	       com.apple.security.application-groups (group.com.eopio.lytter)
+	         unread by both the app and the Top Shelf extension. Re-add it when the
+	         extension actually shares the cached schedule — see docs/ROADMAP.md. -->
 	<key>com.apple.developer.siri</key>
 	<true/>
-	<key>com.apple.security.application-groups</key>
-	<array>
-		<string>group.com.eopio.lytter</string>
-	</array>
 </dict>
 </plist>
