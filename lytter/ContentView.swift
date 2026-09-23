@@ -12,10 +12,11 @@ struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var items: [Item]
     
-    @StateObject private var serviceManager = DRServiceManager()
+    /// Owned by lytterApp and shared with the Siri service — see the note there.
+    @EnvironmentObject var serviceManager: DRServiceManager
     @StateObject private var selectionState = SelectionState()
     @SceneStorage("selectedTab") private var selectedTabIndex = 0
-    
+
     @EnvironmentObject var deepLinkHandler: DeepLinkHandler
     
     #if os(iOS) || os(macOS)
@@ -120,5 +121,10 @@ struct ContentView: View {
 
 #Preview {
     ContentView()
+        .environmentObject(DRServiceManager())
+        .environmentObject(DeepLinkHandler())
+        #if os(iOS) || os(macOS)
+        .environmentObject(SiriShortcutsService.shared)
+        #endif
         .modelContainer(for: Item.self, inMemory: true)
 }
