@@ -12,7 +12,78 @@ import GroupActivities
 
 #if os(tvOS)
 
+// MARK: - Remote Interaction Detector
+/// Attaches a pass-through gesture recognizer to the UIWindow so it sees
+/// ALL remote input — touchpad swipes, directional presses, and select —
+/// before the focus engine routes events to individual views.
+/// Setting state = .failed immediately means events are never consumed.
+private class PassThroughGestureRecognizer: UIGestureRecognizer {
+    var onInteraction: (() -> Void)?
+
+    // Touchpad begin (swipe start, tap start)
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent) {
+        onInteraction?()
+        state = .failed
+    }
+
+    // All physical button presses (select, menu, play/pause, d-pad directions)
+    override func pressesBegan(_ presses: Set<UIPress>, with event: UIPressesEvent) {
+        onInteraction?()
+        state = .failed
+    }
+}
+
+/// A transparent view that, as soon as it enters the window hierarchy,
+/// installs the pass-through recognizer onto the UIWindow itself.
+private class RemoteDetectorHostView: UIView {
+    var onInteraction: (() -> Void)?
+    private weak var installedRecognizer: PassThroughGestureRecognizer?
+
+    override func didMoveToWindow() {
+        super.didMoveToWindow()
+        // Remove any previously installed recognizer
+        if let old = installedRecognizer {
+            old.view?.removeGestureRecognizer(old)
+            installedRecognizer = nil
+        }
+        // Install onto the window so it fires ahead of the focus engine
+        if let win = window {
+            let recognizer = PassThroughGestureRecognizer()
+            recognizer.onInteraction = { [weak self] in self?.onInteraction?() }
+            recognizer.cancelsTouchesInView = false
+            recognizer.delaysTouchesBegan = false
+            win.addGestureRecognizer(recognizer)
+            installedRecognizer = recognizer
+        }
+    }
+
+    deinit {
+        if let old = installedRecognizer {
+            old.view?.removeGestureRecognizer(old)
+        }
+    }
+}
+
+private struct RemoteInteractionDetector: UIViewRepresentable {
+    let onInteraction: () -> Void
+
+    func makeUIView(context: Context) -> RemoteDetectorHostView {
+        let view = RemoteDetectorHostView()
+        view.backgroundColor = .clear
+        view.onInteraction = onInteraction
+        return view
+    }
+
+    func updateUIView(_ uiView: RemoteDetectorHostView, context: Context) {
+        uiView.onInteraction = onInteraction
+    }
+}
+
 // MARK: - Tab Bar Visibility Helper
+/// Hides/shows the tab bar by toggling both alpha (for a smooth fade) and
+/// isUserInteractionEnabled.  Setting isUserInteractionEnabled = false removes
+/// the bar from the tvOS focus system entirely, preventing the focus engine
+/// from cycling to invisible tab-bar items and causing a show/hide flicker.
 private func setTabBarVisible(_ visible: Bool) {
     guard let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
           let window = scene.windows.first else { return }
@@ -20,9 +91,17 @@ private func setTabBarVisible(_ visible: Bool) {
         if let tbc = vc as? UITabBarController { return tbc }
         return vc?.children.compactMap { findTabBar(in: $0) }.first
     }
-    if let tbc = findTabBar(in: window.rootViewController) {
-        UIView.animate(withDuration: 0.4) {
-            tbc.tabBar.alpha = visible ? 1 : 0
+    guard let tbc = findTabBar(in: window.rootViewController) else { return }
+    if visible {
+        // Re-enable interaction before the fade-in so focus can return to it.
+        tbc.tabBar.isUserInteractionEnabled = true
+    }
+    UIView.animate(withDuration: 0.4) {
+        tbc.tabBar.alpha = visible ? 1 : 0
+    } completion: { _ in
+        if !visible {
+            // Disable after fade-out so the focus engine ignores it completely.
+            tbc.tabBar.isUserInteractionEnabled = false
         }
     }
 }
@@ -88,9 +167,9 @@ struct tvOSNowPlayingViewV3: View {
                     Spacer()
                 }
                 .frame(maxWidth: .infinity)
-                // Detect any remote directional input to wake controls
-                .onMoveCommand { _ in wakeControls() }
-                .onPlayPauseCommand { wakeControls() }
+                // UIKit-level pass-through: fires on any remote press/swipe
+                // without consuming the event, so buttons and focus still work.
+                .background(RemoteInteractionDetector(onInteraction: wakeControls))
                 .sheet(isPresented: $showingInfoSheet) {
                     if let ch = serviceManager.playingChannel {
                         tvOSNowPlayingInfoSheetV3(
