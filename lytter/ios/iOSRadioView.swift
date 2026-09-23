@@ -102,7 +102,7 @@ struct iOSRadioView: View {
     
     private func handleDeepLinkChannel(_ targetChannel: DRChannel) {
         // Find the actual channel in available channels
-        if let actualChannel = serviceManager.availableChannels.first(where: { $0.id == targetChannel.id }) {
+        if let actualChannel = serviceManager.channel(forDeepLinkIdentifier: targetChannel.id) {
             // Play the channel
             serviceManager.playChannel(actualChannel)
             selectionState.selectChannel(actualChannel, showSheet: false)
