@@ -246,14 +246,13 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
       channel id from any URL and the views immediately call `playChannel`. Low impact (it
       only starts a public radio stream) but it should resolve against `availableChannels`
       first, and `pendingChannelId` should expire rather than being retried indefinitely.
-- [ ] **S6. Move the image cache out of `Documents`.** `ImageCacheService` writes to
-      `.documentDirectory`; caches belong in `.cachesDirectory`. As written it is backed up
-      to iCloud, never purged under disk pressure, and would be user-visible if file sharing
-      is ever enabled.
-- [ ] **S7. Use a stable cache-key hash.** Disk filenames are `NSString.hash.description`.
-      `NSString.hash` is not stable across launches and collides — collisions serve the
-      *wrong* image, and instability means the disk cache silently never hits. Use SHA-256
-      of the URL.
+- [x] ~~**S6. Move the image cache out of `Documents`.**~~ Done in #11 — now
+      `.cachesDirectory`. Verified on the simulator: `Documents/ImageCache` is empty and
+      `Library/Caches/ImageCache` holds the artwork.
+- [x] ~~**S7. Use a stable cache-key hash.**~~ Done in #11 — SHA-256 of the URL. The old
+      `NSString.hash` is seeded per process, so the disk cache never hit after a relaunch
+      and every image was downloaded again. Memory is keyed by URL *and* decode size; disk
+      is keyed by URL alone, since it stores the original bytes.
 - [ ] **S8. Harden ATS explicitly.** All endpoints are HTTPS today, but set
       `NSAllowsArbitraryLoads = false` explicitly and consider pinning `api.dr.dk`.
 - [ ] **S9. Remove the force-unwrapped URLs.** `URL(string:)!` in `DRNetworkService`
@@ -293,29 +292,20 @@ Ordered by expected impact. The top three are, together, most of the cold-launch
       preload.** Opening the Shortcuts tab today fires a second complete network + image
       storm. Inject one instance through the environment.
 
-- [ ] **P2. Bound and scope image preloading.** `preloadImagesWithPriority` launches
-      *three* concurrent `TaskGroup`s over every image URL in the entire schedule payload
-      (primary → landscape → everything else), with no concurrency limit and no
-      cancellation. On a cold launch that is hundreds of simultaneous
-      `URLSession.shared.dataTask` calls. Cap concurrency (~4–6), prefetch only what is on
-      screen plus a small lookahead, and cancel on disappear.
-
-- [ ] **P3. Downsample images and set a real `NSCache` cost.**
-      `memoryCache.totalCostLimit` is set to 50 MB but `setObject(_:forKey:)` is called
-      **without a cost**, so the limit is inert and only `countLimit = 50` applies —
-      meanwhile full-resolution artwork is decoded and held. Downsample with
-      `CGImageSourceCreateThumbnailAtIndex` to the display size and pass a byte cost.
-
-- [ ] **P4. Route every image load through `ImageCacheService`.** Today these all bypass
-      it and re-download:
-      - `tvOSNowPlayingArtworkCardV3` — `AsyncImage` **and** a second `URLSession.shared.data`
-        of the same URL just to compute the pill colour;
-      - `tvOSNowPlayingInfoSheetV3` — `AsyncImage`;
-      - `TVPosterViewRepresentable.updateUIView` and `FocusableLockupUIView.setContent` —
-        raw `dataTask` **from `updateUIView`**, which runs on every layout pass, so duplicate
-        requests are unbounded;
-      - `AudioPlayerService.loadImageForCommandCenter` — its own `dataTask` per metadata update.
-
+- [x] ~~**P2. Bound and scope image preloading.**~~ Done in #11. The three unbounded
+      task groups are one sliding window of four downloads, over the primary image per
+      episode only, at thumbnail size, and cancellable. Landscape and "everything else"
+      are no longer preloaded at all — they load on demand and are cached.
+- [x] ~~**P3. Downsample images and set a real `NSCache` cost.**~~ Done in #11. DR serves
+      1920×1080 artwork — roughly 8 MB once decoded — so a 50-image cache could reach
+      several hundred megabytes. Everything is now decoded through
+      `CGImageSourceCreateThumbnailAtIndex` at 512px for lists and 1024px for the player,
+      and `setObject` passes the decoded byte cost so `totalCostLimit` (48 MB) is real.
+- [x] ~~**P4. Route every image load through `ImageCacheService`.**~~ Done in #11. All
+      eight bypassing call sites now go through the cache, including the tvOS pill-colour
+      sampler that fetched the same artwork a second time just to read a few pixels, and
+      the two `updateUIView` sites that re-downloaded on every layout pass. Requests for
+      the same key are coalesced, so N views share one download.
 - [x] ~~**P5. Fix the Combine subscription leak in `AudioPlayerService`.**~~ Done in #10.
       The set is now `playerObservations`, cleared in `play(url:)` and `stop()`. Worse than
       the memory alone: the sinks captured their `AVPlayerItem` and subscribed to their
