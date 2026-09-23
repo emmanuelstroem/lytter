@@ -46,7 +46,7 @@ struct tvOSHomeView: View {
     }
 
     private func handleDeepLinkChannel(_ targetChannel: DRChannel) {
-        if let actualChannel = serviceManager.availableChannels.first(where: { $0.id == targetChannel.id }) {
+        if let actualChannel = serviceManager.channel(forDeepLinkIdentifier: targetChannel.id) {
             serviceManager.playChannel(actualChannel)
             selectionState.selectChannel(actualChannel)
             selectedTab = 1 // Switch to Now Playing

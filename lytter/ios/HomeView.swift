@@ -88,7 +88,7 @@ struct HomeView: View {
         print("🏠 HomeView: Available channels count: \(serviceManager.availableChannels.count)")
         
         // Find the actual channel in available channels
-        if let actualChannel = serviceManager.availableChannels.first(where: { $0.id == targetChannel.id }) {
+        if let actualChannel = serviceManager.channel(forDeepLinkIdentifier: targetChannel.id) {
             print("🏠 HomeView: Found actual channel: \(actualChannel.title)")
             // Play the channel
             serviceManager.playChannel(actualChannel)
