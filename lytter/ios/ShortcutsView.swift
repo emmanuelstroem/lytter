@@ -12,7 +12,10 @@ import IntentsUI
 #if os(iOS)
 struct ShortcutsView: View {
     @EnvironmentObject var siriShortcutsService: SiriShortcutsService
-    @StateObject private var serviceManager = DRServiceManager()
+    /// Shared with the rest of the app. This used to be its own @StateObject, which meant
+    /// opening this tab started a second catalogue fetch and image preload, and showed a
+    /// channel list that drifted from the one every other screen was using.
+    @EnvironmentObject var serviceManager: DRServiceManager
     @State private var showingAddShortcut = false
     @State private var selectedChannel: DRChannel?
     
@@ -277,6 +280,7 @@ struct ShortcutConfigurationView: View {
 #Preview {
     ShortcutsView()
         .environmentObject(SiriShortcutsService.shared)
-} 
+        .environmentObject(DRServiceManager())
+}
 
 #endif

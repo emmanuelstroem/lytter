@@ -19,19 +19,21 @@ class SiriShortcutsService: ObservableObject {
     #if os(iOS) || os(macOS)
     @Published var availableShortcuts: [INShortcut] = []
     #endif
-    private var serviceManager: DRServiceManager?
-    
-    private init() {
-        // Initialize service manager when needed
+    /// The app-wide manager, handed over by lytterApp at launch.
+    ///
+    /// Held weakly: this is a singleton that outlives any individual scene and it does not
+    /// own the manager. It previously built its own DRServiceManager on first use, which
+    /// meant a second catalogue fetch plus a second full image preload, against a channel
+    /// list no screen ever saw.
+    private weak var serviceManager: DRServiceManager?
+
+    private init() {}
+
+    /// Supplies the shared DRServiceManager. Safe to call repeatedly.
+    func configure(with serviceManager: DRServiceManager) {
+        self.serviceManager = serviceManager
     }
-    
-    private func getServiceManager() -> DRServiceManager {
-        if serviceManager == nil {
-            serviceManager = DRServiceManager()
-        }
-        return serviceManager!
-    }
-    
+
     // MARK: - Shortcut Management
     
     func updateAvailableShortcuts() {
@@ -51,9 +53,9 @@ class SiriShortcutsService: ObservableObject {
     }
     
     private func createChannelShortcuts() -> [INShortcut] {
-        // Get channels from the service manager
-        let channels = getServiceManager().availableChannels
-        
+        guard let serviceManager else { return [] }
+        let channels = serviceManager.availableChannels
+
         return channels.map { channel in
             let activity = createUserActivity(for: channel)
             return INShortcut(userActivity: activity)
@@ -70,12 +72,15 @@ class SiriShortcutsService: ObservableObject {
     // MARK: - Shortcut Invocation
     
     func handleShortcutInvocation(channelId: String) {
-        let serviceManager = getServiceManager()
+        guard let serviceManager else {
+            print("SiriShortcutsService has no service manager; ignoring shortcut for \(channelId)")
+            return
+        }
         guard let channel = serviceManager.availableChannels.first(where: { $0.id == channelId }) else {
             print("Channel not found for ID: \(channelId)")
             return
         }
-        
+
         // Play the channel
         serviceManager.playChannel(channel)
     }
@@ -134,9 +139,9 @@ extension SiriShortcutsService {
     }
     
     func donateAllUserActivities() {
-        let channels = getServiceManager().availableChannels
-        
-        for channel in channels {
+        guard let serviceManager else { return }
+
+        for channel in serviceManager.availableChannels {
             donateUserActivity(for: channel)
         }
     }
