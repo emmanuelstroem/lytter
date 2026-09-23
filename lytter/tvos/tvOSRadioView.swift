@@ -38,23 +38,30 @@ struct tvOSRadioView: View {
                     .ignoresSafeArea()
                 
                 VStack {
-                    VStack(alignment: .leading, spacing: 24) {
-                        Text("DR Radio")
-                        
+                    VStack(alignment: .leading, spacing: 32) {
+                        // Section header — Music-app style
+                        Text("Radio")
+                            .font(.system(size: 52, weight: .bold))
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 60)
+
                         if serviceManager.isLoading {
                             ProgressView().scaleEffect(1.4).tint(.white)
+                                .padding(.horizontal, 60)
                         } else if let error = serviceManager.error {
                             VStack(spacing: 16) {
                                 Image(systemName: "exclamationmark.triangle").font(.system(size: 60)).foregroundColor(.orange)
                                 Text(error).foregroundColor(.white)
                                 Button("Retry") { serviceManager.loadChannels() }
                             }
+                            .padding(.horizontal, 60)
                         } else if primaryChannels.isEmpty {
                             Text("No channels").foregroundColor(.white)
+                                .padding(.horizontal, 60)
                         } else {
-                            // Single horizontal list of primary channels
-                            ScrollView(.horizontal) {
-                                LazyHStack(spacing: 60) {
+                            // Horizontal shelf — like the Music Home tab
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                LazyHStack(alignment: .top, spacing: 40) {
                                     ForEach(primaryChannels, id: \.id) { channel in
                                         let variants = serviceManager.availableChannels.filter { $0.name == channel.name }
                                         if variants.count <= 1 {
@@ -63,32 +70,29 @@ struct tvOSRadioView: View {
                                                 selectionState.selectChannel(channel)
                                             } label: {
                                                 tvOSChannelCard(channel: channel)
-                                                    .frame(width: 460, height: 300)
                                             }
-                                            .buttonStyle(.card)
+                                            .buttonStyle(tvOSMusicCardButtonStyle())
                                             .focused($focusedMenuChannelId, equals: channel.id)
-                                            
                                         } else {
                                             Button {
                                                 lastFocusedChannelId = channel.id
                                                 selectedChannelForVariants = channel
                                             } label: {
                                                 tvOSChannelCard(channel: channel)
-                                                    .frame(width: 460, height: 300)
                                             }
-                                            .buttonStyle(.card)
+                                            .buttonStyle(tvOSMusicCardButtonStyle())
                                             .focused($focusedMenuChannelId, equals: channel.id)
                                         }
                                     }
                                 }
-                                .padding(.horizontal, 30)
-                                .padding(.vertical, 10)
+                                .padding(.horizontal, 60)
+                                .padding(.top, 50)    // room for 1.1x scale overflow upward
+                                .padding(.bottom, 30)
                                 .focusSection()
                             }
                         }
                     }
-                    .padding(.top, 40)
-                    .padding(.horizontal, 60)
+                    .padding(.top, 50)
                     // While variants overlay is visible, block interaction and hide focus effects behind it
                     .allowsHitTesting(selectedChannelForVariants == nil)
                     .focusEffectDisabled(selectedChannelForVariants != nil)

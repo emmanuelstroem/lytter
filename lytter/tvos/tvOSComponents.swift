@@ -179,26 +179,120 @@ class FocusableLockupUIView: UIView {
 #endif
 
 #if os(tvOS)
+/// Full shelf item: square artwork + title + subtitle.
+/// Designed to be used as a Button label with tvOSMusicCardButtonStyle,
+/// so the entire item (image and text) scales together on focus.
 struct tvOSChannelCard: View {
     let channel: DRChannel
     @EnvironmentObject private var serviceManager: DRServiceManager
-    
+    @Environment(\.isFocused) private var isFocused
+
+    private var currentProgram: DREpisode? {
+        serviceManager.getCurrentProgram(for: channel)
+    }
+
+    private var artworkURL: URL? {
+        guard let program = currentProgram,
+              let urlString = program.primaryImageURL ?? program.landscapeImageURL
+        else { return nil }
+        return URL(string: urlString)
+    }
+
+    // Match by base channel name so any regional variant counts as "this" channel
+    private var isCurrentChannel: Bool {
+        serviceManager.playingChannel?.name == channel.name
+    }
+
     var body: some View {
-        // For districtized channels (e.g., "P4 Bornholm"), show only the base name ("P4")
         let displayTitle = (channel.district != nil) ? channel.name : channel.title
-        FocusableLockupView(
-            title: displayTitle,
-            subtitle: serviceManager.getCurrentProgram(for: channel)?.cleanTitle(),
-            imageURL: {
-                if let program = serviceManager.getCurrentProgram(for: channel),
-                   let urlString = program.landscapeImageURL ?? program.primaryImageURL {
-                    return URL(string: urlString)
+
+        VStack(alignment: .leading, spacing: 12) {
+            // Square artwork
+            AsyncImage(url: artworkURL) { phase in
+                switch phase {
+                case .success(let image):
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                default:
+                    ZStack {
+                        Color.white.opacity(0.12)
+                        Image(systemName: "dot.radiowaves.left.and.right")
+                            .font(.system(size: 64))
+                            .foregroundStyle(.white.opacity(0.35))
+                    }
                 }
-                return nil
-            }()
-        )
-//        .frame(height: 300)
-//        .padding(.vertical, 10)
+            }
+            .frame(width: 300, height: 300)
+            .clipped()
+            .clipShape(RoundedRectangle(cornerRadius: 16))
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(.white.opacity(isFocused ? 0.85 : 0), lineWidth: 0.5)
+            )
+            .overlay(alignment: .topTrailing) {
+                if isCurrentChannel {
+                    NowPlayingBadge(isPlaying: serviceManager.isPlaying)
+                        .padding(10)
+                }
+            }
+            .shadow(color: .white.opacity(isFocused ? 0.55 : 0), radius: 18, x: 0, y: 0)
+            .animation(.spring(response: 0.28, dampingFraction: 0.72), value: isFocused)
+
+            // Channel name
+            Text(displayTitle)
+                .font(.system(size: 24, weight: .bold))
+                .foregroundStyle(.white)
+                .lineLimit(1)
+                .frame(width: 300, alignment: .leading)
+
+            // Currently playing program
+            Text(currentProgram?.cleanTitle() ?? "")
+                .font(.system(size: 18, weight: .regular))
+                .foregroundStyle(.gray)
+                .lineLimit(1)
+                .frame(width: 300, alignment: .leading)
+                .frame(minHeight: 22)
+        }
+    }
+}
+
+/// Small badge shown on the top-right corner of a channel card when that channel is playing.
+struct NowPlayingBadge: View {
+    let isPlaying: Bool
+
+    var body: some View {
+        Image(systemName: isPlaying ? "waveform" : "pause.fill")
+            .font(.system(size: 13, weight: .bold))
+            .foregroundStyle(.white)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 7)
+            .background(.ultraThinMaterial, in: Capsule())
+            .symbolEffect(.variableColor.iterative.dimInactiveLayers, isActive: isPlaying)
+    }
+}
+
+/// Custom button style that scales and lifts the entire item (image + text) on focus.
+/// The system focus effect (which creates _UIReplicantView) is disabled because
+/// this style renders its own scale + shadow effects.
+struct tvOSMusicCardButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        tvOSMusicCardBody(configuration: configuration)
+    }
+
+    private struct tvOSMusicCardBody: View {
+        let configuration: ButtonStyleConfiguration
+        @Environment(\.isFocused) private var isFocused
+
+        var body: some View {
+            configuration.label
+                .scaleEffect(isFocused ? 1.1 : 1.0, anchor: .center)
+                .shadow(color: .black.opacity(isFocused ? 0.55 : 0), radius: 24, x: 0, y: 18)
+                .animation(.spring(response: 0.28, dampingFraction: 0.72), value: isFocused)
+                // Prevent tvOS from creating a _UIReplicantView for the default
+                // focus lift effect — we own all focus visuals above.
+                .focusEffectDisabled()
+        }
     }
 }
 
