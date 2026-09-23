@@ -133,16 +133,18 @@ the folder adds it to the build automatically — including dead files.
 ```swift
 "P4 København"  → name: "P4",  district: "København"    // correct
 "P1"            → name: "P1",  district: nil            // correct
-"P6 Beat"       → name: "P6",  district: "Beat"         // ⚠ false positive
-"P8 Jazz"       → name: "P8",  district: "Jazz"         // ⚠ false positive
 ```
 
-This drives tvOS channel grouping, the district/variant overlay, the iOS grouped cards,
-Top Shelf consolidation, and the "is this the playing channel" badge
-(`playingChannel?.name == channel.name`). Any two-word non-regional channel is mis-parsed
-as a region — and `p6beat` / `p8jazz` are both in the app's own hardcoded stream map, so
-this is live data, not a hypothetical. Channel identity should come from `slug` or a real
-region field, not from splitting the display title.
+Checked against the live v5 payload (25 channels, 2026-09-23): **every channel currently
+parses correctly.** The five national channels have single-word titles — `P6` and `P8`,
+despite their slugs being `p6beat` and `p8jazz` — and every `P4 …` / `P5 …` title carries
+a genuine region.
+
+So this is fragile rather than broken. It drives tvOS channel grouping, the
+district/variant overlay, the iOS grouped cards, Top Shelf consolidation, and the "is this
+the playing channel" badge (`playingChannel?.name == channel.name`). The day DR renames a
+national channel to two words, all of those mis-file it as a regional variant. Channel
+identity belongs in `slug`, not in a split of the display title.
 
 ### Stream URL resolution (`DREpisode.streamURL`)
 
