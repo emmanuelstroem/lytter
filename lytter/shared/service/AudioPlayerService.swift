@@ -17,7 +17,12 @@ import AVKit
 class AudioPlayerService: NSObject, ObservableObject {
     private var player: AVPlayer?
     private var timeObserver: Any?
-    private var cancellables = Set<AnyCancellable>()
+    /// Subscriptions belonging to the *current* AVPlayer and AVPlayerItem.
+    ///
+    /// These must be torn down whenever the player is replaced or stopped. They capture
+    /// the item and subscribe to the player, so leaving them in place retains both, and
+    /// a discarded player still writing `isPlaying` would fight the live one.
+    private var playerObservations = Set<AnyCancellable>()
     
     @Published var isPlaying = false
     @Published var currentTime: TimeInterval = 0
@@ -508,10 +513,16 @@ class AudioPlayerService: NSObject, ObservableObject {
         
             // Create new player item
         let playerItem = AVPlayerItem(url: url)
-        
-            // Remove existing time observer
+
+            // Tear down everything tied to the outgoing player before replacing it.
+            // The two sinks below capture their AVPlayerItem and subscribe to their
+            // AVPlayer, so leaving them subscribed kept one of each alive per channel
+            // switch — and each one carried on writing isPlaying/isLoading on this
+            // service. A discarded player reaching .paused would then flip the UI to
+            // "paused" while the channel the user just chose was playing.
+        playerObservations.removeAll()
         removeTimeObserver()
-        
+
         // Create new player
         player = AVPlayer(playerItem: playerItem)
 
@@ -548,7 +559,7 @@ class AudioPlayerService: NSObject, ObservableObject {
                         break
                 }
             }
-            .store(in: &cancellables)
+            .store(in: &playerObservations)
         
             // Observe playback status
         player?.publisher(for: \.timeControlStatus)
@@ -569,7 +580,7 @@ class AudioPlayerService: NSObject, ObservableObject {
                         break
                 }
             }
-            .store(in: &cancellables)
+            .store(in: &playerObservations)
     }
     
     func pause() {
@@ -631,11 +642,16 @@ class AudioPlayerService: NSObject, ObservableObject {
     
     func stop() {
         player?.pause()
+            // Order matters. The periodic observer has to come off the player while we
+            // still hold a reference to it: AVPlayer requires its observers to be removed
+            // before it deallocates, and the previous order nilled the player first, so
+            // removeTimeObserver() was a no-op on nil and the observer was never removed.
+        removeTimeObserver()
+        playerObservations.removeAll()
         player = nil
         isPlaying = false
         currentTime = 0
         duration = 0
-        removeTimeObserver()
             // Clear Command Center info
         clearCommandCenterInfo()
         
