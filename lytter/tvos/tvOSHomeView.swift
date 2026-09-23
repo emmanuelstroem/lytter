@@ -23,7 +23,7 @@ struct tvOSHomeView: View {
                 }
                 .tag(0)
 
-            tvOSNowPlayingViewV3(serviceManager: serviceManager)
+            tvOSNowPlayingView(serviceManager: serviceManager)
                 .tabItem {
                     Label("Now Playing", systemImage: "play.circle")
                 }
