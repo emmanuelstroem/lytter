@@ -205,7 +205,11 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
       Observing `serviceManager` alone meant pinning a channel wrote the list and redrew
       nothing — the section stayed empty. `FavouritesSection` observes the preferences
       object directly. Found by running it; the build was clean.
-- [ ] **F8. Recently played.** More than one entry; the data is already in `UserDefaults`.
+- [x] ~~**F8. Recently played.**~~ Done in #28. `RecentlyPlayed` keeps ten channels, newest
+      first; replaying one moves it rather than duplicating it, because the common case is
+      returning to the same two or three stations. Ids only — a name copied here would go
+      stale when DR renames something. `lastPlayedChannel` stays as it was: it keeps a title
+      and district so the mini player can be populated before the catalogue loads.
 - [x] ~~**F9. Sleep timer.**~~ Done in #25. 15/30/45/60 minutes, plus **end of
       programme**, which is the one a listener actually wants on live radio and which the
       schedule loaded for #14 already supports. Playback fades over the last 20 seconds
@@ -315,12 +319,18 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
       `BroadcasterChannelsSection` takes its name from the model.
       Adding a source is now a `Broadcaster`, a network service returning its channels, and
       an entry in `registered` — no layout changes.
-- [ ] **F32. Apple Music-style home, all four platforms.** Shelves rather than a grid:
-      Favourites, Recently Played, then one section per broadcaster. Depends on F32a (done)
-      and F8, and on F20 for macOS.
-      Note what does **not** exist yet: other broadcasters. The app calls one API, so the
-      extra sections stay empty until there is a second source behind them — that is a data
-      change, not a UI one.
+- [ ] **F32. Apple Music-style home, all four platforms.** *iOS and iPadOS done in #28* —
+      Favourites, Recently Played and one shelf per broadcaster, each a horizontally
+      scrolling row of square artwork cards. Every row is the same `ChannelShelf`, which
+      takes `GroupedChannel` so a station and a single channel need one card: a group of one
+      has no districts and plays on tap, a group of ten opens the picker. Sections draw
+      nothing when empty, so a first launch shows only the catalogue rather than two empty
+      headings. The grid and its three views (`FavouritesSection`,
+      `BroadcasterChannelsSection`, `GroupedChannelCard`) are gone.
+      **Remaining: tvOS and macOS.** tvOS has its own layout that already reads as shelves
+      and needs the Favourites and Recently Played rows; macOS has no UI at all (F20).
+      Still true, and worth repeating: other broadcasters do not exist. The shelves are
+      broadcaster-shaped but DR is the only source, and a second one is a data change.
 - [ ] **F33. Favourite shows, not just channels.** Store series ids and surface a
       favourited programme with when it is next on. Needs the per-channel schedule snapshot
       that #14 wired up. Deliberately deferred: favourites are channels for now.

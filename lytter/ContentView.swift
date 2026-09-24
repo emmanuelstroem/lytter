@@ -27,7 +27,7 @@ struct ContentView: View {
             if #available(iOS 26.0, *) {
                 TabView(selection: $selectedTabIndex) {
                     Tab("Home", systemImage: "house", value: 0) {
-                        HomeView(serviceManager: serviceManager, selectionState: selectionState)
+                        HomeView(serviceManager: serviceManager, selectionState: selectionState, preferences: serviceManager.userPreferences)
                     }
                     Tab("Radio", systemImage: "antenna.radiowaves.left.and.right", value: 1) {
                         iOSRadioView(serviceManager: serviceManager, selectionState: selectionState)
@@ -54,7 +54,7 @@ struct ContentView: View {
                 // Fallback on earlier versions
                 TabView {
                     // Home Tab
-                    HomeView(serviceManager: serviceManager, selectionState: selectionState)
+                    HomeView(serviceManager: serviceManager, selectionState: selectionState, preferences: serviceManager.userPreferences)
                         .tabItem {
                             Image(systemName: "house")
                             Text("Home")

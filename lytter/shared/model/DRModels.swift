@@ -221,6 +221,17 @@ struct DREpisode: Identifiable, Codable, Equatable {
     /// name one broadcast.
     var broadcastID: String { "\(channel.id)|\(startTime)" }
 
+    /// The programme's name, without the episode description.
+    ///
+    /// `title` carries both — "Prompt: AI sladrer og Apple bliver boomere" — which is too
+    /// long to read on a card. DR supplies the name separately as the series title
+    /// ("Prompt"), so this is a lookup rather than a guess about colons. Falls back to the
+    /// cleaned title for the occasional entry with no series.
+    var programmeName: String {
+        if let series = series?.title, !series.isEmpty { return series }
+        return cleanTitle()
+    }
+
     /// How far through this broadcast `date` falls, from 0 to 1.
     ///
     /// `nil` when the schedule does not give both ends, or gives a zero-length slot —

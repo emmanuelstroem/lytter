@@ -19,6 +19,7 @@ class UserPreferencesService: ObservableObject {
         static let lastPlayedChannelName = "lastPlayedChannelName"
         static let lastPlayedTimestamp = "lastPlayedTimestamp"
         static let favouriteChannelIDs = "favouriteChannelIDs"
+        static let recentlyPlayedChannelIDs = "recentlyPlayedChannelIDs"
     }
     
     // MARK: - Published Properties
@@ -30,10 +31,16 @@ class UserPreferencesService: ObservableObject {
     /// something.
     @Published private(set) var favourites = Favourites()
 
+    /// Listening history, newest first. Separate from `lastPlayedChannel`, which keeps a
+    /// title and district so the mini player can be populated before the catalogue loads.
+    @Published private(set) var recentlyPlayed = RecentlyPlayed()
+
     init() {
         loadLastPlayedChannel()
         favourites = Favourites(
             channelIDs: userDefaults.stringArray(forKey: Keys.favouriteChannelIDs) ?? [])
+        recentlyPlayed = RecentlyPlayed(
+            channelIDs: userDefaults.stringArray(forKey: Keys.recentlyPlayedChannelIDs) ?? [])
     }
 
     // MARK: - Favourites
@@ -50,9 +57,19 @@ class UserPreferencesService: ObservableObject {
     func isFavourite(_ channelID: String) -> Bool {
         favourites.contains(channelID)
     }
+
+    // MARK: - Recently played
+
+    func recordPlay(of channelID: String) {
+        var updated = recentlyPlayed
+        updated.record(channelID)
+        recentlyPlayed = updated
+        userDefaults.set(updated.channelIDs, forKey: Keys.recentlyPlayedChannelIDs)
+    }
     
     // MARK: - Save Last Played Channel
     func saveLastPlayedChannel(_ channel: DRChannel) {
+        recordPlay(of: channel.id)
         userDefaults.set(channel.id, forKey: Keys.lastPlayedChannelId)
         userDefaults.set(channel.title, forKey: Keys.lastPlayedChannelTitle)
         userDefaults.set(channel.district, forKey: Keys.lastPlayedChannelDistrict)
