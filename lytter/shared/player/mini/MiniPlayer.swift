@@ -97,7 +97,7 @@ struct MiniPlayerComponents: View {
                                     VStack(alignment: .leading, spacing: 1) {
                                         Text("\(playingChannel.title) - \(programTitle?.cleanTitle() ?? "")")
                                             .font(.system(size: 13, weight: .medium))
-                                            .foregroundColor(.white)
+                                            .foregroundStyle(Color.primary)
                                             .lineLimit(1)
                                         MarqueeText(
                                             text: track.displayText,
@@ -106,14 +106,14 @@ struct MiniPlayerComponents: View {
                                             rightFade: 24,
                                             startDelay: 1.5
                                         )
-                                        .foregroundColor(.gray)
+                                        .foregroundStyle(Color.secondary)
                                     }
                                 } else {
                                     let programTitle = serviceManager.getCurrentProgram(for: playingChannel)?.cleanTitle() ?? "Live"
                                     VStack(alignment: .leading, spacing: 1) {
                                         Text(playingChannel.title)
                                             .font(.system(size: 13, weight: .medium))
-                                            .foregroundColor(.white)
+                                            .foregroundStyle(Color.primary)
                                             .lineLimit(1)
                                         MarqueeText(
                                             text: programTitle,
@@ -122,13 +122,13 @@ struct MiniPlayerComponents: View {
                                             rightFade: 24,
                                             startDelay: 1.5
                                         )
-                                        .foregroundColor(.gray)
+                                        .foregroundStyle(Color.secondary)
                                     }
                                 }
                             } else if let currentProgram = serviceManager.getCurrentProgram(for: playingChannel) {
                                 Text(playingChannel.title)
                                     .font(.system(size: 13, weight: .medium))
-                                    .foregroundColor(.white)
+                                    .foregroundStyle(Color.primary)
                                     .lineLimit(1)
                                 MarqueeText(
                                     text: currentProgram.cleanTitle(),
@@ -137,11 +137,11 @@ struct MiniPlayerComponents: View {
                                     rightFade: 24,
                                     startDelay: 1.5
                                 )
-                                .foregroundColor(.gray)
+                                .foregroundStyle(Color.secondary)
                             } else {
                                 Text(serviceManager.isPlaying ? "Live Now" : "Paused")
                                     .font(.system(size: 13, weight: .medium))
-                                    .foregroundColor(serviceManager.isPlaying ? .red : .gray)
+                                    .foregroundColor(serviceManager.isPlaying ? Color.red : Color.secondary)
                                     .lineLimit(1)
                             }
                         } else {
@@ -151,7 +151,7 @@ struct MiniPlayerComponents: View {
                                 VStack(alignment: .leading, spacing: 1) {
                                     Text(lastPlayedChannel.title)
                                         .font(.system(size: 13, weight: .medium))
-                                        .foregroundColor(.white)
+                                        .foregroundStyle(Color.primary)
                                         .lineLimit(1)
                                     MarqueeText(
                                         text: programTitle,
@@ -160,16 +160,16 @@ struct MiniPlayerComponents: View {
                                         rightFade: 24,
                                         startDelay: 1.5
                                     )
-                                    .foregroundColor(.gray)
+                                    .foregroundStyle(Color.secondary)
                                 }
                             } else {
                                 Text("Not Playing")
                                     .font(.system(size: 13, weight: .medium))
-                                    .foregroundColor(.white)
+                                    .foregroundStyle(Color.primary)
                                     .lineLimit(1)
                                 Text(serviceManager.availableChannels.isEmpty ? "No channels available" : "Tap play to start")
                                     .font(.system(size: 11, weight: .regular))
-                                    .foregroundColor(.gray)
+                                    .foregroundStyle(Color.secondary)
                                     .lineLimit(1)
                             }
                         }
@@ -200,7 +200,7 @@ struct MiniPlayerComponents: View {
                     }) {
                         Image(systemName: serviceManager.isPlaying ? "pause.fill" : "play.fill")
                             .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.white)
+                            .foregroundStyle(Color.primary)
                             .frame(width: 32, height: 32)
                     }
                     .disabled(playingChannel == nil && serviceManager.availableChannels.isEmpty)
@@ -247,7 +247,7 @@ struct MiniPlayer: View {
                     )
                     .overlay(
                         Capsule()
-                            .stroke(.white.opacity(0.2), lineWidth: 1)
+                            .stroke(Color.primary.opacity(0.15), lineWidth: 1)
                     )
                     .padding(.horizontal, 16)
                     .padding(.bottom, geometry.safeAreaInsets.bottom + 25) // 25 is standard TabBar height

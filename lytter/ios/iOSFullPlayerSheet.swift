@@ -83,19 +83,7 @@ struct iOSFullPlayerSheet: View {
     var body: some View {
         NavigationView {
             ZStack {
-                // Semantic background, so the player follows the system appearance.
-                // In dark mode systemBackground is black, which is very close to the
-                // hardcoded gradient this replaces; in light mode it is white. Everything
-                // drawn on top uses .primary/.secondary rather than fixed white and grey.
-                LinearGradient(
-                    colors: [
-                        Color(.systemBackground),
-                        Color(.secondarySystemBackground)
-                    ],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-                .ignoresSafeArea()
+                AppBackground()
                 
                 if let currentChannel = currentChannel {
                     VStack(spacing: 0) {

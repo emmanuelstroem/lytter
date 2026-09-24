@@ -17,17 +17,7 @@ struct HomeView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                // Background gradient
-                LinearGradient(
-                    colors: [
-                        Color.black,
-                        Color.black.opacity(0.95),
-                        Color.black.opacity(0.9)
-                    ],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-                .ignoresSafeArea()
+                AppBackground()
                 
                 ScrollView {
                     VStack(spacing: 24) {
@@ -108,11 +98,11 @@ struct LoadingView: View {
         VStack(spacing: 20) {
             ProgressView()
                 .scaleEffect(1.5)
-                .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                .progressViewStyle(CircularProgressViewStyle())
             
             Text("Loading channels...")
                 .font(.headline)
-                .foregroundColor(.white)
+                .foregroundStyle(Color.primary)
         }
     }
 }
@@ -130,11 +120,11 @@ struct ErrorView: View {
             
             Text("Error loading channels")
                 .font(.headline)
-                .foregroundColor(.white)
+                .foregroundStyle(Color.primary)
             
             Text(error)
                 .font(.subheadline)
-                .foregroundColor(.gray)
+                .foregroundStyle(Color.secondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 40)
             
@@ -143,7 +133,7 @@ struct ErrorView: View {
             }
             .foregroundColor(.blue)
             .padding()
-            .background(Color.white.opacity(0.1))
+            .background(Color(.tertiarySystemFill))
             .cornerRadius(10)
         }
     }
@@ -155,15 +145,15 @@ struct EmptyStateView: View {
         VStack(spacing: 20) {
             Image(systemName: "radio")
                 .font(.system(size: 50))
-                .foregroundColor(.gray)
+                .foregroundStyle(Color.secondary)
             
             Text("No channels available")
                 .font(.headline)
-                .foregroundColor(.white)
+                .foregroundStyle(Color.primary)
             
             Text("Try refreshing to load channels")
                 .font(.subheadline)
-                .foregroundColor(.gray)
+                .foregroundStyle(Color.secondary)
         }
     }
 }
@@ -176,11 +166,11 @@ struct HomeHeader: View {
                 Text("Lyt")
                     .font(.largeTitle)
                     .fontWeight(.bold)
-                    .foregroundColor(.white)
+                    .foregroundStyle(Color.primary)
                 
                 Text("Live Danish Radio")
                     .font(.subheadline)
-                    .foregroundColor(.gray)
+                    .foregroundStyle(Color.secondary)
             }
             
             Spacer()
@@ -244,7 +234,7 @@ struct DRChannelsSection: View {
                 Text("DR")
                     .font(.title2)
                     .fontWeight(.semibold)
-                    .foregroundColor(.white)
+                    .foregroundStyle(Color.primary)
                 
                 Spacer()
             }
@@ -437,13 +427,13 @@ struct PlaybackErrorAlert: View {
                 Text("Playback Error")
                     .font(.subheadline)
                     .fontWeight(.semibold)
-                    .foregroundColor(.white)
+                    .foregroundStyle(Color.primary)
                 
                 Spacer()
                 
                 Button(action: onDismiss) {
                     Image(systemName: "xmark.circle.fill")
-                        .foregroundColor(.gray)
+                        .foregroundStyle(Color.secondary)
                         .font(.system(size: 16))
                 }
             }
@@ -452,7 +442,7 @@ struct PlaybackErrorAlert: View {
             
             Text(error)
                 .font(.caption)
-                .foregroundColor(.gray)
+                .foregroundStyle(Color.secondary)
                 .multilineTextAlignment(.leading)
                 .padding(.horizontal, 16)
                 .padding(.bottom, 12)
