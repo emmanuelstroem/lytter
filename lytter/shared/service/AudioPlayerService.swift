@@ -16,7 +16,6 @@ import AVKit
 
 class AudioPlayerService: NSObject, ObservableObject {
     private var player: AVPlayer?
-    private var timeObserver: Any?
     /// Subscriptions belonging to the *current* AVPlayer and AVPlayerItem.
     ///
     /// These must be torn down whenever the player is replaced or stopped. They capture
@@ -25,7 +24,6 @@ class AudioPlayerService: NSObject, ObservableObject {
     private var playerObservations = Set<AnyCancellable>()
     
     @Published var isPlaying = false
-    @Published var currentTime: TimeInterval = 0
     @Published var duration: TimeInterval = 0
     @Published var isLoading = false
     @Published var error: String?
@@ -55,8 +53,6 @@ class AudioPlayerService: NSObject, ObservableObject {
     }
     
     deinit {
-        removeTimeObserver()
-        
             // Remove notification observers
         NotificationCenter.default.removeObserver(self)
         
@@ -295,36 +291,16 @@ class AudioPlayerService: NSObject, ObservableObject {
             return .success
         }
 
-        // Configure skip backward command (30 seconds)
-        commandCenter?.skipBackwardCommand.preferredIntervals = [30]
-        commandCenter?.skipBackwardCommand.isEnabled = true
-        commandCenter?.skipBackwardCommand.addTarget { [weak self] _ in
-            self?.skipBackward(by: 30)
-            return .success
-        }
-
-        // Configure skip forward command (jump to live)
-        commandCenter?.skipForwardCommand.preferredIntervals = [1]
-        commandCenter?.skipForwardCommand.isEnabled = true
-        commandCenter?.skipForwardCommand.addTarget { [weak self] _ in
-            self?.skipForward()
-            return .success
-        }
-
-        // Configure seeking commands for live radio
-        commandCenter?.seekForwardCommand.isEnabled = true
-        commandCenter?.seekBackwardCommand.isEnabled = true
-        commandCenter?.changePlaybackPositionCommand.isEnabled = true
-
-        commandCenter?.seekForwardCommand.addTarget { [weak self] _ in
-            self?.skipForward()
-            return .success
-        }
-
-        commandCenter?.seekBackwardCommand.addTarget { [weak self] _ in
-            self?.skipBackward(by: 30)
-            return .success
-        }
+        // Skip and seek are disabled rather than wired up. These are live ICY streams
+        // with no seekable range, so the old handlers — seek(to: .zero) and
+        // seek(to: .positiveInfinity) — did nothing at all, while the commands were
+        // advertised as enabled. The lock screen and Control Centre showed skip buttons
+        // that silently ignored every press. Better to not offer them.
+        commandCenter?.skipBackwardCommand.isEnabled = false
+        commandCenter?.skipForwardCommand.isEnabled = false
+        commandCenter?.seekForwardCommand.isEnabled = false
+        commandCenter?.seekBackwardCommand.isEnabled = false
+        commandCenter?.changePlaybackPositionCommand.isEnabled = false
     }
     
     private func cleanupCommandCenter() {
@@ -464,11 +440,8 @@ class AudioPlayerService: NSObject, ObservableObject {
         nowPlayingInfo[MPNowPlayingInfoPropertyPlaybackRate] = isPlaying ? 1.0 : 0.0
         nowPlayingInfoCenter?.nowPlayingInfo = nowPlayingInfo
         
-            // Enable/disable skip commands based on playback state
-        commandCenter?.skipForwardCommand.isEnabled = isPlaying
-        commandCenter?.skipBackwardCommand.isEnabled = isPlaying
-        commandCenter?.seekForwardCommand.isEnabled = isPlaying
-        commandCenter?.seekBackwardCommand.isEnabled = isPlaying
+            // Skip and seek stay disabled: there is nothing to seek within on a live
+            // stream. See configureRemoteCommandTargets.
     }
     
     func clearCommandCenterInfo() {
@@ -516,7 +489,6 @@ class AudioPlayerService: NSObject, ObservableObject {
             // service. A discarded player reaching .paused would then flip the UI to
             // "paused" while the channel the user just chose was playing.
         playerObservations.removeAll()
-        removeTimeObserver()
 
         // Create new player
         player = AVPlayer(playerItem: playerItem)
@@ -527,11 +499,9 @@ class AudioPlayerService: NSObject, ObservableObject {
         }
         #endif
         
-            // Add time observer with longer interval to allow screen sleep
-        let interval = CMTime(seconds: 5.0, preferredTimescale: CMTimeScale(NSEC_PER_SEC))
-        timeObserver = player?.addPeriodicTimeObserver(forInterval: interval, queue: .main) { [weak self] time in
-            self?.currentTime = time.seconds
-        }
+            // No periodic time observer. It fired every 5 seconds to write `currentTime`,
+            // which no view reads — live radio has no meaningful elapsed position, and
+            // the two players that show a progress bar drive it from their own @State.
         
             // Observe player item status
         playerItem.publisher(for: \.status)
@@ -586,15 +556,12 @@ class AudioPlayerService: NSObject, ObservableObject {
         if !wasPlayingBeforeInterruption {
             wasPlayingBeforeInterruption = false
         }
-        
-            // Deactivate audio session when pausing to allow screen sleep
-        do {
-            let audioSession = AVAudioSession.sharedInstance()
-            try audioSession.setActive(false, options: .notifyOthersOnDeactivation)
-        } catch {
-                // Silent error handling
-        }
-        
+
+            // The session deliberately stays active. Pausing live radio is momentary, and
+            // deactivating here tore the session down and rebuilt it on every resume —
+            // an audible delay, and it handed audio focus to whatever else was running,
+            // which could duck or stop us. stop() is where the session is released.
+
         // Update Command Center playback state
         updateCommandCenterPlaybackState()
     }
@@ -637,15 +604,9 @@ class AudioPlayerService: NSObject, ObservableObject {
     
     func stop() {
         player?.pause()
-            // Order matters. The periodic observer has to come off the player while we
-            // still hold a reference to it: AVPlayer requires its observers to be removed
-            // before it deallocates, and the previous order nilled the player first, so
-            // removeTimeObserver() was a no-op on nil and the observer was never removed.
-        removeTimeObserver()
         playerObservations.removeAll()
         player = nil
         isPlaying = false
-        currentTime = 0
         duration = 0
             // Clear Command Center info
         clearCommandCenterInfo()
@@ -664,13 +625,6 @@ class AudioPlayerService: NSObject, ObservableObject {
         player?.seek(to: cmTime)
     }
     
-    private func removeTimeObserver() {
-        if let timeObserver = timeObserver {
-            player?.removeTimeObserver(timeObserver)
-            self.timeObserver = nil
-        }
-    }
-    
     func setVolume(_ volume: Float) {
         player?.volume = volume
     }
@@ -681,34 +635,4 @@ class AudioPlayerService: NSObject, ObservableObject {
         preventScreenSleep = prevent
         updateIdleTimer()
     }
-    
-        // MARK: - Skip Functionality
-    
-    func skipForward() {
-            // For live radio, skip forward means jump to the live position
-            // This effectively "catches up" to the live stream
-        if let player = player {
-                // For live radio, seek to the end of the stream (live position)
-                // This will jump to the current live broadcast
-            player.seek(to: .positiveInfinity)
-            
-                // Update the command center to reflect we're at live position
-            updateCommandCenterPlaybackState()
-        }
-    }
-    
-    func skipBackward(by interval: TimeInterval) {
-            // For live radio, skip backward jumps to the beginning of the current stream
-            // This effectively "restarts" the current live broadcast
-        if let player = player {
-                // Jump to the beginning of the current stream (0 seconds)
-            let startTime = CMTime(seconds: 0, preferredTimescale: CMTimeScale(NSEC_PER_SEC))
-            player.seek(to: startTime)
-            
-                // Update the command center to reflect we're at the beginning
-            updateCommandCenterPlaybackState()
-        }
-    }
-    
-    
 } 
