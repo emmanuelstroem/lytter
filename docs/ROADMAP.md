@@ -214,8 +214,17 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
       through VoiceOver.* Remaining: Dynamic Type support
       (all typography is currently hardcoded `.system(size:)`), Reduce Motion for the
       marquee and focus animations, and a contrast check on the white-on-artwork text.
-- [ ] **F12. Replace `NavigationView` with `NavigationStack`/`NavigationSplitView`.**
-      Seven uses, all deprecated. Prerequisite for the iPhone Duo work.
+- [x] ~~**F12. Replace `NavigationView` with `NavigationStack`.**~~ Done in #21. Five
+      containers across four files, and the useful finding was that **the app has no
+      `NavigationLink` anywhere** — nothing was navigating. Three of the five had a title
+      or toolbar and became `NavigationStack`; two (Home and the full player) had no title,
+      no toolbar and nothing to push, so the container went entirely, taking
+      `navigationBarBackButtonHidden` with it — it was hiding a back button that could
+      never exist.
+      `NavigationSplitView` was not used: it is for multi-column layouts, and this is a
+      tab-based app with no master/detail anywhere. Reaching for it would have changed
+      behaviour on iPad for no reason.
+      Verified by screenshot on all four screens; every one renders as it did before.
 - [x] ~~**F13. Reconcile the URL scheme.**~~ Done in #16 — and note that **F27 was a
       duplicate of this entry**, written without spotting that the same bug was already on
       the list. Both are closed by the same change. Worth the lesson: search the roadmap
