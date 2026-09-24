@@ -89,6 +89,11 @@ struct HomeView: View {
                 .padding(.horizontal, 16)
                 .padding(.bottom, 100) // Space for bottom tab bar
             }
+
+            // A sibling of the background rather than an overlay on the scroll view: as an
+            // overlay it inherits the scroll view's already-inset frame, so it drew an
+            // 18-point band below the status bar instead of behind it.
+            StatusBarScrim()
         }
     }
 }
