@@ -15,21 +15,12 @@ struct iOSRadioView: View {
     @State private var isLoading = false
     
     var filteredGroupedChannels: [GroupedChannel] {
-        let channels = serviceManager.availableChannels
-        let grouped = Dictionary(grouping: channels) { $0.name }
-        let groupedChannels = grouped.values.map { GroupedChannel(channels: $0) }
-            .sorted { $0.name < $1.name }
-        
-        if searchText.isEmpty {
-            return groupedChannels
-        } else {
-            return groupedChannels.filter { groupedChannel in
-                groupedChannel.name.localizedCaseInsensitiveContains(searchText) ||
-                groupedChannel.channels.contains { channel in
-                    channel.displayName.localizedCaseInsensitiveContains(searchText)
+        GroupedChannel.grouped(from: serviceManager.availableChannels)
+            .filter { group in
+                group.matches(searchText) { channel in
+                    serviceManager.getCurrentProgram(for: channel)?.cleanTitle()
                 }
             }
-        }
     }
     
     var body: some View {

@@ -115,7 +115,9 @@ class TopShelfNetworkService {
     }
     
     func fetchChannelsWithImages() async throws -> [TopShelfEpisode] {
-        let url = URL(string: TopShelfAPIConfig.schedulesAllNow)!
+        guard let url = URL(string: TopShelfAPIConfig.schedulesAllNow) else {
+            throw TopShelfError.invalidURL
+        }
         
         let (data, response) = try await session.data(from: url)
         
@@ -137,6 +139,7 @@ class TopShelfNetworkService {
 
 // MARK: - TopShelf Error
 enum TopShelfError: Error {
+    case invalidURL
     case networkError
     case decodingError
     case noData
