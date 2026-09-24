@@ -23,6 +23,12 @@ struct tvOSHomeView: View {
 
     @State private var section: tvOSSection = .home
 
+    // Menu returns Home from Now Playing, and only from there. Every other section is a
+    // grid or a list, so focus can always walk left into the sidebar. Now Playing fades its
+    // controls out after a few seconds and fills the screen with artwork, and once they are
+    // gone there is nothing to walk left *from* — the screen became a dead end with no way
+    // back. Lost when this moved from a hand-rolled switcher to a TabView.
+
     var body: some View {
         Group {
             if #available(tvOS 18.0, *) {
@@ -38,6 +44,7 @@ struct tvOSHomeView: View {
                     Tab("Now Playing", systemImage: "play.circle",
                         value: tvOSSection.nowPlaying) {
                         tvOSNowPlayingView(serviceManager: serviceManager)
+                            .onExitCommand { section = .home }
                     }
                     Tab("Search", systemImage: "magnifyingglass", value: tvOSSection.search) {
                         tvOSSearchView(serviceManager: serviceManager,
@@ -72,6 +79,7 @@ struct tvOSHomeView: View {
                 .tag(tvOSSection.radio)
 
             tvOSNowPlayingView(serviceManager: serviceManager)
+                .onExitCommand { section = .home }
                 .tabItem { Label("Now Playing", systemImage: "play.circle") }
                 .tag(tvOSSection.nowPlaying)
 
