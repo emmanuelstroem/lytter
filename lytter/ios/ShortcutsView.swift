@@ -8,6 +8,7 @@
 import SwiftUI
 import Intents
 import IntentsUI
+import os
 
 #if os(iOS)
 struct ShortcutsView: View {
@@ -72,7 +73,7 @@ struct ShortcutsView: View {
                 // Request Siri authorization when user accesses Shortcuts tab
                 if #available(iOS 12.0, *) {
                     INPreferences.requestSiriAuthorization { status in
-                        print("Siri authorization status: \(status.rawValue)")
+                        Log.siri.debug("authorization status \(status.rawValue, privacy: .public)")
                     }
                 }
                 siriShortcutsService.refreshShortcuts()

@@ -7,6 +7,7 @@
 
 import TVServices
 import Foundation
+import os
 
 #if os(tvOS)
 class ContentProvider: TVTopShelfContentProvider {
@@ -64,7 +65,8 @@ class ContentProvider: TVTopShelfContentProvider {
             return items
             
         } catch {
-            print("⚠️ TopShelf: Failed to fetch live data, using fallback: \(error)")
+            TopShelfLog.provider.error(
+                "live fetch failed, using bundled fallback: \(error.localizedDescription, privacy: .public)")
             return await createFallbackItems()
         }
     }

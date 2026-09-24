@@ -11,6 +11,7 @@ import Combine
 import UIKit
 import MediaPlayer
 import AVKit
+import os
 
     // MARK: - iOS Audio Player Service
 
@@ -158,7 +159,8 @@ class AudioPlayerService: NSObject, ObservableObject {
             try audioSession.setCategory(.playback, mode: .default, policy: .longFormAudio)
             try audioSession.setActive(true)
         } catch {
-            print("Failed to reactivate audio session after interruption: \(error)")
+            Log.playback.error(
+                "could not reactivate the audio session after an interruption: \(error.localizedDescription, privacy: .public)")
             return
         }
         
