@@ -65,6 +65,24 @@ struct ChannelShelf: View {
     }
 }
 
+/// Backdrop for a caption sitting on artwork.
+///
+/// Liquid Glass on iOS 26, an `.ultraThinMaterial` below it — the same shape either way,
+/// so the layout does not shift across versions. Both refract what is behind them, which
+/// is the point: the card's artwork is arbitrary photography and plain text on it is
+/// unreadable often enough to matter.
+private struct GlassBadge: ViewModifier {
+    var shape: AnyShape = AnyShape(Capsule())
+
+    func body(content: Content) -> some View {
+        if #available(iOS 26.0, *) {
+            content.glassEffect(.regular, in: shape)
+        } else {
+            content.background(.ultraThinMaterial, in: shape)
+        }
+    }
+}
+
 /// One card: square artwork, the station's name, and what is on it now.
 struct ChannelShelfCard: View {
     let group: GroupedChannel
@@ -109,54 +127,52 @@ struct ChannelShelfCard: View {
         .clipped()
     }
 
-    /// Caption over the artwork, behind a material scrim.
+    /// A band across the foot of the artwork carrying the station and what is on it.
     ///
-    /// The scrim is not decoration: artwork is arbitrary photography, so white text on it
-    /// is unreadable often enough to matter. `.ultraThinMaterial` also keeps the caption
-    /// legible in both appearances without picking a colour.
-    private var featuredCard: some View {
-        artwork
-            .overlay(alignment: .bottomLeading) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(group.name)
-                        .font(.headline)
-                        .foregroundStyle(.primary)
-                        .lineLimit(1)
+    /// The backdrop is not decoration. Artwork is arbitrary photography, so text laid
+    /// straight onto it is unreadable often enough to matter — and a band that spans the
+    /// card reads at a glance where a small badge did not.
+    ///
+    /// Both sizes use it, so the shelves differ in scale rather than in kind.
+    private func captionBand(titleFont: Font, subtitleLines: Int) -> some View {
+        VStack(alignment: .leading, spacing: 1) {
+            Text(group.name)
+                .font(titleFont)
+                .foregroundStyle(.primary)
+                .lineLimit(1)
+                // Shrinks rather than truncates. The station is the thing being chosen —
+                // "P4 Køben…" is a worse card than slightly smaller type.
+                .minimumScaleFactor(0.7)
 
-                    Text(subtitle)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(2)
-                }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 10)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(.ultraThinMaterial)
-            }
-            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-            .shadow(color: .black.opacity(0.22), radius: 7, y: 4)
+            Text(subtitle)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .lineLimit(subtitleLines)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .modifier(GlassBadge(shape: AnyShape(Rectangle())))
     }
 
-    /// Caption beneath the artwork — the quieter rows.
-    private var standardCard: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            artwork
-                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-                .shadow(color: .black.opacity(0.18), radius: 5, y: 3)
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text(group.name)
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(Color.primary)
-                    .lineLimit(1)
-
-                Text(subtitle)
-                    .font(.caption)
-                    .foregroundStyle(Color.secondary)
-                    .lineLimit(1)
+    private var featuredCard: some View {
+        artwork
+            .overlay(alignment: .bottom) {
+                captionBand(titleFont: .title2.weight(.bold), subtitleLines: 2)
             }
-            .frame(width: style.cardWidth, alignment: .leading)
-        }
+            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+            // Diffuse, barely offset. At radius 7 with y: 4 the shadow hugged the card's
+            // straight bottom edge and read as a drawn line rather than a shadow.
+            .shadow(color: .black.opacity(0.16), radius: 14, y: 3)
+    }
+
+    private var standardCard: some View {
+        artwork
+            .overlay(alignment: .bottom) {
+                captionBand(titleFont: .title3.weight(.semibold), subtitleLines: 1)
+            }
+            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .shadow(color: .black.opacity(0.14), radius: 10, y: 2)
     }
 
     var body: some View {
