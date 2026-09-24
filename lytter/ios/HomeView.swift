@@ -165,36 +165,13 @@ struct HomeHeader: View {
 }
 
 // MARK: - Grouped Channel Structure
-struct GroupedChannel: Identifiable {
-    let id: String
-    let name: String
-    let channels: [DRChannel]
-    
-    init(channels: [DRChannel]) {
-        self.channels = channels
-        self.name = channels.first?.name ?? ""
-        self.id = channels.first?.id ?? ""
-    }
-    
-    var hasMultipleDistricts: Bool {
-        return channels.count > 1
-    }
-    
-    var districts: [String] {
-        return channels.compactMap { $0.district }.uniqued()
-    }
-}
-
 // MARK: - DR Channels Section
 struct DRChannelsSection: View {
     @ObservedObject var serviceManager: DRServiceManager
     let onChannelTap: (DRChannel) -> Void
     
     private var groupedChannels: [GroupedChannel] {
-        let channels = serviceManager.availableChannels
-        let grouped = Dictionary(grouping: channels) { $0.name }
-        return grouped.values.map { GroupedChannel(channels: $0) }
-            .sorted { $0.name < $1.name }
+        GroupedChannel.grouped(from: serviceManager.availableChannels)
     }
     
     var body: some View {

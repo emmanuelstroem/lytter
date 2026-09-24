@@ -74,7 +74,6 @@
 				Info.plist,
 			);
 			platformFiltersByRelativePath = {
-				ios/ChannelView.swift = (ios, );
 				ios/DistrictSelectionSheet.swift = (ios, );
 				ios/HomeView.swift = (ios, );
 				ios/SearchView.swift = (ios, );
