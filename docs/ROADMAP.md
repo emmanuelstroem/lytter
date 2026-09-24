@@ -192,7 +192,15 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
       on-demand playback will want it.
 - [ ] **F7. Favourites.** Pin channels; surface them first on Home and on the tvOS shelf.
 - [ ] **F8. Recently played.** More than one entry; the data is already in `UserDefaults`.
-- [ ] **F9. Sleep timer.** Fade out and pause after 15/30/45/60 min.
+- [x] ~~**F9. Sleep timer.**~~ Done in #25. 15/30/45/60 minutes, plus **end of
+      programme**, which is the one a listener actually wants on live radio and which the
+      schedule loaded for #14 already supports. Playback fades over the last 20 seconds
+      rather than cutting.
+      `SleepTimer` stores a **deadline, not a countdown**: a `Date` survives the app being
+      backgrounded and suspended, where a decrementing counter drifts or stalls. Everything
+      is derived from the current time, so a tick that arrives late — or not at all — cannot
+      put it out of step. Eight tests, no AVFoundation, so the hour-long cases run instantly.
+      Verified end to end: a one-minute timer counted 55→0 in the log and playback stopped.
 - [x] ~~**F10. Localisation.**~~ Done in #20. One String Catalog,
       `lytter/Localizable.xcstrings`, with 83 keys and Danish throughout, including plural
       forms for the district count and the minutes remaining. See
@@ -272,6 +280,19 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
 - [ ] **S10 remains open.** These were the concrete warnings, not the whole job. Full Swift 6
       still means auditing `@unchecked Sendable` (which `InFlightTasks` now uses, with the
       lock as its justification), the observable services, and `SWIFT_VERSION = 5.0`.
+- [x] ~~**F31. The lock-screen artwork handler crashed the app.**~~ Done in #25 — and it
+      was **introduced by #24**, the Swift 6 migration. `MPMediaItemArtwork`'s request
+      handler was written inline in a main-actor method, so under
+      `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor` the closure was main-actor isolated.
+      MediaPlayer calls it on its own queue, and Swift 6 enforces isolation at runtime:
+      `dispatch_assert_queue` failed and the app took a `SIGTRAP` the moment the lock
+      screen asked for artwork — which is to say, on every playback of a channel with an
+      image.
+      Builds were clean and 30 tests passed throughout. It took **running the app with
+      playback** to find it, via crash reports in `~/Library/Logs/DiagnosticReports`. The
+      handler is a `nonisolated static` helper now.
+      The lesson is the cheap one: a language-mode change that moves checks from compile
+      time to *runtime* cannot be signed off by a green build.
 - [ ] **F14. Add a README.** Nineteen commits and no entry point for a reader.
 
 ### P2 — expansion
@@ -305,12 +326,17 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
       Verified end to end on the simulator: a cold-start link to `p3` now plays P3; the
       same link against the previous code left the app on "Not Playing".
       The three views no longer take a `DeepLinkHandler` at all.
-- [ ] **F23. Silence the `AppIcon.icon` actool warning.** Every build, on both platforms,
-      emits `None of the input catalogs contained a matching App Icon & Top Shelf Image
-      brand assets collection named "AppIcon"`, attributed to the Icon Composer file. It
-      declares `squares: shared` / `circles: watchOS` and cannot supply tvOS brand assets,
-      which now come from `Brand Assets.brandassets`. Likely fixed by excluding
-      `AppIcon.icon` from the tvOS target; needs care not to disturb the iOS icon.
+- [x] ~~**F23. Silence the `AppIcon.icon` actool warning.**~~ Done in #25, and the cause
+      was not the one guessed here. `AppIcon.icon` was a resource of **the Top Shelf
+      extension**, which compiles with `--app-icon AppIcon --target-device tv`. An Icon
+      Composer file declares `squares: shared` / `circles: watchOS` and cannot supply tvOS
+      brand assets, so actool reported it could find none. The second warning followed from
+      the same thing: the extension's asset compile was being thinned for an *iPhone*
+      device configuration during iOS builds.
+      An appex has no app icon of its own, so removing it from that target was the whole
+      fix. Both app icons verified intact afterwards — iOS `CFBundleIconName = AppIcon`
+      with its PNGs, tvOS Brand Assets in a 7.9 MB `Assets.car`.
+      **Both platforms now build with no warnings at all.**
 - [x] ~~**F24. Three buttons in the iOS full player do nothing.**~~ Done in #14. The
       ellipsis is now a share button — its menu had exactly one live item, a `ShareLink`,
       so it cost a tap for nothing. The list button opens the channel schedule (F17). And

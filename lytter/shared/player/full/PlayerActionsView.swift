@@ -12,21 +12,31 @@ struct PlayerActionsView: View {
     let showQuoteButton: Bool
     let showAirPlayButton: Bool
     let showListButton: Bool
+    let showSleepButton: Bool
+    /// Minutes left on the sleep timer, or nil when none is running.
+    let sleepTimerMinutesRemaining: Int?
     let onQuoteTap: (() -> Void)?
     let onListTap: (() -> Void)?
-    
+    let onSleepTap: (() -> Void)?
+
     init(
         showQuoteButton: Bool = true,
         showAirPlayButton: Bool = true,
         showListButton: Bool = true,
+        showSleepButton: Bool = true,
+        sleepTimerMinutesRemaining: Int? = nil,
         onQuoteTap: (() -> Void)? = nil,
-        onListTap: (() -> Void)? = nil
+        onListTap: (() -> Void)? = nil,
+        onSleepTap: (() -> Void)? = nil
     ) {
         self.showQuoteButton = showQuoteButton
         self.showAirPlayButton = showAirPlayButton
         self.showListButton = showListButton
+        self.showSleepButton = showSleepButton
+        self.sleepTimerMinutesRemaining = sleepTimerMinutesRemaining
         self.onQuoteTap = onQuoteTap
         self.onListTap = onListTap
+        self.onSleepTap = onSleepTap
     }
     
     var body: some View {
@@ -66,16 +76,36 @@ struct PlayerActionsView: View {
                     }
                     .accessibilityLabel("Today's schedule")
                 }
+                Spacer()
+                if showSleepButton {
+                    let isRunning = sleepTimerMinutesRemaining != nil
+                    Button(action: {
+                        onSleepTap?()
+                    }) {
+                        Image(systemName: isRunning ? "moon.zzz.fill" : "moon.zzz")
+                            .font(.system(size: min(geometry.size.width, geometry.size.height) * 0.3, weight: .medium))
+                            // Tinted while running: the only indication on this screen
+                            // that playback is going to stop by itself.
+                            .foregroundStyle(isRunning ? Color.accentColor : Color.secondary)
+                    }
+                    .accessibilityLabel("Sleep timer")
+                    .accessibilityValue(
+                        sleepTimerMinutesRemaining.map { String(localized: "\($0) minutes remaining") }
+                            ?? String(localized: "Off")
+                    )
+                }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .padding(.horizontal, geometry.size.width * 0.2)
+            .padding(.horizontal, geometry.size.width * 0.12)
         }
     }
 }
 
 #Preview {
     PlayerActionsView(
+        sleepTimerMinutesRemaining: 24,
         onQuoteTap: {},
-        onListTap: {}
+        onListTap: {},
+        onSleepTap: {}
     )
 } 

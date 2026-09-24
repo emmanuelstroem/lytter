@@ -10,7 +10,6 @@
 		1470660F2E47F55200574321 /* TVServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 147063492E46DE8C00574321 /* TVServices.framework */; };
 		147066162E47F55200574321 /* TopShelfExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 1470660E2E47F55200574321 /* TopShelfExtension.appex */; platformFilters = (tvos, ); settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		147DE6F02E4FF646005991DF /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = 147DE6EF2E4FF646005991DF /* AppIcon.icon */; };
-		147DE6F12E4FF646005991DF /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = 147DE6EF2E4FF646005991DF /* AppIcon.icon */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -342,7 +341,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				147DE6F12E4FF646005991DF /* AppIcon.icon in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
