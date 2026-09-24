@@ -665,12 +665,12 @@ class DRServiceManager: ObservableObject {
         if playingChannel?.id == channel.id {
             if isPlaying {
                 audioPlayer.pause()
-                stopTrackPolling()
+                stopPolling()
                 audioPlayer.updateCommandCenterPlaybackState()
             } else if audioPlayer.hasLoadedItem {
                 // Player item exists — just resume from where it paused
                 audioPlayer.resume()
-                Task { await getCurrentTrack(for: channel) }
+                startPolling(for: channel)
                 audioPlayer.updateCommandCenterPlaybackState()
             } else {
                 // Channel was restored from cache but never played this session — start fresh
@@ -686,8 +686,7 @@ class DRServiceManager: ObservableObject {
         playingChannel = nil
         currentTrack = nil
         currentLiveProgram = nil
-        stopTrackPolling()
-        stopProgramRefreshTimer()
+        stopPolling()
         
         // Clear command center info
         audioPlayer.clearCommandCenterInfo()
@@ -697,10 +696,9 @@ class DRServiceManager: ObservableObject {
     }
     
     func playChannel(_ channel: DRChannel) {
-        // If switching to a different channel, stop polling for the previous channel
-        if let currentPlayingChannel = playingChannel, currentPlayingChannel.id != channel.id {
-            stopTrackPolling()
-        }
+        // Switching channels: drop the previous channel's polling before starting the
+        // new one, so two loops never run at once.
+        stopPolling()
         
         // Get current program from cached schedules
         let currentProgram = getCurrentProgram(for: channel)
@@ -716,13 +714,8 @@ class DRServiceManager: ObservableObject {
             }
         }
         
-        // Start track polling for this channel
-        Task {
-            await self.getCurrentTrack(for: channel)
-        }
-        
-        // Start program refresh timer (check every 5 minutes)
-        startProgramRefreshTimer()
+        // Poll the live track and refresh the programme for as long as this channel plays.
+        startPolling(for: channel)
         
         // Try to get stream URL from current program first
         var streamURL: String? = currentProgram?.streamURL
@@ -823,10 +816,8 @@ class DRServiceManager: ObservableObject {
             let indexPoints = try await networkService.fetchIndexPoints(for: channel.slug)
             let currentTrack = indexPoints.items.first { $0.isCurrentlyPlaying }
             
-            // Update current track and schedule next poll
             await MainActor.run {
                 self.currentTrack = currentTrack
-                self.scheduleNextLivePoll(for: channel, track: currentTrack)
                 
                 // Update Command Center with new track information
                 let currentProgram = self.getCurrentProgram(for: channel)
@@ -841,26 +832,62 @@ class DRServiceManager: ObservableObject {
     
     
     
-    private func stopTrackPolling() {
-        isPollingForTrack = false
-        nextLivePollingTime = nil
-    }
+    private var trackPollingTask: Task<Void, Never>?
+    private var programRefreshTask: Task<Void, Never>?
+    private let programRefreshInterval: TimeInterval = 5 * 60
     
-    private var programRefreshTimer: Timer?
-    
-    private func startProgramRefreshTimer() {
-        // Stop existing timer if any
-        stopProgramRefreshTimer()
+    /// Polls the live track for as long as `channel` is actually playing.
+    ///
+    /// This replaced a self-perpetuating chain — getCurrentTrack scheduled the next poll
+    /// via DispatchQueue.asyncAfter, which called getCurrentTrack again. Nothing held a
+    /// handle to the pending work, and its only guard was that `playingChannel` still
+    /// matched. Since pausing leaves `playingChannel` set so the mini player keeps its
+    /// content, pausing did not stop the chain: the app went on hitting
+    /// /indexpoints/live every ~15s, foreground or background, until the channel changed
+    /// or the app was killed.
+    private func startPolling(for channel: DRChannel) {
+        stopPolling()
+        isPollingForTrack = true
         
-        // Create a timer that fires every 5 minutes
-        programRefreshTimer = Timer.scheduledTimer(withTimeInterval: 5 * 60, repeats: true) { [weak self] _ in
-            self?.refreshCurrentProgram()
+        trackPollingTask = Task { [weak self] in
+            while !Task.isCancelled {
+                guard let self else { return }
+                let track = await self.getCurrentTrack(for: channel)
+                guard !Task.isCancelled else { return }
+                
+                // Wake just after the current track ends, otherwise fall back to the
+                // fixed interval.
+                let delay: TimeInterval
+                if let track, track.isCurrentlyPlaying, let endTime = track.endTime {
+                    delay = max(endTime.timeIntervalSinceNow + DRAPIConfig.trackUpdateBuffer, 1)
+                } else {
+                    delay = DRAPIConfig.trackPollingInterval
+                }
+                await MainActor.run {
+                    self.nextLivePollingTime = Date().addingTimeInterval(delay)
+                }
+                try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+            }
+        }
+        
+        programRefreshTask = Task { [weak self] in
+            while !Task.isCancelled {
+                try? await Task.sleep(nanoseconds: UInt64(self?.programRefreshInterval ?? 300) * 1_000_000_000)
+                guard !Task.isCancelled, let self else { return }
+                await MainActor.run { self.refreshCurrentProgram() }
+            }
         }
     }
     
-    private func stopProgramRefreshTimer() {
-        programRefreshTimer?.invalidate()
-        programRefreshTimer = nil
+    /// Stops both loops. Cancellation is real now: `Task.sleep` throws on cancel and the
+    /// loops check `Task.isCancelled`, so nothing is left in flight.
+    private func stopPolling() {
+        trackPollingTask?.cancel()
+        trackPollingTask = nil
+        programRefreshTask?.cancel()
+        programRefreshTask = nil
+        isPollingForTrack = false
+        nextLivePollingTime = nil
     }
     
     
@@ -889,27 +916,6 @@ class DRServiceManager: ObservableObject {
     
     // MARK: - New Live Polling System
     
-    private func scheduleNextLivePoll(for channel: DRChannel, track: DRTrack?) {
-        guard let playingChannel = playingChannel, playingChannel.id == channel.id else { return }
-        
-        let now = Date()
-        
-        if let track = track, track.isCurrentlyPlaying, let endTime = track.endTime {
-            // Track is currently playing - schedule poll when it ends
-            nextLivePollingTime = endTime.addingTimeInterval(DRAPIConfig.trackUpdateBuffer)
-            
-            schedulePoll(at: nextLivePollingTime!, for: channel)
-        } else {
-            // No currently playing track - use trackPollingInterval
-            let nextPollTime = now.addingTimeInterval(DRAPIConfig.trackPollingInterval)
-            nextLivePollingTime = nextPollTime
-            
-            schedulePoll(at: nextPollTime, for: channel)
-        }
-        
-        isPollingForTrack = true
-    }
-    
     // MARK: - Image Preloading
     
     /// Warms the artwork the channel lists show. Only the primary image per episode, at
@@ -926,21 +932,6 @@ class DRServiceManager: ObservableObject {
     /// Clears all cached images
     func clearImageCache() {
         imageCache.clearAllCaches()
-    }
-    
-    private func schedulePoll(at time: Date, for channel: DRChannel) {
-        let delay = time.timeIntervalSinceNow
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
-            guard let self = self else { return }
-            
-            // Check if we should still poll (channel still playing)
-            guard let playingChannel = self.playingChannel, playingChannel.id == channel.id else { return }
-            
-            Task { @MainActor in
-                await self.getCurrentTrack(for: channel)
-            }
-        }
     }
 }
 
