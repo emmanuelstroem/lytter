@@ -83,12 +83,14 @@ struct iOSFullPlayerSheet: View {
     var body: some View {
         NavigationView {
             ZStack {
-                // Background gradient
+                // Semantic background, so the player follows the system appearance.
+                // In dark mode systemBackground is black, which is very close to the
+                // hardcoded gradient this replaces; in light mode it is white. Everything
+                // drawn on top uses .primary/.secondary rather than fixed white and grey.
                 LinearGradient(
                     colors: [
-                        Color.black,
-                        Color.black.opacity(0.95),
-                        Color.black.opacity(0.9)
+                        Color(.systemBackground),
+                        Color(.secondarySystemBackground)
                     ],
                     startPoint: .top,
                     endPoint: .bottom
@@ -126,6 +128,9 @@ struct iOSFullPlayerSheet: View {
                                         ProgressView(value: currentTime, total: totalTime)
                                             .progressViewStyle(LinearProgressViewStyle(tint: .purple))
                                             .scaleEffect(y: 2)
+                                            // A mask reads only the alpha channel, so
+                                            // the black here is not a colour choice and
+                                            // does not need to follow the appearance.
                                             .mask(
                                                 RadialGradient(
                                                     colors: [
@@ -142,8 +147,7 @@ struct iOSFullPlayerSheet: View {
                                         Text("LIVE")
                                             .font(.caption)
                                             .fontWeight(.bold)
-                                            .foregroundColor(.white)
-                                            .opacity(0.8)
+                                            .foregroundStyle(Color.secondary)
                                     }
                                 }
                                 .frame(height: 20) // Fixed height for the progress view
@@ -197,12 +201,12 @@ struct iOSFullPlayerSheet: View {
                     VStack(spacing: 20) {
                         Image(systemName: "antenna.radiowaves.left.and.right")
                             .font(.system(size: 64, weight: .medium))
-                            .foregroundColor(.gray)
+                            .foregroundStyle(Color.secondary)
                         
                         Text("No Channel Playing")
                             .font(.title2)
                             .fontWeight(.bold)
-                            .foregroundColor(.gray)
+                            .foregroundStyle(Color.secondary)
                     }
                 }
             }
@@ -211,7 +215,7 @@ struct iOSFullPlayerSheet: View {
             .overlay(alignment: .top) {
                 // Drag indicator
                 RoundedRectangle(cornerRadius: 2.5)
-                    .fill(Color.gray.opacity(0.6))
+                    .fill(Color.secondary.opacity(0.6))
                     .frame(width: 36, height: 5)
                     .padding(.top, 8)
             }

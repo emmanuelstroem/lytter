@@ -44,7 +44,7 @@ struct PlayerControlsView: View {
                         }) {
                             Image(systemName: "gobackward.30")
                                 .font(.system(size: min(geometry.size.width, geometry.size.height) * 0.3, weight: .medium))
-                                .foregroundColor(.gray)
+                                .foregroundStyle(Color.secondary)
                         }
                     }
                     
@@ -54,7 +54,7 @@ struct PlayerControlsView: View {
                         }) {
                             Image(systemName: isPlaying ? "pause.fill" : "play.fill")
                                 .font(.system(size: min(geometry.size.width, geometry.size.height) * 0.8, weight: .medium))
-                                .foregroundColor(.primary)
+                                .foregroundStyle(Color.primary)
                         }
                     }
                     
@@ -64,7 +64,7 @@ struct PlayerControlsView: View {
                         }) {
                             Image(systemName: "goforward.plus")
                                 .font(.system(size: min(geometry.size.width, geometry.size.height) * 0.3, weight: .medium))
-                                .foregroundColor(.gray)
+                                .foregroundStyle(Color.secondary)
                         }
                     }
                 }

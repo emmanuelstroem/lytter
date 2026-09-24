@@ -38,7 +38,7 @@ struct PlayerActionsView: View {
                     }) {
                         Image(systemName: "info.circle")
                             .font(.system(size: min(geometry.size.width, geometry.size.height) * 0.3, weight: .medium))
-                            .foregroundColor(.gray)
+                            .foregroundStyle(Color.secondary)
                     }
                 }
                 Spacer()
@@ -49,8 +49,10 @@ struct PlayerActionsView: View {
                     // deliberately no tap callback: there was one, and it was never
                     // invoked, which is why the full player's "AirPlay tapped" handler
                     // looked dead while the button actually worked.
-                    AirPlayButtonView(size: 24)
-                        .foregroundColor(.gray)
+                    // The tint is passed in rather than set with .foregroundColor: this
+                    // wraps a UIKit view, so a SwiftUI foreground style never reached it —
+                    // the old .gray here did nothing at all.
+                    AirPlayButtonView(size: 24, tint: .secondaryLabel)
                 }
                 Spacer()
                 if showListButton {
@@ -59,7 +61,7 @@ struct PlayerActionsView: View {
                     }) {
                         Image(systemName: "list.bullet")
                             .font(.system(size: min(geometry.size.width, geometry.size.height) * 0.3, weight: .medium))
-                            .foregroundColor(.gray)
+                            .foregroundStyle(Color.secondary)
                     }
                 }
             }
