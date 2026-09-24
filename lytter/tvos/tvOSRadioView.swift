@@ -88,7 +88,7 @@ struct tvOSRadioView: View {
                                             tvOSChannelCard(channel: channel)
                                             StationCard.Subtitle(
                                                 text: serviceManager.getCurrentProgram(for: channel)?.programmeName ?? "",
-                                                font: .system(size: 18)
+                                                metrics: .tvOS(.standard)
                                             )
                                             .frame(minHeight: 22)
                                         }

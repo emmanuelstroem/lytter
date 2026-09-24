@@ -15,6 +15,7 @@ import SwiftUI
 struct tvOSChannelShelf: View {
     let title: String
     let groups: [GroupedChannel]
+    var style: StationCardStyle = .standard
     @ObservedObject var serviceManager: DRServiceManager
     let onSelect: (DRChannel) -> Void
 
@@ -31,6 +32,7 @@ struct tvOSChannelShelf: View {
                         ForEach(groups) { group in
                             tvOSShelfCard(
                                 group: group,
+                                style: style,
                                 serviceManager: serviceManager,
                                 onSelect: onSelect
                             )
@@ -54,6 +56,9 @@ struct tvOSChannelShelf: View {
 /// exactly as the same station does on a shelf.
 struct tvOSShelfCard: View {
     let group: GroupedChannel
+    var style: StationCardStyle = .standard
+
+    private var metrics: StationCardMetrics { .tvOS(style) }
     @ObservedObject var serviceManager: DRServiceManager
     let onSelect: (DRChannel) -> Void
 
@@ -83,15 +88,19 @@ struct tvOSShelfCard: View {
     /// deliberately does not use.
     private var item: some View {
         VStack(alignment: .leading, spacing: 10) {
-            tvOSChannelCard(channel: channel, titleOverride: title)
+            tvOSChannelCard(channel: channel, metrics: metrics, titleOverride: title)
 
-            StationCard.Subtitle(
-                text: serviceManager.getCurrentProgram(for: channel)?.programmeName ?? "",
-                font: .system(size: 18)
-            )
-            .frame(minHeight: 22)
+            // A featured card carries the programme under its own glass, so there is nothing
+            // to print beneath it.
+            if !style.captionsProgramme {
+                StationCard.Subtitle(
+                    text: serviceManager.getCurrentProgram(for: channel)?.programmeName ?? "",
+                    metrics: metrics
+                )
+                .frame(minHeight: 22)
+            }
         }
-        .frame(width: 300, alignment: .leading)
+        .frame(width: metrics.width, alignment: .leading)
     }
 
     var body: some View {

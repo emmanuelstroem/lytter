@@ -188,6 +188,10 @@ class FocusableLockupUIView: UIView {
 struct tvOSChannelCard: View {
     let channel: DRChannel
 
+    /// Sizes and type scale. Defaulted to the smaller card, which is what the Radio tab and
+    /// every broadcaster shelf use.
+    var metrics: StationCardMetrics = .tvOS(.standard)
+
     /// What to call the channel, when the caller knows better than the card does.
     ///
     /// A card on a shelf may stand for a station ("P4") or for one particular district
@@ -236,12 +240,14 @@ struct tvOSChannelCard: View {
                         .foregroundStyle(.white.opacity(0.35))
                 }
             }
-            .frame(width: 300, height: 300)
+            .frame(width: metrics.width, height: metrics.height)
             .clipped()
-            .overlay(alignment: .bottom) { nameBand(displayTitle) }
-            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .overlay(alignment: .bottom) {
+                StationCard.Caption(title: displayTitle, subtitle: subtitle, metrics: metrics)
+            }
+            .clipShape(RoundedRectangle(cornerRadius: metrics.cornerRadius, style: .continuous))
             .overlay(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                RoundedRectangle(cornerRadius: metrics.cornerRadius, style: .continuous)
                     .stroke(.white.opacity(isFocused ? 0.85 : 0), lineWidth: 0.5)
             )
             .overlay(alignment: .topTrailing) {
@@ -258,14 +264,7 @@ struct tvOSChannelCard: View {
     /// What is on the channel now, for a caller to place beneath the card.
     var subtitle: String { currentProgram?.programmeName ?? "" }
 
-    private func nameBand(_ title: String) -> some View {
-        StationCard.NameBand(
-            title: title,
-            font: .system(size: 26, weight: .bold),
-            horizontalPadding: 14,
-            verticalPadding: 10
-        )
-    }
+
 }
 
 /// Small badge shown on the top-right corner of a channel card when that channel is playing.

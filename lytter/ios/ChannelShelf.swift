@@ -20,24 +20,12 @@ import SwiftUI
 /// Apple Music does this too: the top row is larger and captions its artwork, the rows
 /// below are smaller and caption beneath. Two sizes is the whole hierarchy — a third would
 /// stop reading as "this one matters more".
-enum ChannelShelfStyle {
-    /// Large card, text laid over the artwork behind a translucent scrim.
-    case featured
-    /// Smaller card, text underneath.
-    case standard
+typealias ChannelShelfStyle = StationCardStyle
 
-    var cardWidth: CGFloat { self == .featured ? 240 : 148 }
-    var cardHeight: CGFloat { self == .featured ? 280 : 148 }
-
-    /// How far up the large card the glass reaches.
-    ///
-    /// More than the caption needs — sized to the text, the gradient had only two lines to
-    /// fade across and read as the effect starting just above the words. But not most of
-    /// the card either: glass lightens whatever is behind it, so a tall fade washes the
-    /// artwork out. Half is enough to be gradual while leaving the image intact above it.
-    ///
-    /// Unused by `standard`, whose band does not fade.
-    var captionFadeHeight: CGFloat { cardHeight * 0.52 }
+extension StationCardStyle {
+    /// This platform's sizes. The design itself — proportions, type scale, which glass —
+    /// lives in `StationCardMetrics`, shared with tvOS.
+    var metrics: StationCardMetrics { .iOS(self) }
 }
 
 struct ChannelShelf: View {
@@ -152,7 +140,7 @@ struct ChannelShelfCard: View {
         } placeholder: {
             Rectangle().fill(Color(.tertiarySystemFill))
         }
-        .frame(width: style.cardWidth, height: style.cardHeight)
+        .frame(width: style.metrics.width, height: style.metrics.height)
         .clipped()
     }
 
@@ -160,62 +148,22 @@ struct ChannelShelfCard: View {
     ///
     /// The backdrop is not decoration. Artwork is arbitrary photography, so text laid
     /// straight onto it is unreadable often enough to matter.
-    private var featuredCaption: some View {
-        VStack(alignment: .leading, spacing: 1) {
-            HStack(spacing: 6) {
-                Text(title)
-                    .font(.title.weight(.bold))
-                    .foregroundStyle(.primary)
-                    .lineLimit(1)
-                    // Shrinks rather than truncates. The station is the thing being chosen
-                    // — "P4 Køben…" is a worse card than slightly smaller type.
-                    .minimumScaleFactor(0.7)
-
-                if opensPicker {
-                    Spacer(minLength: 4)
-                    chevron
-                }
+    /// The caption is shared with tvOS; the chevron is not, because a remote has no
+    /// equivalent of a tap that might open a sheet.
+    private var caption: some View {
+        StationCard.Caption(title: title, subtitle: subtitle, metrics: style.metrics) {
+            if opensPicker {
+                Spacer(minLength: 4)
+                chevron
             }
-
-            Text(subtitle)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .lineLimit(2)
         }
-        .padding(.horizontal, 12)
-        .padding(.bottom, 10)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        // The backdrop is sized independently of the text and laid behind it, so the fade
-        // spans the card rather than the caption.
-        .background(alignment: .bottom) {
-            CaptionBackdrop(fades: true)
-                .frame(height: style.captionFadeHeight)
-        }
-        .captionOnArtwork()
-    }
-
-    /// The small card's caption: the station's name alone, on a band of glass.
-    ///
-    /// Only the name. At this size a second line over artwork is clutter rather than
-    /// information — the programme goes beneath the card, where it has a plain background
-    /// and can simply be read.
-    private var nameBand: some View {
-        // The band itself is shared with tvOS; the chevron is not, because a remote has no
-        // equivalent of a tap that might open a sheet.
-        StationCard.NameBand(title: title)
-            .overlay(alignment: .trailing) {
-                if opensPicker {
-                    chevron
-                        .padding(.trailing, 10)
-                        .captionOnArtwork()
-                }
-            }
     }
 
     private var featuredCard: some View {
         artwork
-            .overlay(alignment: .bottom) { featuredCaption }
-            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+            .overlay(alignment: .bottom) { caption }
+            .clipShape(RoundedRectangle(cornerRadius: style.metrics.cornerRadius,
+                                        style: .continuous))
             // Diffuse, barely offset. At radius 7 with y: 4 the shadow hugged the card's
             // straight bottom edge and read as a drawn line rather than a shadow.
             .shadow(color: .black.opacity(0.16), radius: 14, y: 3)
@@ -226,13 +174,14 @@ struct ChannelShelfCard: View {
     private var standardCard: some View {
         VStack(alignment: .leading, spacing: 6) {
             artwork
-                .overlay(alignment: .bottom) { nameBand }
-                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .overlay(alignment: .bottom) { caption }
+                .clipShape(RoundedRectangle(cornerRadius: style.metrics.cornerRadius,
+                                            style: .continuous))
                 .shadow(color: .black.opacity(0.14), radius: 10, y: 2)
 
-            StationCard.Subtitle(text: subtitle)
+            StationCard.Subtitle(text: subtitle, metrics: style.metrics)
         }
-        .frame(width: style.cardWidth, alignment: .leading)
+        .frame(width: style.metrics.width, alignment: .leading)
     }
 
     var body: some View {
