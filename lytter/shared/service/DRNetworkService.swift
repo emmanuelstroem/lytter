@@ -169,13 +169,17 @@ enum NetworkError: Error, LocalizedError {
     var errorDescription: String? {
         switch self {
         case .invalidResponse:
-            return "Could not reach the server. Please check your connection."
+            return String(localized: "Could not reach the server. Please check your connection.")
         case .httpError(let code):
             switch code {
             case 401:
                 // api.dr.dk answers 401 for any path under /radio/ that it does not serve,
                 // so this nearly always means the API version was retired rather than that
                 // a key is missing. Lead with the likely cause.
+                //
+                // Deliberately not localised: it names a build setting and tells the
+                // reader to edit source. Anyone who can act on it reads English, and a
+                // translated version would only make the symbol harder to find.
                 return """
                     DR's API rejected the request (401). The app is using API version \
                     \(DRAPIConfig.apiVersion), which DR may have retired — check \
@@ -183,22 +187,22 @@ enum NetworkError: Error, LocalizedError {
                     DRAPIConfig.apiVersion. If that version is correct, the API may now \
                     require a subscription key from developer.dr.dk.
                     """
-            case 403: return "API access forbidden (403). Check your subscription key."
-            case 404: return "Channel data not found (404). Try again later."
-            case 429: return "Too many requests. Please wait a moment and retry."
-            case 500...599: return "DR server error (\(code)). Try again later."
-            default: return "Unexpected server response (\(code))."
+            case 403: return String(localized: "API access forbidden (403). Check your subscription key.")
+            case 404: return String(localized: "Channel data not found (404). Try again later.")
+            case 429: return String(localized: "Too many requests. Please wait a moment and retry.")
+            case 500...599: return String(localized: "DR server error (\(code)). Try again later.")
+            default: return String(localized: "Unexpected server response (\(code)).")
             }
         case .invalidData:
-            return "Invalid data received"
+            return String(localized: "Invalid data received")
         case .decodingError:
-            return "Failed to decode response"
+            return String(localized: "Failed to decode response")
         case .invalidURL:
-            return "Invalid URL"
+            return String(localized: "Invalid URL")
         case .noInternetConnection:
-            return "No internet connection"
+            return String(localized: "No internet connection")
         case .serverError:
-            return "Server error"
+            return String(localized: "Server error")
         }
     }
 } 

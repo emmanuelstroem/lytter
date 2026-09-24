@@ -103,7 +103,10 @@ struct iOSGroupedRadioChannelCard: View {
             parts.append(programme)
         }
         if groupedChannel.hasMultipleDistricts {
-            parts.append("\(groupedChannel.channels.count) districts")
+            // String(localized:) rather than plain interpolation: this string is assembled
+            // into a Swift String, so unlike a Text it is not localised for us. The
+            // catalog carries plural variants for it.
+            parts.append(String(localized: "\(groupedChannel.channels.count) districts"))
         }
         return parts.joined(separator: ", ")
     }
@@ -171,7 +174,7 @@ struct iOSGroupedRadioChannelCard: View {
                         
                         if groupedChannel.hasMultipleDistricts {
                             HStack(spacing: 4) {
-                                Text("(\(groupedChannel.districts.count))")
+                                Text(verbatim: "(\(groupedChannel.districts.count))")
                                     .font(.caption)
                                     .foregroundColor(channelColor)
                                 
