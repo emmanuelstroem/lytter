@@ -296,7 +296,10 @@ struct tvOSNowPlayingArtworkCard: View {
             .foregroundStyle(pillForeground)
             .padding(.horizontal, 14)
             .padding(.vertical, 9)
-            .background(pillBackground, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+            // 12, not 10: the badge is inset 12 from a card with a 24 radius, and a nested
+            // shape that meets a corner takes the outer radius minus that inset. At 10 the
+            // gap between the two curves narrowed as it went round the corner.
+            .background(pillBackground, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
             .padding(12)
             .animation(.easeInOut(duration: 0.4), value: pillBackground)
         }
