@@ -783,8 +783,8 @@ class DRServiceManager: ObservableObject {
     ///
     /// Two link formats exist and they do not agree on what identifies a channel:
     ///
-    ///   - `DeepLinkHandler.generateDeepLinkURL` emits `lyt:///channel/<id>`, where id is
-    ///     an opaque URN such as `urn:dr:radio:channel:5fa156d1da351264f87b462d`.
+    ///   - `DeepLinkHandler.generateDeepLinkURL` emits `lytter:///channel/<id>`, where id
+    ///     is an opaque URN such as `urn:dr:radio:channel:5fa156d1da351264f87b462d`.
     ///   - The Top Shelf extension emits `lytter://radio/channel/<slug>`, where slug is
     ///     the short form such as `p1`.
     ///
