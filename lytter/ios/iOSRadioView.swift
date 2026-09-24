@@ -90,6 +90,23 @@ struct iOSGroupedRadioChannelCard: View {
     private var primaryChannel: DRChannel {
         return groupedChannel.channels.first!
     }
+
+    /// What VoiceOver announces for the card.
+    ///
+    /// The card's own text is a station name over artwork, sometimes with a district
+    /// count — read out piecemeal that says very little. This states the station, what is
+    /// on it now, and whether choosing it opens a district picker.
+    private var accessibilitySummary: String {
+        var parts = [groupedChannel.name]
+        if let programme = serviceManager.getCurrentProgram(for: primaryChannel)?.cleanTitle(),
+           !programme.isEmpty {
+            parts.append(programme)
+        }
+        if groupedChannel.hasMultipleDistricts {
+            parts.append("\(groupedChannel.channels.count) districts")
+        }
+        return parts.joined(separator: ", ")
+    }
     
     private var channelColor: Color {
         // Generate a consistent color based on channel ID
@@ -195,6 +212,11 @@ struct iOSGroupedRadioChannelCard: View {
             .scaleEffect(isPressed ? 0.95 : 1.0)
             .animation(.easeInOut(duration: 0.1), value: isPressed)
         }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(accessibilitySummary)
+        .accessibilityHint(groupedChannel.hasMultipleDistricts
+                           ? "Choose a district"
+                           : "Plays this channel")
         .buttonStyle(PlainButtonStyle())
         .onLongPressGesture(minimumDuration: 0, maximumDistance: .infinity, pressing: { pressing in
             isPressed = pressing

@@ -47,6 +47,10 @@ struct DistrictSelectionSheet: View {
                             onChannelSelect(channel)
                             dismiss()
                         }
+                        // A tap gesture on a VStack is not announced as anything
+                        // actionable; the iOS 26 path above uses a real Button.
+                        .accessibilityElement(children: .combine)
+                        .accessibilityAddTraits(.isButton)
                     }
                 }
                 .padding(.horizontal, 20)

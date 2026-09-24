@@ -217,6 +217,23 @@ struct GroupedChannelCard: View {
     private var primaryChannel: DRChannel {
         return groupedChannel.channels.first!
     }
+
+    /// What VoiceOver announces for the card.
+    ///
+    /// The card's own text is a station name over artwork, sometimes with a district
+    /// count — read out piecemeal that says very little. This states the station, what is
+    /// on it now, and whether choosing it opens a district picker.
+    private var accessibilitySummary: String {
+        var parts = [groupedChannel.name]
+        if let programme = serviceManager.getCurrentProgram(for: primaryChannel)?.cleanTitle(),
+           !programme.isEmpty {
+            parts.append(programme)
+        }
+        if groupedChannel.hasMultipleDistricts {
+            parts.append("\(groupedChannel.channels.count) districts")
+        }
+        return parts.joined(separator: ", ")
+    }
     
     private var channelColor: Color {
         // DR Radio channel color themes
@@ -349,6 +366,11 @@ struct GroupedChannelCard: View {
         .shadow(color: .black.opacity(0.3), radius: 8, x: 0, y: 4)
         .buttonStyle(PlainButtonStyle())
         .contentShape(Rectangle()) // Ensure the entire card area is tappable
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(accessibilitySummary)
+        .accessibilityHint(groupedChannel.hasMultipleDistricts
+                           ? "Choose a district"
+                           : "Plays this channel")
         .sheet(isPresented: $showingDistrictSheet) {
             DistrictSelectionSheet(
                 groupedChannel: groupedChannel,
