@@ -45,10 +45,10 @@ struct iOSFullPlayerSheet: View {
     }
     
     private var infoTitle: String {
-        guard let currentChannel = currentChannel else { return "No Channel" }
+        guard let currentChannel = currentChannel else { return String(localized: "No Channel") }
         
         if let track = serviceManager.currentTrack, track.isCurrentlyPlaying {
-            let programTitle = serviceManager.getCurrentProgram(for: currentChannel)?.cleanTitle() ?? "Live"
+            let programTitle = serviceManager.getCurrentProgram(for: currentChannel)?.cleanTitle() ?? String(localized: "Live")
             return "\(currentChannel.title) - \(programTitle)"
         } else {
             return currentChannel.title
@@ -56,24 +56,24 @@ struct iOSFullPlayerSheet: View {
     }
     
     private var infoSubtitle: String {
-        guard let currentChannel = currentChannel else { return "No program information" }
+        guard let currentChannel = currentChannel else { return String(localized: "No program information") }
         
         if let track = serviceManager.currentTrack, track.isCurrentlyPlaying {
             return track.displayText
         } else if let currentProgram = serviceManager.getCurrentProgram(for: currentChannel) {
             return currentProgram.cleanTitle()
         } else {
-            return "Live"
+            return String(localized: "Live")
         }
     }
     
     private var programDescription: String {
-        guard let currentChannel = currentChannel else { return "No program information available" }
+        guard let currentChannel = currentChannel else { return String(localized: "No program information available") }
         
         if let currentProgram = serviceManager.getCurrentProgram(for: currentChannel) {
-            return currentProgram.description ?? "Live radio programming"
+            return currentProgram.description ?? String(localized: "Live radio programming")
         } else {
-            return "Live radio programming"
+            return String(localized: "Live radio programming")
         }
     }
     

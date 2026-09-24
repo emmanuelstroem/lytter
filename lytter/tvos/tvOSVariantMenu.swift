@@ -56,7 +56,7 @@ struct tvOSVariantMenu<Label: View, Item: Identifiable & Hashable>: View {
 
     private var overlayPanel: some View {
         VStack(alignment: .leading, spacing: 24) {
-            Text("Vælg variant")
+            Text("Choose a variant")
                 .font(.title2)
                 .bold()
                 .foregroundColor(.white)

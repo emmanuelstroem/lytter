@@ -193,10 +193,25 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
 - [ ] **F7. Favourites.** Pin channels; surface them first on Home and on the tvOS shelf.
 - [ ] **F8. Recently played.** More than one entry; the data is already in `UserDefaults`.
 - [ ] **F9. Sleep timer.** Fade out and pause after 15/30/45/60 min.
-- [ ] **F10. Localisation.** Migrate to a String Catalog (`.xcstrings`), add **Danish**,
-      and localise channel/programme strings that the app synthesises (`"Live"`, `"Not
-      Playing"`, `"DR Radio"`).
-- [ ] **F11. Accessibility pass.** VoiceOver labels on every control, Dynamic Type support
+- [x] ~~**F10. Localisation.**~~ Done in #20. One String Catalog,
+      `lytter/Localizable.xcstrings`, with 83 keys and Danish throughout, including plural
+      forms for the district count and the minutes remaining. See
+      [LOCALISATION.md](LOCALISATION.md) — adding a third language is a data change, no
+      code.
+      The catch worth knowing: `Text("…")` localises itself, but a value assembled into a
+      Swift `String` does not, and fails silently. Those sites use `String(localized:)`
+      now — the synthesised `"Live"`, `"Not Playing"`, the network errors, and the
+      accessibility summaries.
+      Verified by running the app under `-AppleLanguages (da)`, and under `(de)`, which has
+      no translations and correctly falls back to English, plurals included.
+      **The Danish wording has not been reviewed by a native speaker** — it was written
+      alongside the code. The mechanism is verified; the phrasing is not.
+- [ ] **F11b. Dynamic Type in the player.** The accessibility labels landed in #19, but the
+      player still sizes its type with `.font(.system(size:))` off `GeometryReader`, so it
+      ignores Dynamic Type entirely. That is a layout change rather than a labelling one.
+- [ ] **F11. Accessibility pass.** *Partly done in #19 — every control in the player, the
+      channel cards and the district rows now carry labels, though nobody has yet heard them
+      through VoiceOver.* Remaining: Dynamic Type support
       (all typography is currently hardcoded `.system(size:)`), Reduce Motion for the
       marquee and focus animations, and a contrast check on the white-on-artwork text.
 - [ ] **F12. Replace `NavigationView` with `NavigationStack`/`NavigationSplitView`.**

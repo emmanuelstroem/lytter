@@ -94,7 +94,7 @@ struct MiniPlayerComponents: View {
                                 if track.isCurrentlyPlaying {
                                     let programTitle = serviceManager.getCurrentProgram(for: playingChannel)
                                     VStack(alignment: .leading, spacing: 1) {
-                                        Text("\(playingChannel.title) - \(programTitle?.cleanTitle() ?? "")")
+                                        Text(verbatim: "\(playingChannel.title) - \(programTitle?.cleanTitle() ?? "")")
                                             .font(.system(size: 13, weight: .medium))
                                             .foregroundStyle(Color.primary)
                                             .lineLimit(1)
@@ -108,7 +108,7 @@ struct MiniPlayerComponents: View {
                                         .foregroundStyle(Color.secondary)
                                     }
                                 } else {
-                                    let programTitle = serviceManager.getCurrentProgram(for: playingChannel)?.cleanTitle() ?? "Live"
+                                    let programTitle = serviceManager.getCurrentProgram(for: playingChannel)?.cleanTitle() ?? String(localized: "Live")
                                     VStack(alignment: .leading, spacing: 1) {
                                         Text(playingChannel.title)
                                             .font(.system(size: 13, weight: .medium))
@@ -146,7 +146,7 @@ struct MiniPlayerComponents: View {
                         } else {
                             if let lastPlayedChannel = serviceManager.userPreferences.lastPlayedChannel,
                                serviceManager.findLastPlayedChannel(in: serviceManager.availableChannels) != nil {
-                                let programTitle = serviceManager.getCurrentProgram(for: lastPlayedChannel)?.cleanTitle() ?? "Live"
+                                let programTitle = serviceManager.getCurrentProgram(for: lastPlayedChannel)?.cleanTitle() ?? String(localized: "Live")
                                 VStack(alignment: .leading, spacing: 1) {
                                     Text(lastPlayedChannel.title)
                                         .font(.system(size: 13, weight: .medium))

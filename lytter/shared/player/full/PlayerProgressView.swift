@@ -62,8 +62,8 @@ struct PlayerProgressView: View {
         .accessibilityLabel("Programme progress")
         .accessibilityValue(
             remaining > 0
-                ? "\(remaining) minutes remaining"
-                : "Ending now"
+                ? String(localized: "\(remaining) minutes remaining")
+                : String(localized: "Ending now")
         )
     }
 }

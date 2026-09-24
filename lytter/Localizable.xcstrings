@@ -1,0 +1,985 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "%lld districts": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld distrikt"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld distrikter"
+                }
+              }
+            }
+          }
+        },
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld district"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld districts"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld minutes remaining": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld minut tilbage"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld minutter tilbage"
+                }
+              }
+            }
+          }
+        },
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld minute remaining"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld minutes remaining"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "API access forbidden (403). Check your subscription key.": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "API-adgang nægtet (403). Kontrollér din abonnementsnøgle."
+          }
+        }
+      }
+    },
+    "Add": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tilføj"
+          }
+        }
+      }
+    },
+    "Add All Channels to Siri": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tilføj alle kanaler til Siri"
+          }
+        }
+      }
+    },
+    "Add to Siri": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tilføj til Siri"
+          }
+        }
+      }
+    },
+    "AirPlay": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AirPlay"
+          }
+        }
+      },
+      "shouldTranslate": false
+    },
+    "Available Channels": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tilgængelige kanaler"
+          }
+        }
+      }
+    },
+    "Cancel": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Annullér"
+          }
+        }
+      }
+    },
+    "Channel data not found (404). Try again later.": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kanaldata blev ikke fundet (404). Prøv igen senere."
+          }
+        }
+      }
+    },
+    "Channels and what's on now": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kanaler og hvad der sendes nu"
+          }
+        }
+      }
+    },
+    "Choose a district": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vælg et distrikt"
+          }
+        }
+      }
+    },
+    "Choose a variant": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vælg variant"
+          }
+        }
+      }
+    },
+    "Clear search": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ryd søgning"
+          }
+        }
+      }
+    },
+    "Configure Shortcut": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Konfigurer genvej"
+          }
+        }
+      }
+    },
+    "Configure Siri Shortcut": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Konfigurer Siri-genvej"
+          }
+        }
+      }
+    },
+    "Could not reach the server. Please check your connection.": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kunne ikke få forbindelse til serveren. Kontrollér din internetforbindelse."
+          }
+        }
+      }
+    },
+    "Create custom shortcuts in the Shortcuts app to automate your radio listening experience.": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Opret dine egne genveje i Genveje-appen, og automatisér din radiolytning."
+          }
+        }
+      }
+    },
+    "DR": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "DR"
+          }
+        }
+      },
+      "shouldTranslate": false
+    },
+    "DR did not return a schedule for %@.": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "DR returnerede ingen sendeplan for %@."
+          }
+        }
+      }
+    },
+    "DR server error (%lld). Try again later.": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Serverfejl hos DR (%lld). Prøv igen senere."
+          }
+        }
+      }
+    },
+    "Done": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Færdig"
+          }
+        }
+      }
+    },
+    "Ending now": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Slutter nu"
+          }
+        }
+      }
+    },
+    "Error loading channels": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kunne ikke indlæse kanaler"
+          }
+        }
+      }
+    },
+    "Failed to decode response": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Svaret kunne ikke afkodes"
+          }
+        }
+      }
+    },
+    "Home": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hjem"
+          }
+        }
+      }
+    },
+    "Invalid URL": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ugyldig URL"
+          }
+        }
+      }
+    },
+    "Invalid data received": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ugyldige data modtaget"
+          }
+        }
+      }
+    },
+    "LIVE": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "LIVE"
+          }
+        }
+      },
+      "shouldTranslate": false
+    },
+    "Live": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Live"
+          }
+        }
+      }
+    },
+    "Live Danish Radio": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dansk radio live"
+          }
+        }
+      }
+    },
+    "Live Now": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sender nu"
+          }
+        }
+      }
+    },
+    "Live radio programming": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Live radio"
+          }
+        }
+      }
+    },
+    "Loading channels...": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Indlæser kanaler …"
+          }
+        }
+      }
+    },
+    "Lyt": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lyt"
+          }
+        }
+      },
+      "shouldTranslate": false
+    },
+    "No Channel": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ingen kanal"
+          }
+        }
+      }
+    },
+    "No Channel Playing": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ingen kanal afspilles"
+          }
+        }
+      }
+    },
+    "No channels": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ingen kanaler"
+          }
+        }
+      }
+    },
+    "No channels available": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ingen kanaler tilgængelige"
+          }
+        }
+      }
+    },
+    "No internet connection": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ingen internetforbindelse"
+          }
+        }
+      }
+    },
+    "No program information": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ingen programoplysninger"
+          }
+        }
+      }
+    },
+    "No program information available": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ingen programoplysninger tilgængelige"
+          }
+        }
+      }
+    },
+    "No schedule": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ingen sendeplan"
+          }
+        }
+      }
+    },
+    "Not Playing": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Afspiller ikke"
+          }
+        }
+      }
+    },
+    "Nothing Playing": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Intet afspilles"
+          }
+        }
+      }
+    },
+    "Now Playing": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Afspiller nu"
+          }
+        }
+      }
+    },
+    "On air": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sender nu"
+          }
+        }
+      }
+    },
+    "Open Shortcuts App": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Åbn Genveje"
+          }
+        }
+      }
+    },
+    "Opens the player": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Åbner afspilleren"
+          }
+        }
+      }
+    },
+    "Pause": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pause"
+          }
+        }
+      },
+      "shouldTranslate": false
+    },
+    "Paused": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sat på pause"
+          }
+        }
+      }
+    },
+    "Play": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Afspil"
+          }
+        }
+      }
+    },
+    "Play %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Afspil %@"
+          }
+        }
+      }
+    },
+    "Playback Error": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Afspilningsfejl"
+          }
+        }
+      }
+    },
+    "Plays this channel": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Afspiller denne kanal"
+          }
+        }
+      }
+    },
+    "Programme information": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Programoplysninger"
+          }
+        }
+      }
+    },
+    "Programme progress": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Programforløb"
+          }
+        }
+      }
+    },
+    "Quick Actions": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hurtige handlinger"
+          }
+        }
+      }
+    },
+    "Radio": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Radio"
+          }
+        }
+      },
+      "shouldTranslate": false
+    },
+    "Retry": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prøv igen"
+          }
+        }
+      }
+    },
+    "Say \"Hey Siri, play %@\"": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sig \"Hey Siri, afspil %@\""
+          }
+        }
+      }
+    },
+    "Say \"Hey Siri, play [channel name]\" to start listening to your favorite DR radio channels.": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sig \"Hey Siri, afspil [kanalnavn]\" for at lytte til dine foretrukne DR-kanaler."
+          }
+        }
+      }
+    },
+    "Search": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Søg"
+          }
+        }
+      }
+    },
+    "Search channels...": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Søg efter kanaler …"
+          }
+        }
+      }
+    },
+    "Search radios": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Søg efter kanaler"
+          }
+        }
+      }
+    },
+    "Select a channel to start listening": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vælg en kanal for at begynde at lytte"
+          }
+        }
+      }
+    },
+    "Server error": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Serverfejl"
+          }
+        }
+      }
+    },
+    "Share": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Del"
+          }
+        }
+      }
+    },
+    "Shortcuts": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Genveje"
+          }
+        }
+      }
+    },
+    "Shortcuts App Integration": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Integration med Genveje"
+          }
+        }
+      }
+    },
+    "Siri & Shortcuts": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Siri og Genveje"
+          }
+        }
+      }
+    },
+    "Siri Shortcuts": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Siri-genveje"
+          }
+        }
+      }
+    },
+    "Skip back 30 seconds": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spol 30 sekunder tilbage"
+          }
+        }
+      }
+    },
+    "Skip forward": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spol frem"
+          }
+        }
+      }
+    },
+    "Tap play to start": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tryk på afspil for at starte"
+          }
+        }
+      }
+    },
+    "These shortcuts will be available in the Shortcuts app and can be triggered by Siri.": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Genvejene bliver tilgængelige i Genveje-appen og kan aktiveres med Siri."
+          }
+        }
+      }
+    },
+    "This will automatically start playing %@ when triggered.": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dette starter automatisk afspilning af %@, når genvejen aktiveres."
+          }
+        }
+      }
+    },
+    "Today's schedule": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dagens sendeplan"
+          }
+        }
+      }
+    },
+    "Too many requests. Please wait a moment and retry.": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "For mange forespørgsler. Vent et øjeblik, og prøv igen."
+          }
+        }
+      }
+    },
+    "Try refreshing to load channels": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prøv at opdatere for at hente kanaler"
+          }
+        }
+      }
+    },
+    "Unexpected server response (%lld).": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uventet svar fra serveren (%lld)."
+          }
+        }
+      }
+    },
+    "Voice Command": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Talekommando"
+          }
+        }
+      }
+    },
+    "Voice Commands": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Talekommandoer"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}
