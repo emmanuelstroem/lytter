@@ -11,13 +11,21 @@ import os
 
 // MARK: - Deep Link Handler
 class DeepLinkHandler: ObservableObject {
+    /// The URL scheme this app answers to. Must stay in step with `CFBundleURLSchemes`
+    /// in Info.plist; `DeepLinkTests` asserts that it does.
+    static let urlScheme = "lytter"
+
     @Published var targetChannel: DRChannel?
     @Published var shouldNavigateToChannel = false
     @Published var pendingChannelId: String?
     
     func handleDeepLink(_ url: URL) {
         Log.deepLink.debug("received \(url.absoluteString, privacy: .private)")
-        guard url.scheme == "lyt" || url.scheme == "lytter" else {
+        // Only the scheme Info.plist registers. "lyt" used to be accepted here too, which
+        // is why nobody noticed that the share sheet was emitting it: the handler was
+        // happy to take those URLs, but iOS never routed one to us, because an
+        // unregistered scheme is not delivered to anybody.
+        guard url.scheme == DeepLinkHandler.urlScheme else {
             Log.deepLink.warning("rejected URL with unknown scheme")
             return
         }
@@ -97,19 +105,20 @@ class DeepLinkHandler: ObservableObject {
 
 // MARK: - Deep Link URL Generator
 extension DeepLinkHandler {
-    /// Generates a deep link URL for a specific channel
-    /// - Parameter channel: The channel to create a deep link for
-    /// - Returns: A URL that will open the app and navigate to the channel
-    static func generateDeepLinkURL(for channel: DRChannel) -> URL? {
-        let urlString = "lyt:///channel/\(channel.id)"
-        return URL(string: urlString)
-    }
-    
-    /// Generates a deep link URL string for a specific channel
-    /// - Parameter channel: The channel to create a deep link for
-    /// - Returns: A URL string that will open the app and navigate to the channel
+    /// Builds the link shared from the player, e.g. `lytter:///channel/<id>`.
+    ///
+    /// Note the three slashes. The authority has to be empty, because `handleDeepLink`
+    /// reads `URLComponents.path`: in `lytter://channel/<id>` the parser takes `channel`
+    /// as the host and leaves `/<id>` as the path, so the link matches nothing and does
+    /// nothing. The Top Shelf extension's `lytter://radio/channel/<slug>` works for the
+    /// same reason in reverse — its `radio` host is dropped and the path is already
+    /// `/channel/<slug>`.
     static func generateDeepLinkString(for channel: DRChannel) -> String {
-        let urlString = "lyt:///channel/\(channel.id)"
-        return urlString
+        "\(urlScheme):///channel/\(channel.id)"
+    }
+
+    /// The same link as a `URL`.
+    static func generateDeepLinkURL(for channel: DRChannel) -> URL? {
+        URL(string: generateDeepLinkString(for: channel))
     }
 } 

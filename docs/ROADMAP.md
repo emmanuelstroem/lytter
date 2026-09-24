@@ -250,11 +250,21 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
       presentation destroyed its own state. `.id(playingChannel?.id)` on the accessory did
       the same on every channel change. The flag now lives in `SelectionState` and the
       sheet is presented from `ContentView`, above the `TabView`.
-- [ ] **F27. Shared deep links cannot open the app.** `DeepLinkHandler` generates
-      `lyt:///channel/<id>` for the share sheet, but `Info.plist` registers only the
-      `lytter` scheme, so iOS never routes those URLs anywhere — every shared link is
-      inert. The handler already accepts both schemes; either emit `lytter://` or register
-      `lyt` as well. Check the Top Shelf extension's links before choosing.
+- [x] ~~**F27. Shared deep links could not open the app.**~~ Done in #16. The share sheet
+      emitted `lyt:///channel/<id>` while `Info.plist` registered only `lytter`, so iOS
+      delivered those URLs to nobody and every shared link was inert. The generator now
+      emits the registered scheme. The handler used to accept `lyt` as well, which is why
+      this survived review — round-tripping a link through the app worked perfectly, and
+      only the system ever refused it; that arm is gone.
+      Checked Top Shelf first, as the entry asked: it already used `lytter://`, and its
+      `radio` authority is dropped by `URLComponents`, leaving the `/channel/<slug>` path
+      the handler wants. Left alone, and pinned by a test.
+      `lytterTests/DeepLinkTests.swift` asserts the generated scheme against the shipping
+      Info.plist, and both link shapes against the handler. Confirmed the tests fail when
+      the old generator is put back, rather than only passing against the fix.
+      Worth knowing for any future link: the empty authority is load-bearing.
+      `lytter://channel/<id>` parses `channel` as the host and matches nothing, failing
+      silently. There is a test for that too.
 - [ ] **S1. Get the API key out of source *before* there is one.**
       `DRAPIConfig.subscriptionKey` is a `static var` in `DRModels.swift` waiting for an
       Azure APIM key. If a key is ever assigned there it is committed to git and shipped in
