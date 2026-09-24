@@ -62,3 +62,14 @@ fastlane/report.xml
 fastlane/Preview.html
 fastlane/screenshots/**/*.png
 fastlane/test_output
+
+## Design sources
+#
+# Editable artwork belongs beside the repo, not in it: lytter.xcf was 32 MB, and because
+# the app target is a folder-synced group it was copied into the shipped bundle — 32 MB of
+# a 40 MB download that did nothing at runtime. It was purged from history; this keeps it
+# and its kind out. The file itself is kept beside the repo as
+# lytter-icon-source.xcf; see S13 in docs/ROADMAP.md.
+*.xcf
+*.psd
+*.sketch

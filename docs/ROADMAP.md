@@ -370,18 +370,28 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
       tracking and no collected data, plus the two required-reason APIs actually used:
       `UserDefaults` (`CA92.1`, last played channel) and file timestamps (`DDA9.1`,
       `ImageCacheService` evicting its own oldest cached artwork).
-- [ ] **S13. Purge the 32 MB `lytter.xcf` from git history.** `lytter/shared/icons/lytter.xcf`
-      is a GIMP source file; the `AppIcon.icon` Icon Composer sources supersede it. It is
-      the single largest object in the repo.
-
----
-
-## 7. Todo — Performance
-
-Ordered by expected impact. The top three are, together, most of the cold-launch cost.
-
-### P0 — measurable user-visible wins
-
+- [x] ~~**S13. Purge the 32 MB `lytter.xcf` from git history.**~~ Done. The entry
+      understated it: the file was not merely in history, it was being **copied into the
+      shipped app bundle on both platforms**, because the app target is a folder-synced
+      group and any non-source file in it is treated as a resource. 32 MB of a 40 MB iOS
+      download did nothing at runtime.
+      Removed with `git filter-repo` and force-pushed. One commit disappeared in the
+      rewrite — `3113a71 add GIMP icons file` touched only that file, so it was pruned as
+      empty; 70 commits became 69 and nothing else changed. The 13 merged branches were
+      deleted too, otherwise GitHub would have kept the old objects alive and a fresh clone
+      would still have pulled them.
+      Measured: app bundle 40 MB → **7.7 MB**; fresh clone 47 MB → **30 MB** (the blob
+      compresses to ~17 MB in the pack). Verified by cloning from scratch: no `.xcf` in any
+      object, 113 files at HEAD, both platforms build, 19/19 tests pass.
+      The file itself is **not lost** — it is at
+      `/Users/emmanuel/Developer/Github/emmanuelstroem/lytter-icon-source.xcf`, outside the
+      repo, and `.gitignore` now excludes `*.xcf`, `*.psd` and `*.sketch` so it cannot
+      drift back in.
+- [ ] **P17. The brand assets are the next-largest thing in history.** Five PNG blobs of
+      1–4.5 MB under `lytter/Assets.xcassets/Brand`, re-committed several times while the
+      icons were being iterated, are most of the 30 MB that remains. They are real shipped
+      assets, so the fix is not deletion — it is checking whether the tvOS layered images
+      need to be that large, and not re-committing regenerated variants.
 - [x] ~~**P1. Collapse to one `DRServiceManager`.**~~ Done in #5 — this entry was simply
       never ticked. Verified on current `main`: one live instance in `lytterApp`, and every
       other `DRServiceManager()` is inside a `#Preview`.
