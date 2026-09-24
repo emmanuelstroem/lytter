@@ -6,6 +6,7 @@
     //
 
 import Foundation
+import os
 
     // MARK: - iOS DR Network Service
 
@@ -27,7 +28,16 @@ class DRNetworkService {
     }
 
     // MARK: - Request builder
+    
+    /// Every outbound request is logged here. This is deliberately the single choke
+    /// point: it is what lets you confirm from the console that polling actually stops
+    /// when playback is paused, which nothing else in the app could show.
+    private func log(_ url: URL) {
+        Log.network.debug("GET \(url.path, privacy: .public)")
+    }
+    
     private func makeRequest(for url: URL) -> URLRequest {
+        log(url)
         var request = URLRequest(url: url)
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.setValue("lytter/1.0 tvOS", forHTTPHeaderField: "User-Agent")
@@ -62,10 +72,12 @@ class DRNetworkService {
                 return scheduleItems.map { $0.toEpisode() }
             } catch NetworkError.decodingError {
                 // Decoding errors are not transient — fail immediately
+                Log.network.error("decode failed for schedules/all/now")
                 throw NetworkError.decodingError
             } catch {
                 lastError = error
-                // Retry on network/server errors
+                Log.network.warning(
+                    "schedules/all/now attempt \(attempt + 1, privacy: .public) failed: \(error.localizedDescription, privacy: .public)")
             }
         }
 

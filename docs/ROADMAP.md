@@ -214,6 +214,12 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
       declares `squares: shared` / `circles: watchOS` and cannot supply tvOS brand assets,
       which now come from `Brand Assets.brandassets`. Likely fixed by excluding
       `AppIcon.icon` from the tvOS target; needs care not to disturb the iOS icon.
+- [ ] **F24. Three buttons in the iOS full player do nothing.** The ellipsis, AirPlay and
+      list buttons in `iOSFullPlayerSheet` had bodies consisting solely of a `print`.
+      Converted to `Log.playback.debug("… (unimplemented)")` in #13 so nothing reaches the
+      release console, but they are still dead controls on a shipping screen. Either
+      implement them or remove them — the working AirPlay control is the
+      `AVRoutePickerView` in the mini player.
 
 ---
 
@@ -236,12 +242,18 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
       lowered from `TVOS_DEPLOYMENT_TARGET = 26.0` to `17.6` to match the host app. Verified
       in the built product — both `lytter.app` and `TopShelfExtension.appex` now report
       `MinimumOSVersion 17.6`.
-- [ ] **S4. Replace `print()` with `os.Logger`.** 50+ call sites compiled into release
-      builds, including `DeepLinkHandler` printing full incoming URLs and channel IDs to the
-      device console. Use `Logger` with `privacy:` annotations, or strip in release.
+- [x] ~~**S4. Replace `print()` with `os.Logger`.**~~ Done in #13. Every live `print` is
+      gone; the eight that remain are inside `#Preview` and never ship. New `Log.swift`
+      declares categories under the `com.eopio.lytter` subsystem, and the Top Shelf
+      extension gets its own logger on the same subsystem since it cannot see the app's.
+      Values that come from outside the app, or that reveal what someone is listening to,
+      are marked `privacy: .private`; slugs and counts stay `.public` so the logs are
+      still useful.
 
-### P1
-
+      It also paid for itself immediately: a `Log.network.debug` on every outbound request
+      let me finally measure the P8 fix from #12, which I had been unable to verify —
+      45s playing gave 4 `indexpoints` requests, 60s paused gave **0**, and 40s after
+      resuming gave 4 again.
 - [ ] **S5. Validate deep links before acting on them.** `handleDeepLink` accepts any
       channel id from any URL and the views immediately call `playChannel`. Low impact (it
       only starts a public radio stream) but it should resolve against `availableChannels`

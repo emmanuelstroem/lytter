@@ -6,8 +6,15 @@
 //
 
 import Foundation
+import os
 
 #if os(tvOS)
+/// The extension is a separate target and cannot see the app's `Log`, so it declares its
+/// own. Same subsystem, so both show up together in a single `log stream`.
+enum TopShelfLog {
+    static let provider = Logger(subsystem: "com.eopio.lytter", category: "topshelf")
+}
+
 // MARK: - TopShelf API Configuration
 struct TopShelfAPIConfig {
     /// ⚠️ Must match `DRAPIConfig.apiVersion` in lytter/shared/model/DRModels.swift.
@@ -121,7 +128,8 @@ class TopShelfNetworkService {
             let scheduleItems = try decoder.decode([TopShelfScheduleItem].self, from: data)
             return scheduleItems.map { $0.toEpisode() }
         } catch {
-            print("⚠️ TopShelf: Decoding error: \(error)")
+            TopShelfLog.provider.error(
+                "decode failed: \(error.localizedDescription, privacy: .public)")
             throw TopShelfError.decodingError
         }
     }
