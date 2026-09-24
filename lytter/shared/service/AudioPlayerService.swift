@@ -418,15 +418,10 @@ class AudioPlayerService: NSObject, ObservableObject {
     }
     
     private func loadImageForCommandCenter(from url: URL, completion: @escaping (UIImage?) -> Void) {
-        URLSession.shared.dataTask(with: url) { data, response, error in
-            DispatchQueue.main.async {
-                if let data = data, let image = UIImage(data: data) {
-                    completion(image)
-                } else {
-                    completion(nil)
-                }
-            }
-        }.resume()
+        // Through the cache: this runs on every now-playing metadata update — each track
+        // change, each programme change — and it is almost always the same artwork the
+        // player screen is already showing.
+        ImageCacheService.shared.loadImage(from: url.absoluteString, completion: completion)
     }
     
     private func setDefaultCommandCenterArtwork(nowPlayingInfo: [String: Any]) {

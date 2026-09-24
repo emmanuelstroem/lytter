@@ -271,17 +271,14 @@ struct tvOSNowPlayingArtworkCard: View {
     }
 
     var body: some View {
-        AsyncImage(url: artworkURL) { phase in
-            switch phase {
-            case .success(let image):
-                image.resizable().aspectRatio(contentMode: .fill)
-            default:
-                ZStack {
-                    Color.white.opacity(0.08)
-                    Image(systemName: "dot.radiowaves.left.and.right")
-                        .font(.system(size: 72))
-                        .foregroundStyle(.white.opacity(0.3))
-                }
+        CachedAsyncImage(url: artworkURL) { image in
+            image.resizable().aspectRatio(contentMode: .fill)
+        } placeholder: {
+            ZStack {
+                Color.white.opacity(0.08)
+                Image(systemName: "dot.radiowaves.left.and.right")
+                    .font(.system(size: 72))
+                    .foregroundStyle(.white.opacity(0.3))
             }
         }
         .frame(width: 400, height: 400)
@@ -307,9 +304,10 @@ struct tvOSNowPlayingArtworkCard: View {
     }
 
     private func updatePillColors() async {
+        // Reuse the image the card above is already showing. This used to fetch the same
+        // artwork a second time over the network, purely to read a few pixels from it.
         guard let url = artworkURL,
-              let (data, _) = try? await URLSession.shared.data(from: url),
-              let uiImage = UIImage(data: data),
+              let uiImage = await ImageCacheService.shared.image(for: url.absoluteString),
               let cgImage = uiImage.cgImage else { return }
 
         // Sample the top-right region where the pill sits
@@ -510,17 +508,14 @@ struct tvOSNowPlayingInfoSheet: View {
 
             // Left: Program artwork with channel pill overlay
             ZStack(alignment: .topTrailing) {
-                AsyncImage(url: artworkURL) { phase in
-                    switch phase {
-                    case .success(let image):
-                        image.resizable().aspectRatio(contentMode: .fill)
-                    default:
-                        ZStack {
-                            Color.white.opacity(0.07)
-                            Image(systemName: "dot.radiowaves.left.and.right")
-                                .font(.system(size: 44))
-                                .foregroundStyle(.white.opacity(0.25))
-                        }
+                CachedAsyncImage(url: artworkURL) { image in
+                    image.resizable().aspectRatio(contentMode: .fill)
+                } placeholder: {
+                    ZStack {
+                        Color.white.opacity(0.07)
+                        Image(systemName: "dot.radiowaves.left.and.right")
+                            .font(.system(size: 44))
+                            .foregroundStyle(.white.opacity(0.25))
                     }
                 }
                 .frame(width: 340, height: 340)
