@@ -42,29 +42,38 @@ struct tvOSSearchView: View {
     )
 
     var body: some View {
-        NavigationStack {
-            ScrollView {
-                if results.isEmpty {
-                    ContentUnavailableView.search(text: query)
-                        .padding(.top, 120)
-                } else {
-                    LazyVGrid(columns: columns, spacing: 48) {
-                        ForEach(results) { group in
-                            tvOSShelfCard(
-                                group: group,
-                                serviceManager: serviceManager,
-                                onSelect: play
-                            )
+        // The whole stack is pushed down, not just its content. The search field is placed
+        // by the system at the top of the navigation stack, so insetting from the inside
+        // moved the results and left the field where it was — under the sidebar rail, which
+        // floats over the top-left corner and was covering the prompt.
+        VStack(spacing: 0) {
+            Color.clear.frame(height: 76)
+
+            NavigationStack {
+                ScrollView {
+                    if results.isEmpty {
+                        ContentUnavailableView.search(text: query)
+                            .padding(.top, 120)
+                    } else {
+                        LazyVGrid(columns: columns, spacing: 48) {
+                            ForEach(results) { group in
+                                tvOSShelfCard(
+                                    group: group,
+                                    serviceManager: serviceManager,
+                                    onSelect: play
+                                )
+                            }
                         }
+                        // Focus lifts a card; without room the grid clips it.
+                        .padding(.horizontal, 60)
+                        .padding(.vertical, 40)
                     }
-                    // Focus lifts a card; without room the grid clips it.
-                    .padding(.horizontal, 60)
-                    .padding(.vertical, 40)
-                }
             }
             .background(Color.black.ignoresSafeArea())
             .searchable(text: $query, prompt: Text("Channels, districts, programmes"))
+            }
         }
+        .background(Color.black.ignoresSafeArea())
         .onAppear {
             if serviceManager.availableChannels.isEmpty { serviceManager.loadChannels() }
         }

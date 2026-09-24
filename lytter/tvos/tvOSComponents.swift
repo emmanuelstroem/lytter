@@ -212,12 +212,17 @@ struct tvOSChannelCard: View {
         serviceManager.playingChannel?.name == channel.name
     }
 
+    /// The same anatomy as the iOS card: the station's name on a band of glass across the
+    /// foot of the artwork, and what is on it now beneath the card, on the background.
+    ///
+    /// Two lines of text under the artwork was the old arrangement, and it made a station
+    /// look like a different product on the television than it does on the phone. The band
+    /// also puts the name where the eye already is — on the image.
     var body: some View {
         let displayTitle = titleOverride
             ?? ((channel.district != nil) ? channel.name : channel.title)
 
-        VStack(alignment: .leading, spacing: 12) {
-            // Square artwork
+        VStack(alignment: .leading, spacing: 10) {
             CachedAsyncImage(url: artworkURL,
                              maxPixelSize: ImageCacheService.thumbnailMaxPixelSize) { image in
                 image
@@ -233,9 +238,10 @@ struct tvOSChannelCard: View {
             }
             .frame(width: 300, height: 300)
             .clipped()
-            .clipShape(RoundedRectangle(cornerRadius: 16))
+            .overlay(alignment: .bottom) { nameBand(displayTitle) }
+            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
             .overlay(
-                RoundedRectangle(cornerRadius: 16)
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
                     .stroke(.white.opacity(isFocused ? 0.85 : 0), lineWidth: 0.5)
             )
             .overlay(alignment: .topTrailing) {
@@ -247,21 +253,32 @@ struct tvOSChannelCard: View {
             .shadow(color: .white.opacity(isFocused ? 0.55 : 0), radius: 18, x: 0, y: 0)
             .animation(.spring(response: 0.28, dampingFraction: 0.72), value: isFocused)
 
-            // Channel name
-            Text(displayTitle)
-                .font(.system(size: 24, weight: .bold))
-                .foregroundStyle(.white)
-                .lineLimit(1)
-                .frame(width: 300, alignment: .leading)
-
-            // Currently playing program
-            Text(currentProgram?.cleanTitle() ?? "")
+            // Beneath the card, on the background, where it needs no scrim to be read.
+            //
+            // Inset by 6: the card button style rounds its own container, and text starting
+            // flush at x=0 had its first letter clipped by that corner — "Orientering" read
+            // as "rientering".
+            Text(currentProgram?.programmeName ?? "")
                 .font(.system(size: 18, weight: .regular))
                 .foregroundStyle(.gray)
                 .lineLimit(1)
+                .padding(.horizontal, 6)
                 .frame(width: 300, alignment: .leading)
                 .frame(minHeight: 22)
         }
+    }
+
+    private func nameBand(_ title: String) -> some View {
+        Text(title)
+            .font(.system(size: 26, weight: .bold))
+            .foregroundStyle(.primary)
+            .lineLimit(1)
+            .minimumScaleFactor(0.7)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background { CaptionBackdrop(fades: false) }
+            .captionOnArtwork()
     }
 }
 

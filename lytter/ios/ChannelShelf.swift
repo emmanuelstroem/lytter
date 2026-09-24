@@ -75,79 +75,10 @@ struct ChannelShelf: View {
     }
 }
 
-/// Backdrop for a caption sitting on artwork.
-///
-/// Liquid Glass on iOS 26, an `.ultraThinMaterial` below it — the same shape either way,
-/// so the layout does not shift across versions. Both refract what is behind them, which
-/// is the point: the card's artwork is arbitrary photography and plain text on it is
-/// unreadable often enough to matter.
-private struct CaptionBackdrop: View {
-
-    /// Whether the glass fades in over the artwork or meets it at a straight edge.
-    ///
-    /// The large card fades: its caption sits well inside the image, and a hard line across
-    /// the middle would cut the artwork in two. The small card does not — the band is one
-    /// line of text deep and sits on the very edge, where a straight edge reads as a label
-    /// laid on the artwork rather than as a seam through it.
-    let fades: Bool
-
-    var body: some View {
-        Group {
-            if fades { glass.mask(fade) } else { glass }
-        }
-        .allowsHitTesting(false)
-    }
-
-    /// Slow to start, then decisive. The frost stays out of the way over the upper part of
-    /// the card and only reaches full strength where the text actually sits, so the artwork
-    /// reads as itself rather than as something behind fog.
-    private var fade: LinearGradient {
-        LinearGradient(
-            stops: [
-                .init(color: .clear, location: 0),
-                .init(color: .black.opacity(0.18), location: 0.34),
-                .init(color: .black.opacity(0.55), location: 0.62),
-                .init(color: .black.opacity(0.92), location: 0.84),
-                .init(color: .black, location: 1)
-            ],
-            startPoint: .top,
-            endPoint: .bottom
-        )
-    }
-
-    /// `clear` rather than `regular`: it is the variant meant to sit on media, more
-    /// transparent and carrying its own dimming layer to keep whatever is on top legible.
-    /// Regular glass frosted the artwork more than it needed to.
-    @ViewBuilder
-    private var glass: some View {
-        if #available(iOS 26.0, *) {
-            Rectangle().fill(.clear).glassEffect(.clear.tint(.black.opacity(0.45)), in: .rect)
-        } else {
-            Rectangle().fill(.ultraThinMaterial)
-        }
-    }
-}
-
-private extension View {
-
-    /// Pins a caption that sits on artwork to the dark appearance.
-    ///
-    /// Glass has no automatic contrast against what it covers — `Glass` offers `regular`,
-    /// `clear`, `tint` and `interactive`, and none of them adapt the text. So in light mode
-    /// `.primary` resolved to black while the glass over a night photograph rendered dark,
-    /// and the station's name disappeared into its own backdrop.
-    ///
-    /// Forcing the appearance fixes both halves at once: the glass renders its dark variant
-    /// and `.primary` becomes white, so the caption is light-on-dark over any artwork in
-    /// either theme. It is what Apple Music does — text laid on album art is white there
-    /// whatever the system appearance. The card's own artwork is unaffected, and text
-    /// outside the artwork still follows the app's theme.
-    func captionOnArtwork() -> some View {
-        environment(\.colorScheme, .dark)
-    }
-}
-
 /// One card: square artwork, the station's name, and what is on it now.
+///
+/// The caption's backdrop lives in `shared/views` — tvOS builds its cards from the same
+/// piece, so the two platforms cannot drift apart.
 struct ChannelShelfCard: View {
     let group: GroupedChannel
     var style: ChannelShelfStyle = .standard
