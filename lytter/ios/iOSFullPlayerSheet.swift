@@ -16,7 +16,8 @@ struct iOSFullPlayerSheet: View {
     @State private var currentTime: Double = 0
     @State private var totalTime: Double = 100
     @State private var volume: Double = 0.7
-    @State private var showingDescriptionSheet: Bool = false // New state for description sheet
+    @State private var showingDescriptionSheet: Bool = false
+    @State private var showingScheduleSheet: Bool = false
     
     // Get the current playing channel from serviceManager
     private var currentChannel: DRChannel? {
@@ -110,15 +111,13 @@ struct iOSFullPlayerSheet: View {
                         // Bottom VStack - All other components
                         VStack(spacing: 30) {
                             // Info Component
+                            // The share control lives inside PlayerInfoView.
                             PlayerInfoView(
                                 title: infoTitle,
                                 subtitle: infoSubtitle,
                                 channel: currentChannel,
                                 serviceManager: serviceManager
-                            ) {
-                                // Unimplemented — this button currently does nothing.
-                                Log.playback.debug("full player: ellipsis tapped (unimplemented)")
-                            }
+                            )
                             
                             // Progress Bar with centered LIVE text and transparency fade
                             VStack(spacing: 8) {
@@ -185,14 +184,8 @@ struct iOSFullPlayerSheet: View {
                                 onQuoteTap: {
                                     showingDescriptionSheet = true
                                 },
-                                onAirPlayTap: {
-                                    // Unimplemented — the working AirPlay control is the
-                                    // AVRoutePickerView in the mini player.
-                                    Log.playback.debug("full player: AirPlay tapped (unimplemented)")
-                                },
                                 onListTap: {
-                                    // Unimplemented.
-                                    Log.playback.debug("full player: list tapped (unimplemented)")
+                                    showingScheduleSheet = true
                                 }
                             )
                         }
@@ -222,6 +215,12 @@ struct iOSFullPlayerSheet: View {
                     .frame(width: 36, height: 5)
                     .padding(.top, 8)
             }
+            .sheet(isPresented: $showingScheduleSheet) {
+                if let currentChannel {
+                    iOSChannelScheduleSheet(channel: currentChannel,
+                                            serviceManager: serviceManager)
+                }
+            }
             .sheet(isPresented: $showingDescriptionSheet) {
                 if let currentChannel = currentChannel {
                     iOSProgramDescriptionSheet(
@@ -229,76 +228,87 @@ struct iOSFullPlayerSheet: View {
                         currentProgram: serviceManager.getCurrentProgram(for: currentChannel),
                         programDescription: programDescription
                     )
-                    .presentationDetents([.medium])
-                    
+                    .presentationDetents([.medium, .large])
                 }
             }
         }
     }
 }
 
+/// Programme details, presented from the full player.
+///
+/// Typography follows the HIG's text-style hierarchy rather than fixed sizes, so it
+/// scales with Dynamic Type. Metadata uses `Label`, which pairs a symbol with its text
+/// and keeps the two optically matched — the previous version placed a default-size
+/// `Image` beside body text, and the symbols read as oversized next to it.
 struct iOSProgramDescriptionSheet: View {
     let channel: DRChannel?
     let currentProgram: DREpisode?
     let programDescription: String
     @Environment(\.dismiss) private var dismiss
-    
-    private var navigationTitle: String {
-        var title = channel?.title ?? "Unknown Channel"
-        if let currentProgram = currentProgram {
-            title += " - \(currentProgram.cleanTitle())"
-        }
-        return title
+
+    private var airingTime: String? {
+        guard let start = currentProgram?.startDate, let end = currentProgram?.endDate
+        else { return nil }
+        return "\(start.formatted(date: .omitted, time: .shortened))–\(end.formatted(date: .omitted, time: .shortened))"
     }
-    
+
+    private var durationText: String? {
+        guard let duration = currentProgram?.duration, duration > 0 else { return nil }
+        // Localised by the formatter rather than hand-built with "min"/"mins".
+        return Duration.seconds(duration)
+            .formatted(.units(allowed: [.hours, .minutes], width: .abbreviated))
+    }
+
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: 20) {
-                    // Description
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text(programDescription)
-                            .font(.body)
-                            .foregroundColor(.secondary)
-                            .lineLimit(nil)
-                            .fixedSize(horizontal: false, vertical: true)
+                VStack(alignment: .leading, spacing: 16) {
+                    if let title = currentProgram?.cleanTitle(), !title.isEmpty {
+                        Text(title)
+                            .font(.title3.weight(.semibold))
                     }
-                    .padding(.horizontal, 20)
-                    
-                    // Additional details
-                    if let currentProgram = currentProgram {
-                        VStack(alignment: .leading, spacing: 12) {
-                            VStack(alignment: .leading, spacing: 8) {
-                                let duration = currentProgram.duration
-                                HStack {
-                                    Image(systemName: "clock")
-                                        .foregroundColor(.secondary)
-                                    Text("\(Int(duration / 60)) min\(Int(duration / 60) > 1 ? "s" : "")")
-                                        .foregroundColor(.secondary)
-                                }
-                                
-                                if let category = currentProgram.categories?.first {
-                                    HStack {
-                                        Image(systemName: "tag")
-                                            .foregroundColor(.secondary)
-                                        Text(category)
-                                            .foregroundColor(.secondary)
-                                    }
-                                }
+
+                    if let airingTime {
+                        Text(airingTime)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+
+                    // Duration and categories. `.imageScale(.small)` is what brings the
+                    // symbols down to the weight of the text beside them.
+                    let categories = currentProgram?.categories ?? []
+                    if durationText != nil || !categories.isEmpty {
+                        HStack(spacing: 16) {
+                            if let durationText {
+                                Label(durationText, systemImage: "clock")
+                            }
+                            if let category = categories.first {
+                                Label(category, systemImage: "tag")
                             }
                         }
-                        .padding(.horizontal, 20)
+                        .font(.subheadline)
+                        .imageScale(.small)
+                        .foregroundStyle(.secondary)
                     }
+
+                    Divider()
+
+                    // .primary, not .secondary. As secondary this was legible in light
+                    // mode and close to invisible against the sheet in dark mode.
+                    Text(programDescription)
+                        .font(.body)
+                        .foregroundStyle(.primary)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
-                .padding(.vertical, 20)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(20)
             }
-            .navigationTitle(navigationTitle)
+            .navigationTitle(channel?.title ?? "")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
-                        dismiss()
-                    }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") { dismiss() }
                 }
             }
         }
