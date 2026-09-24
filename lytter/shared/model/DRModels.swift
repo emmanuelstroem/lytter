@@ -912,11 +912,10 @@ class DRServiceManager: ObservableObject {
     
     // MARK: - Image Preloading
     
-    /// Preloads all images from episodes to improve performance
-    /// - Parameter schedules: Array of episodes containing image URLs
+    /// Warms the artwork the channel lists show. Only the primary image per episode, at
+    /// thumbnail size, four downloads at a time — see `preloadPrimaryImages`.
     private func preloadChannelImages(from schedules: [DREpisode]) async {
-        // Use priority-based preloading for optimal performance
-        imageCache.preloadImagesWithPriority(from: schedules)
+        imageCache.preloadPrimaryImages(from: schedules)
     }
     
     /// Returns image cache statistics

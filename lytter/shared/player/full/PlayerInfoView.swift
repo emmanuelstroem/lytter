@@ -164,13 +164,10 @@ struct PlayerInfoView: View {
     private func loadShareImage() {
         guard let artworkURL = channelArtworkURL else { return }
         
-        URLSession.shared.dataTask(with: artworkURL) { data, response, error in
-            if let data = data, let image = UIImage(data: data) {
-                DispatchQueue.main.async {
-                    self.shareImage = image
-                }
-            }
-        }.resume()
+        ImageCacheService.shared.loadImage(from: artworkURL.absoluteString) { image in
+            guard let image else { return }
+            self.shareImage = image
+        }
     }
 }
 
