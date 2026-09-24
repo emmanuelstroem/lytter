@@ -125,6 +125,25 @@ private struct CaptionBackdrop: View {
     }
 }
 
+private extension View {
+
+    /// Pins a caption that sits on artwork to the dark appearance.
+    ///
+    /// Glass has no automatic contrast against what it covers — `Glass` offers `regular`,
+    /// `clear`, `tint` and `interactive`, and none of them adapt the text. So in light mode
+    /// `.primary` resolved to black while the glass over a night photograph rendered dark,
+    /// and the station's name disappeared into its own backdrop.
+    ///
+    /// Forcing the appearance fixes both halves at once: the glass renders its dark variant
+    /// and `.primary` becomes white, so the caption is light-on-dark over any artwork in
+    /// either theme. It is what Apple Music does — text laid on album art is white there
+    /// whatever the system appearance. The card's own artwork is unaffected, and text
+    /// outside the artwork still follows the app's theme.
+    func captionOnArtwork() -> some View {
+        environment(\.colorScheme, .dark)
+    }
+}
+
 /// One card: square artwork, the station's name, and what is on it now.
 struct ChannelShelfCard: View {
     let group: GroupedChannel
@@ -176,7 +195,7 @@ struct ChannelShelfCard: View {
     private var featuredCaption: some View {
         VStack(alignment: .leading, spacing: 1) {
             Text(group.name)
-                .font(.title2.weight(.bold))
+                .font(.title.weight(.bold))
                 .foregroundStyle(.primary)
                 .lineLimit(1)
                 // Shrinks rather than truncates. The station is the thing being chosen —
@@ -197,6 +216,7 @@ struct ChannelShelfCard: View {
             CaptionBackdrop(fades: true)
                 .frame(height: style.captionFadeHeight)
         }
+        .captionOnArtwork()
     }
 
     /// The small card's caption: the station's name alone, on a band of glass.
@@ -206,7 +226,7 @@ struct ChannelShelfCard: View {
     /// and can simply be read.
     private var nameBand: some View {
         Text(group.name)
-            .font(.title3.weight(.semibold))
+            .font(.title2.weight(.bold))
             .foregroundStyle(.primary)
             .lineLimit(1)
             .minimumScaleFactor(0.7)
@@ -214,6 +234,7 @@ struct ChannelShelfCard: View {
             .padding(.vertical, 7)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background { CaptionBackdrop(fades: false) }
+            .captionOnArtwork()
     }
 
     private var featuredCard: some View {
