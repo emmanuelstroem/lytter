@@ -8,9 +8,8 @@ import SwiftUI
 #if os(tvOS)
 /// A pop-over list of choices, presented over whatever is on screen.
 ///
-/// Two callers: the district picker on a shelf card, and the app's own navigation, which
-/// replaced the tab bar. Both want the same thing — a control that says what it is, and a
-/// panel of alternatives when it is clicked.
+/// Used by the district picker on a shelf card: a control that shows the station, and a
+/// panel of its regions when clicked. Navigation is the system sidebar, not this.
 ///
 /// Presented as a `fullScreenCover` rather than laid out in a `ZStack` beside the trigger.
 /// Beside the trigger it centred on *the trigger*, so a control in the top-left corner put
@@ -21,9 +20,9 @@ struct tvOSVariantMenu<Label: View, Item: Identifiable & Hashable>: View {
     let itemTitle: (Item) -> String
     let onSelect: (Item) -> Void
 
-    /// Heading on the panel. Defaulted because this was written for one caller and had
-    /// none; it now carries the app's navigation as well as its district picker, and
-    /// "Choose a variant" is the wrong thing to say about either.
+    /// Heading on the panel. Defaulted because this was written before it had any caller
+    /// at all, and "Choose a variant" is not what a listener is doing when they pick
+    /// between København and Bornholm.
     var panelTitle: String = String(localized: "Choose a variant")
 
     @State private var isPresented = false

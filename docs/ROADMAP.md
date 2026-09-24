@@ -327,11 +327,12 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
       nothing when empty, so a first launch shows only the catalogue rather than two empty
       headings. The grid and its three views (`FavouritesSection`,
       `BroadcasterChannelsSection`, `GroupedChannelCard`) are gone.
-      *tvOS done too* — and it went further than adding two rows. The tab bar is gone: the
-      Music app on Apple TV does not spend a permanent strip of screen on navigation, so
-      Home fills it and one control says where you are and pops over the rest. The shelves
-      are the shared `GroupedChannel`, and the district rule from #30 carries over, so
-      picking a region on Apple TV is the same bargain as on the phone.
+      *tvOS done too* — and it went further than adding two rows. The top tab bar is gone;
+      navigation is the system sidebar the TV and Music apps use, which sits at the left
+      edge and slides out over dimmed content when focus reaches it. That is
+      `.tabViewStyle(.sidebarAdaptable)`, tvOS 18 and up, with the old tab bar kept below
+      it. The shelves are the shared `GroupedChannel`, and the district rule from #30
+      carries over, so picking a region on Apple TV is the same bargain as on the phone.
       **Remaining: macOS**, which has no UI at all (F20).
       Still true, and worth repeating: other broadcasters do not exist. The shelves are
       broadcaster-shaped but DR is the only source, and a second one is a data change.

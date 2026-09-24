@@ -8,13 +8,14 @@ import SwiftUI
 #if os(tvOS)
 /// Where the app opens on Apple TV.
 ///
-/// There is no tab bar. The Music app on tvOS does not spend a permanent strip of the
-/// screen on navigation, and neither does this: Home fills the screen, and the one control
-/// at the top says where you are and pops over the places you can go.
+/// Navigation is the system's sidebar — the one the TV and Music apps use, which sits at the
+/// left edge and slides out over dimmed content when focus reaches it.
+/// `.tabViewStyle(.sidebarAdaptable)` is exactly that, and it arrived in tvOS 18; below that
+/// a plain `TabView` still gives the top tab bar this screen had before.
 ///
 /// Home itself is the same sectioned layout as iOS — Favourites, Recently Played, then one
-/// shelf per broadcaster — built from the shared `GroupedChannel`, so the two platforms
-/// agree on what a station is rather than each deciding separately.
+/// shelf per broadcaster — built from the shared `GroupedChannel`, so the platforms agree on
+/// what a station is rather than each deciding separately.
 struct tvOSHomeView: View {
     @ObservedObject var serviceManager: DRServiceManager
     @ObservedObject var selectionState: SelectionState
@@ -24,24 +25,32 @@ struct tvOSHomeView: View {
 
     var body: some View {
         Group {
-            if section == .nowPlaying {
-                // Full-bleed, with no switcher over it: the artwork is the screen. The
-                // remote's Menu button is the way back, which is where a tvOS viewer
-                // already reaches for it.
-                tvOSNowPlayingView(serviceManager: serviceManager)
-                    .onExitCommand { section = .home }
-            } else {
-                VStack(alignment: .leading, spacing: 0) {
-                    sectionSwitcher
-                        .padding(.horizontal, 60)
-                        .padding(.top, 40)
-                        .padding(.bottom, 8)
-
-                    sectionContent
+            if #available(tvOS 18.0, *) {
+                TabView(selection: $section) {
+                    Tab("Home", systemImage: "house", value: tvOSSection.home) {
+                        shelves
+                    }
+                    Tab("Radio", systemImage: "antenna.radiowaves.left.and.right",
+                        value: tvOSSection.radio) {
+                        tvOSRadioView(serviceManager: serviceManager,
+                                      selectionState: selectionState)
+                    }
+                    Tab("Now Playing", systemImage: "play.circle",
+                        value: tvOSSection.nowPlaying) {
+                        tvOSNowPlayingView(serviceManager: serviceManager)
+                    }
+                    Tab("Search", systemImage: "magnifyingglass", value: tvOSSection.search) {
+                        tvOSSearchView(serviceManager: serviceManager,
+                                       selectionState: selectionState)
+                    }
                 }
+                // No `.tabViewSidebarHeader` — the app name above the list would suit it,
+                // but that modifier is tvOS 27 and this ships to 17.6.
+                .tabViewStyle(.sidebarAdaptable)
+            } else {
+                legacyTabs
             }
         }
-        .background(Color.black.ignoresSafeArea())
         .environmentObject(serviceManager)
         .environmentObject(selectionState)
         .onChange(of: deepLinkHandler.shouldNavigateToChannel) { _, shouldNavigate in
@@ -51,44 +60,26 @@ struct tvOSHomeView: View {
         }
     }
 
-    /// The only piece of chrome: what you are looking at, and a way to the rest.
-    private var sectionSwitcher: some View {
-        tvOSVariantMenu(
-            items: tvOSSection.allCases,
-            label: {
-                HStack(spacing: 14) {
-                    Image(systemName: section.systemImage)
-                        .font(.system(size: 28, weight: .semibold))
-                    Text(section.title)
-                        .font(.system(size: 34, weight: .bold))
-                    Image(systemName: "chevron.down")
-                        .font(.system(size: 22, weight: .bold))
-                        .foregroundStyle(.white.opacity(0.6))
-                }
-                .foregroundStyle(.white)
-                .padding(.horizontal, 28)
-                .padding(.vertical, 14)
-            },
-            itemTitle: \.title,
-            onSelect: { section = $0 },
-            panelTitle: String(localized: "Go to")
-        )
-        .fixedSize()
-    }
-
-    @ViewBuilder
-    private var sectionContent: some View {
-        switch section {
-        case .home:
+    /// tvOS 17 has no sidebar style, so it keeps the tab bar it always had.
+    private var legacyTabs: some View {
+        TabView(selection: $section) {
             shelves
-        case .radio:
+                .tabItem { Label("Home", systemImage: "house") }
+                .tag(tvOSSection.home)
+
             tvOSRadioView(serviceManager: serviceManager, selectionState: selectionState)
-        case .search:
+                .tabItem { Label("Radio", systemImage: "antenna.radiowaves.left.and.right") }
+                .tag(tvOSSection.radio)
+
+            tvOSNowPlayingView(serviceManager: serviceManager)
+                .tabItem { Label("Now Playing", systemImage: "play.circle") }
+                .tag(tvOSSection.nowPlaying)
+
             tvOSSearchView(serviceManager: serviceManager, selectionState: selectionState)
-        case .nowPlaying:
-            // Handled above, full-screen.
-            EmptyView()
+                .tabItem { Label("Search", systemImage: "magnifyingglass") }
+                .tag(tvOSSection.search)
         }
+        .tint(.white)
     }
 
     private var shelves: some View {
@@ -119,8 +110,9 @@ struct tvOSHomeView: View {
                     )
                 }
             }
-            .padding(.vertical, 24)
+            .padding(.vertical, 32)
         }
+        .background(Color.black.ignoresSafeArea())
     }
 
     /// Wraps plain channels as single-channel groups, so the shelf takes one type.
@@ -144,7 +136,7 @@ struct tvOSHomeView: View {
     }
 }
 
-/// Where the app can go. Was a tab bar; now it is a list in a pop-over.
+/// The app's top-level destinations, and the sidebar's selection.
 enum tvOSSection: String, CaseIterable, Identifiable, Hashable {
     case home
     case radio
@@ -152,23 +144,5 @@ enum tvOSSection: String, CaseIterable, Identifiable, Hashable {
     case search
 
     var id: String { rawValue }
-
-    var title: String {
-        switch self {
-        case .home: return String(localized: "Home")
-        case .radio: return String(localized: "Radio")
-        case .nowPlaying: return String(localized: "Now Playing")
-        case .search: return String(localized: "Search")
-        }
-    }
-
-    var systemImage: String {
-        switch self {
-        case .home: return "house"
-        case .radio: return "antenna.radiowaves.left.and.right"
-        case .nowPlaying: return "play.circle"
-        case .search: return "magnifyingglass"
-        }
-    }
 }
 #endif
