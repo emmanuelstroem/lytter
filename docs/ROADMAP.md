@@ -137,7 +137,13 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
 
 ### P0 — blocks release
 
-- [ ] **F1. Implement iOS search.** Port `tvOSSearchView`'s filter logic behind
+- [x] ~~**F1. Implement iOS search.**~~ Done in #18. The tab shipped as "Search
+      functionality coming soon...". It now searches channel names, districts, slugs *and
+      what is on air* — "debat" finds P1 while P1 Debat is running, which the Radio tab's
+      filter could not do. `role: .search` was already declared, so `.searchable` gets the
+      system presentation. Home, Radio and Search now share one `GroupedChannel.grouped`
+      rather than three copies.
+      Superseded note, kept for history — the original entry read: Port `tvOSSearchView`'s filter logic behind
       `.searchable`. Replace the `"coming soon"` stub in `lytter/ios/SearchView.swift`.
 - [x] ~~**F2. Fill in the tvOS Brand Assets.**~~ Done in #8, which grew to cover every
       platform. All 27 images are rendered by `Tools/RenderBrandAssets.swift`, which draws
@@ -158,8 +164,12 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
       `ModelContainer`, the `"Starting app..."` gate and its error screen are gone, along
       with `@Query` / `@Environment(\.modelContext)` in `ContentView`. Nothing in the app
       read any of it, yet it stood between launch and the first frame.
-- [ ] **F6. Delete or wire up `ChannelView.swift`.** A complete iOS screen referenced by
-      nothing.
+- [x] ~~**F6. Delete or wire up `ChannelView.swift`.**~~ Done in #18 — deleted. Note for
+      anyone doing the same elsewhere: it was *not* the pure orphan it looked like.
+      `ChannelView` and `ChannelCard` were referenced by nothing, but `SearchBar` in the
+      same file is used by the Radio tab, and the project carried a platform filter for the
+      path — so removing the file broke the build twice over. `SearchBar` now has its own
+      file.
 - [ ] **F6b. Stop deriving channel identity from the display title.** `DRChannel.name` /
       `.district` split the title on the first space. Checked against the live v5 payload
       (25 channels, 2026-09-23): every channel parses correctly today — `P6` and `P8` have
@@ -171,6 +181,15 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
 
 ### P1 — quality of the core experience
 
+- [x] ~~**F29. The full player's schedule repeated the same programme.**~~ Done in #18.
+      Reported from use: P1 showed "Debat: Skattelettelser eller velfærd?" three times, all
+      at 12.15, each with its own "On air" badge. DR's `id` is an *episode* URN and a
+      channel airs one episode several times a day — on 2026-09-24 P1 ran
+      `…:episode:6a01c544` at 10:15, 16:05 and 17:03, giving 15 broadcasts and 10 distinct
+      ids. `DREpisode` is `Identifiable` on that id, so `ForEach` saw duplicate identities
+      and rendered the first match for each repeat. Rows key off `broadcastID` (channel +
+      start time) now. The episode id is untouched — it is correct for what it names, and
+      on-demand playback will want it.
 - [ ] **F7. Favourites.** Pin channels; surface them first on Home and on the tvOS shelf.
 - [ ] **F8. Recently played.** More than one entry; the data is already in `UserDefaults`.
 - [ ] **F9. Sleep timer.** Fade out and pause after 15/30/45/60 min.
@@ -315,7 +334,10 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
       is keyed by URL alone, since it stores the original bytes.
 - [ ] **S8. Harden ATS explicitly.** All endpoints are HTTPS today, but set
       `NSAllowsArbitraryLoads = false` explicitly and consider pinning `api.dr.dk`.
-- [ ] **S9. Remove the force-unwrapped URLs.** `URL(string:)!` in `DRNetworkService`
+- [x] ~~**S9. Remove the force-unwrapped URLs.**~~ Done in #18. There were four, not one,
+      and two of them interpolate a channel slug that comes from the API — a slug with a
+      space would have crashed the app rather than failing a request. Those percent-encode
+      and throw `invalidURL` now. Original entry: `URL(string:)!` in `DRNetworkService`
       (×3), `TopShelfNetworkService`, plus `.first!` on grouped-channel arrays in `HomeView`
       and `iOSRadioView`, and `.first!` on the documents directory. Each is a crash waiting
       for an edge case.
@@ -414,9 +436,13 @@ Ordered by expected impact. The top three are, together, most of the cold-launch
 - [ ] **P14. Share the cache with the Top Shelf extension** via the already-declared
       `group.com.eopio.lytter` app group, so the extension stops making its own cold network
       call on every Top Shelf refresh.
-- [ ] **P15. Make channel ordering deterministic.** `Array(Set(...))` (in `loadChannels`,
-      `loadDiskCache` and `Array.uniqued()`) produces unordered output; it happens to be
-      sorted afterwards in some paths and not others.
+- [x] ~~**P15. Make channel ordering deterministic.**~~ Done in #18, and smaller than
+      recorded: `loadChannels` and `loadDiskCache` both already sort by title afterwards.
+      The one that actually surfaced was `Array.uniqued()`, which was `Array(Set(self))` —
+      so the district list under P4 and P5 came out in a different order on every launch.
+      It is order-preserving now. `GroupedChannel.init` also sorts, since it takes its id
+      and name from `channels.first` and `Dictionary(grouping:)` does not define that
+      order.
 - [ ] **P16. Move disk-cache encoding off the hot path.** `DRLocalCache.save` JSON-encodes
       the entire schedule array after every successful fetch. Debounce it, and write via a
       background-priority task.
