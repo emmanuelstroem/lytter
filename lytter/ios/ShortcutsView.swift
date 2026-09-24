@@ -21,7 +21,7 @@ struct ShortcutsView: View {
     @State private var selectedChannel: DRChannel?
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             List {
                 Section(header: Text("Siri Shortcuts")) {
                     VStack(alignment: .leading, spacing: 12) {
@@ -174,7 +174,7 @@ struct ShortcutConfigurationView: View {
     @EnvironmentObject var siriShortcutsService: SiriShortcutsService
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             VStack(spacing: 20) {
                 // Channel info
                 VStack(spacing: 16) {

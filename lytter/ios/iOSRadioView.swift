@@ -24,7 +24,7 @@ struct iOSRadioView: View {
     }
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ZStack {
                 AppBackground()
                 

@@ -78,111 +78,110 @@ struct iOSFullPlayerSheet: View {
     }
     
     var body: some View {
-        NavigationView {
-            ZStack {
-                AppBackground()
-                
-                if let currentChannel = currentChannel {
-                    VStack(spacing: 0) {
-                        // Top VStack - Artwork Component
-                        VStack {
-                            PlayerArtworkView(
-                                channel: currentChannel,
-                                currentProgram: serviceManager.getCurrentProgram(for: currentChannel),
-                                channelColor: channelColor,
-                                channelIcon: channelIcon
-                            )
-                        }
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        
-                        // Bottom VStack - All other components
-                        VStack(spacing: 30) {
-                            // Info Component
-                            // The share control lives inside PlayerInfoView.
-                            PlayerInfoView(
-                                title: infoTitle,
-                                subtitle: infoSubtitle,
-                                channel: currentChannel,
-                                serviceManager: serviceManager
-                            )
-                            
-                            PlayerProgressView(
-                                programme: serviceManager.getCurrentProgram(for: currentChannel)
-                            )
-                            .padding(.horizontal, 20)
-                            
-                            Spacer()
-                            
-                            // Controls Component
-                            //
-                            // No skip buttons: these are live ICY streams with no
-                            // seekable range, so back-30 and forward did nothing at all.
-                            // The same buttons were removed from the lock screen and
-                            // Control Centre for the same reason.
-                            PlayerControlsView(
-                                isPlaying: serviceManager.isPlaying,
-                                showBackwardButton: false,
-                                showForwardButton: false,
-                                onPlayPauseTap: {
-                                    if let playingChannel = serviceManager.playingChannel {
-                                        serviceManager.togglePlayback(for: playingChannel)
-                                    }
-                                }
-                            )
-                            
-                            Spacer()
-                            
-                            // Actions Component
-                            PlayerActionsView(
-                                onQuoteTap: {
-                                    showingDescriptionSheet = true
-                                },
-                                onListTap: {
-                                    showingScheduleSheet = true
-                                }
-                            )
-                        }
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        // No navigation container. This is a sheet with no title, no toolbar and
+        // nothing to navigate to; NavigationView gave it an empty inline bar, and
+        // navigationBarBackButtonHidden hid a back button that could never exist.
+        ZStack {
+            AppBackground()
+            
+            if let currentChannel = currentChannel {
+                VStack(spacing: 0) {
+                    // Top VStack - Artwork Component
+                    VStack {
+                        PlayerArtworkView(
+                            channel: currentChannel,
+                            currentProgram: serviceManager.getCurrentProgram(for: currentChannel),
+                            channelColor: channelColor,
+                            channelIcon: channelIcon
+                        )
                     }
-                    .padding(.top, 40)
-                } else {
-                    // No channel playing
-                    VStack(spacing: 20) {
-                        Image(systemName: "antenna.radiowaves.left.and.right")
-                            .font(.system(size: 64, weight: .medium))
-                            .foregroundStyle(Color.secondary)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    
+                    // Bottom VStack - All other components
+                    VStack(spacing: 30) {
+                        // Info Component
+                        // The share control lives inside PlayerInfoView.
+                        PlayerInfoView(
+                            title: infoTitle,
+                            subtitle: infoSubtitle,
+                            channel: currentChannel,
+                            serviceManager: serviceManager
+                        )
                         
-                        Text("No Channel Playing")
-                            .font(.title2)
-                            .fontWeight(.bold)
-                            .foregroundStyle(Color.secondary)
+                        PlayerProgressView(
+                            programme: serviceManager.getCurrentProgram(for: currentChannel)
+                        )
+                        .padding(.horizontal, 20)
+                        
+                        Spacer()
+                        
+                        // Controls Component
+                        //
+                        // No skip buttons: these are live ICY streams with no
+                        // seekable range, so back-30 and forward did nothing at all.
+                        // The same buttons were removed from the lock screen and
+                        // Control Centre for the same reason.
+                        PlayerControlsView(
+                            isPlaying: serviceManager.isPlaying,
+                            showBackwardButton: false,
+                            showForwardButton: false,
+                            onPlayPauseTap: {
+                                if let playingChannel = serviceManager.playingChannel {
+                                    serviceManager.togglePlayback(for: playingChannel)
+                                }
+                            }
+                        )
+                        
+                        Spacer()
+                        
+                        // Actions Component
+                        PlayerActionsView(
+                            onQuoteTap: {
+                                showingDescriptionSheet = true
+                            },
+                            onListTap: {
+                                showingScheduleSheet = true
+                            }
+                        )
                     }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
+                .padding(.top, 40)
+            } else {
+                // No channel playing
+                VStack(spacing: 20) {
+                    Image(systemName: "antenna.radiowaves.left.and.right")
+                        .font(.system(size: 64, weight: .medium))
+                        .foregroundStyle(Color.secondary)
+                    
+                    Text("No Channel Playing")
+                        .font(.title2)
+                        .fontWeight(.bold)
+                        .foregroundStyle(Color.secondary)
                 }
             }
-            .navigationBarTitleDisplayMode(.inline)
-            .navigationBarBackButtonHidden(true)
-            .overlay(alignment: .top) {
-                // Drag indicator
-                RoundedRectangle(cornerRadius: 2.5)
-                    .fill(Color.secondary.opacity(0.6))
-                    .frame(width: 36, height: 5)
-                    .padding(.top, 8)
+        }
+        .overlay(alignment: .top) {
+            // Drag indicator
+            RoundedRectangle(cornerRadius: 2.5)
+                .fill(Color.secondary.opacity(0.6))
+                .frame(width: 36, height: 5)
+                .padding(.top, 8)
+        }
+        .sheet(isPresented: $showingScheduleSheet) {
+            if let currentChannel {
+                iOSChannelScheduleSheet(channel: currentChannel,
+                                        serviceManager: serviceManager)
             }
-            .sheet(isPresented: $showingScheduleSheet) {
-                if let currentChannel {
-                    iOSChannelScheduleSheet(channel: currentChannel,
-                                            serviceManager: serviceManager)
-                }
-            }
-            .sheet(isPresented: $showingDescriptionSheet) {
-                if let currentChannel = currentChannel {
-                    iOSProgramDescriptionSheet(
-                        channel: currentChannel,
-                        currentProgram: serviceManager.getCurrentProgram(for: currentChannel),
-                        programDescription: programDescription
-                    )
-                    .presentationDetents([.medium, .large])
-                }
+        }
+        .sheet(isPresented: $showingDescriptionSheet) {
+            if let currentChannel = currentChannel {
+                iOSProgramDescriptionSheet(
+                    channel: currentChannel,
+                    currentProgram: serviceManager.getCurrentProgram(for: currentChannel),
+                    programDescription: programDescription
+                )
+                .presentationDetents([.medium, .large])
             }
         }
     }

@@ -14,46 +14,47 @@ struct HomeView: View {
     @ObservedObject var selectionState: SelectionState
     
     var body: some View {
-        NavigationView {
-            ZStack {
-                AppBackground()
-                
-                ScrollView {
-                    VStack(spacing: 24) {
-                        HomeHeader()
-                        
-                        if serviceManager.isLoading {
-                            LoadingView()
-                        } else if let error = serviceManager.error {
-                            ErrorView(error: error) {
-                                serviceManager.loadChannels()
+        // No navigation container: this screen has no title, no toolbar and no links,
+        // so NavigationView was contributing an empty bar and nothing else. The header
+        // it does show is drawn inside the ScrollView.
+        ZStack {
+            AppBackground()
+            
+            ScrollView {
+                VStack(spacing: 24) {
+                    HomeHeader()
+                    
+                    if serviceManager.isLoading {
+                        LoadingView()
+                    } else if let error = serviceManager.error {
+                        ErrorView(error: error) {
+                            serviceManager.loadChannels()
+                        }
+                    } else if serviceManager.availableChannels.isEmpty {
+                        EmptyStateView()
+                    } else {
+                        DRChannelsSection(
+                            serviceManager: serviceManager,
+                            onChannelTap: { channel in
+                                // Start streaming the channel
+                                serviceManager.playChannel(channel)
+                                selectionState.selectChannel(channel, showSheet: false)
                             }
-                        } else if serviceManager.availableChannels.isEmpty {
-                            EmptyStateView()
-                        } else {
-                            DRChannelsSection(
-                                serviceManager: serviceManager,
-                                onChannelTap: { channel in
-                                    // Start streaming the channel
-                                    serviceManager.playChannel(channel)
-                                    selectionState.selectChannel(channel, showSheet: false)
-                                }
-                            )
-                        }
-                        
-                        // Playback error alert
-                        if let playbackError = serviceManager.playbackError {
-                            PlaybackErrorAlert(
-                                error: playbackError,
-                                onDismiss: {
-                                    serviceManager.clearPlaybackError()
-                                }
-                            )
-                        }
+                        )
                     }
-                    .padding(.horizontal, 16)
-                    .padding(.bottom, 100) // Space for bottom tab bar
+                    
+                    // Playback error alert
+                    if let playbackError = serviceManager.playbackError {
+                        PlaybackErrorAlert(
+                            error: playbackError,
+                            onDismiss: {
+                                serviceManager.clearPlaybackError()
+                            }
+                        )
+                    }
                 }
+                .padding(.horizontal, 16)
+                .padding(.bottom, 100) // Space for bottom tab bar
             }
         }
     }
