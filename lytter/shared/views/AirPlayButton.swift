@@ -11,6 +11,14 @@ import AVKit
 
 struct AirPlayButton: UIViewRepresentable {
     let size: CGFloat
+    /// Semantic by default, so the glyph follows the system appearance. Callers that
+    /// sit in a row of de-emphasised controls pass `.secondaryLabel` to match them.
+    let tint: UIColor
+    
+    init(size: CGFloat, tint: UIColor = .label) {
+        self.size = size
+        self.tint = tint
+    }
     
     func makeCoordinator() -> Coordinator {
         Coordinator(self)
@@ -22,7 +30,7 @@ struct AirPlayButton: UIViewRepresentable {
         // Configure the view
         view.prioritizesVideoDevices = false
         view.activeTintColor = UIColor.systemBlue
-        view.tintColor = UIColor.label
+        view.tintColor = tint
         view.backgroundColor = UIColor.clear
         
         // Set delegate
@@ -44,7 +52,7 @@ struct AirPlayButton: UIViewRepresentable {
     func updateUIView(_ uiView: AVRoutePickerView, context: Context) {
         // Update tint colors if needed
         uiView.activeTintColor = UIColor.systemBlue
-        uiView.tintColor = UIColor.label
+        uiView.tintColor = tint
         
         // Ensure proper frame and centering
         let buttonSize = max(size, 44)
@@ -73,9 +81,15 @@ struct AirPlayButton: UIViewRepresentable {
 
 struct AirPlayButtonView: View {
     let size: CGFloat
+    let tint: UIColor
+    
+    init(size: CGFloat, tint: UIColor = .label) {
+        self.size = size
+        self.tint = tint
+    }
     
     var body: some View {
-        AirPlayButton(size: size)
+        AirPlayButton(size: size, tint: tint)
             .frame(width: size, height: size, alignment: .center)
             .clipped() // Ensure the content stays within bounds
             .contentShape(Rectangle()) // Ensure the entire frame is tappable

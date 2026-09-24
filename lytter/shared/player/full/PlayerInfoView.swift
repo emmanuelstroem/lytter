@@ -77,7 +77,7 @@ struct PlayerInfoView: View {
                     VStack(alignment: .leading, spacing: geometry.size.height * 0.03) {
                         Text(title)
                             .font(.system(size: min(geometry.size.width, geometry.size.height) * 0.3, weight: .medium))
-                            .foregroundColor(.white)
+                            .foregroundStyle(Color.primary)
                             .lineLimit(1)
                         
                         MarqueeText(
@@ -87,7 +87,7 @@ struct PlayerInfoView: View {
                             rightFade: geometry.size.width * 0.05,
                             startDelay: 1.5
                         )
-                        .foregroundColor(.gray)
+                        .foregroundStyle(Color.secondary)
                         .lineLimit(1)
                         .minimumScaleFactor(0.5)
                     }
@@ -107,7 +107,7 @@ struct PlayerInfoView: View {
                         Image(systemName: "square.and.arrow.up.circle.fill")
                             .font(.system(size: min(geometry.size.width, geometry.size.height) * 0.375,
                                           weight: .medium))
-                            .foregroundColor(.white)
+                            .foregroundStyle(Color.primary)
                             .symbolRenderingMode(.hierarchical)
                             // 44pt is the minimum comfortable target in the HIG.
                             .frame(width: 44, height: 44)

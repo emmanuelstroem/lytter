@@ -36,17 +36,7 @@ struct iOSRadioView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                // Background gradient
-                LinearGradient(
-                    colors: [
-                        Color.black,
-                        Color.black.opacity(0.95),
-                        Color.black.opacity(0.9)
-                    ],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-                .ignoresSafeArea()
+                AppBackground()
                 
                 VStack(spacing: 0) {
                     // Search bar
@@ -186,7 +176,7 @@ struct iOSGroupedRadioChannelCard: View {
                     HStack {
                         Text(groupedChannel.name)
                             .font(.headline)
-                            .foregroundColor(.white)
+                            .foregroundStyle(Color.primary)
                             .lineLimit(1)
                         
                         if groupedChannel.hasMultipleDistricts {
@@ -206,17 +196,17 @@ struct iOSGroupedRadioChannelCard: View {
                     if let program = getCurrentProgram() {
                         Text(program.cleanTitle())
                             .font(.caption)
-                            .foregroundColor(.gray)
+                            .foregroundStyle(Color.secondary)
                             .lineLimit(1)
                     } else if let track = getCurrentTrack() {
                         Text(track.displayText)
                             .font(.caption)
-                            .foregroundColor(.gray)
+                            .foregroundStyle(Color.secondary)
                             .lineLimit(1)
                     } else {
                         Text(primaryChannel.type.capitalized)
                             .font(.caption)
-                            .foregroundColor(.gray)
+                            .foregroundStyle(Color.secondary)
                             .lineLimit(1)
                     }
                 }
@@ -227,7 +217,7 @@ struct iOSGroupedRadioChannelCard: View {
             .padding(.vertical, 12)
             .background(
                 RoundedRectangle(cornerRadius: 16)
-                    .fill(Color.white.opacity(0.05))
+                    .fill(Color(.tertiarySystemFill))
             )
             .scaleEffect(isPressed ? 0.95 : 1.0)
             .animation(.easeInOut(duration: 0.1), value: isPressed)

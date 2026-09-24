@@ -16,27 +16,17 @@ struct SearchView: View {
     
     var body: some View {
         ZStack {
-            // Background gradient
-            LinearGradient(
-                colors: [
-                    Color.black,
-                    Color.black.opacity(0.95),
-                    Color.black.opacity(0.9)
-                ],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-            .ignoresSafeArea()
+            AppBackground()
             
             VStack(spacing: 20) {
                 Text("Search")
                     .font(.largeTitle)
                     .fontWeight(.bold)
-                    .foregroundColor(.white)
+                    .foregroundStyle(Color.primary)
                 
                 Text("Search functionality coming soon...")
                     .font(.title3)
-                    .foregroundColor(.gray)
+                    .foregroundStyle(Color.secondary)
                 
                 Spacer()
             }

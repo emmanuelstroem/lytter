@@ -225,6 +225,36 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
       `AirPlayButtonView` the mini player uses, an `AVRoutePickerView` that presents the
       picker itself. What was dead was the `onAirPlayTap` callback, which nothing ever
       invoked; it has been removed.
+- [x] ~~**F25. The iOS full player ignored the system appearance.**~~ Done in #15. It drew
+      a hardcoded black gradient with fixed white and grey content, so in light mode the
+      play/pause glyph — `.primary`, i.e. black — was invisible against it, and the AirPlay
+      button, already `UIColor.label`, was black on black too. It now uses
+      `systemBackground`/`secondarySystemBackground` with `Color.primary`/`Color.secondary`
+      content. Note the concrete `Color.` prefix: the hierarchical `.primary`/`.secondary`
+      shape styles resolve against the *current tint*, so inside a `Button` or `ShareLink`
+      they render in the accent colour, not the label colour.
+- [x] ~~**F26. The rest of the iOS app was hardcoded dark too.**~~ Done in #15. `HomeView`,
+      `iOSRadioView` and `SearchView` each carried their own copy of the same
+      `Color.black`/`0.95`/`0.9` gradient, which is why the player could be fixed alone
+      without the mismatch being obvious — there was no single place to change. All four
+      now share `AppBackground`. Content follows with `Color.primary`/`Color.secondary`,
+      and the two hand-mixed white fills (5% for the radio rows, 10% for the retry button)
+      became `tertiarySystemFill`; as written they were invisible in light mode. White that
+      sits on saturated artwork placeholders, and the scrim over the channel cards, stayed.
+- [x] ~~**F28. The full player dismissed itself the moment it opened.**~~ Done in #15.
+      Reported from use, and the screen was effectively unreachable. Its `isPresented`
+      flag was `@State` inside `MiniPlayerComponents`, which is the tab bar's bottom
+      accessory: `LiquidGlassMiniPlayer` switches on `tabViewBottomAccessoryPlacement`, so
+      SwiftUI rebuilds the accessory from a different branch whenever the placement
+      changes — and covering the tab bar with a sheet *is* a placement change. The
+      presentation destroyed its own state. `.id(playingChannel?.id)` on the accessory did
+      the same on every channel change. The flag now lives in `SelectionState` and the
+      sheet is presented from `ContentView`, above the `TabView`.
+- [ ] **F27. Shared deep links cannot open the app.** `DeepLinkHandler` generates
+      `lyt:///channel/<id>` for the share sheet, but `Info.plist` registers only the
+      `lytter` scheme, so iOS never routes those URLs anywhere — every shared link is
+      inert. The handler already accepts both schemes; either emit `lytter://` or register
+      `lyt` as well. Check the Top Shelf extension's links before choosing.
 - [ ] **S1. Get the API key out of source *before* there is one.**
       `DRAPIConfig.subscriptionKey` is a `static var` in `DRModels.swift` waiting for an
       Azure APIM key. If a key is ever assigned there it is committed to git and shipped in
