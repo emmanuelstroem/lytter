@@ -344,6 +344,18 @@ class AudioPlayerService: NSObject, ObservableObject {
     
         // MARK: - Command Center Info Updates
     
+    /// Wraps an image as lock-screen artwork.
+    ///
+    /// `nonisolated` deliberately. MediaPlayer calls the request handler on its own queue,
+    /// and under `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor` a closure written inline in a
+    /// main-actor method is main-actor isolated. Swift 6 enforces that with a runtime
+    /// check, so the handler trapped — `dispatch_assert_queue` → SIGTRAP — the moment the
+    /// lock screen asked for artwork. The image is captured and returned unchanged, so
+    /// there is nothing here that needs isolating.
+    private nonisolated static func artwork(for image: UIImage) -> MPMediaItemArtwork {
+        MPMediaItemArtwork(boundsSize: image.size) { _ in image }
+    }
+
     func updateCommandCenterInfo(channel: DRChannel, program: DREpisode?, track: DRTrack? = nil) {
         var nowPlayingInfo: [String: Any] = [:]
         
@@ -382,7 +394,7 @@ class AudioPlayerService: NSObject, ObservableObject {
                 // Load image asynchronously
             loadImageForCommandCenter(from: imageURL) { [weak self] image in
                 if let image = image {
-                    nowPlayingInfo[MPMediaItemPropertyArtwork] = MPMediaItemArtwork(boundsSize: image.size) { _ in image }
+                    nowPlayingInfo[MPMediaItemPropertyArtwork] = Self.artwork(for: image)
                     self?.nowPlayingInfoCenter?.nowPlayingInfo = nowPlayingInfo
                 } else {
                         // Fallback to default artwork
@@ -436,7 +448,7 @@ class AudioPlayerService: NSObject, ObservableObject {
                 .draw(in: iconRect)
         }
         
-        updatedInfo[MPMediaItemPropertyArtwork] = MPMediaItemArtwork(boundsSize: defaultImage.size) { _ in defaultImage }
+        updatedInfo[MPMediaItemPropertyArtwork] = Self.artwork(for: defaultImage)
         nowPlayingInfoCenter?.nowPlayingInfo = updatedInfo
     }
     

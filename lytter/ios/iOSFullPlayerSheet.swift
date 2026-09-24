@@ -15,6 +15,7 @@ struct iOSFullPlayerSheet: View {
     @Environment(\.dismiss) private var dismiss
     @State private var showingDescriptionSheet: Bool = false
     @State private var showingScheduleSheet: Bool = false
+    @State private var showingSleepSheet: Bool = false
     
     // Get the current playing channel from serviceManager
     private var currentChannel: DRChannel? {
@@ -67,6 +68,12 @@ struct iOSFullPlayerSheet: View {
         }
     }
     
+    /// Rounded up, so a timer with 30 seconds left reads "1 minute" rather than "0".
+    private var sleepTimerMinutesRemaining: Int? {
+        guard serviceManager.sleepTimer != nil else { return nil }
+        return max(Int((serviceManager.sleepTimerRemaining / 60).rounded(.up)), 0)
+    }
+
     private var programDescription: String {
         guard let currentChannel = currentChannel else { return String(localized: "No program information available") }
         
@@ -136,11 +143,15 @@ struct iOSFullPlayerSheet: View {
                         
                         // Actions Component
                         PlayerActionsView(
+                            sleepTimerMinutesRemaining: sleepTimerMinutesRemaining,
                             onQuoteTap: {
                                 showingDescriptionSheet = true
                             },
                             onListTap: {
                                 showingScheduleSheet = true
+                            },
+                            onSleepTap: {
+                                showingSleepSheet = true
                             }
                         )
                     }
@@ -167,6 +178,9 @@ struct iOSFullPlayerSheet: View {
                 .fill(Color.secondary.opacity(0.6))
                 .frame(width: 36, height: 5)
                 .padding(.top, 8)
+        }
+        .sheet(isPresented: $showingSleepSheet) {
+            iOSSleepTimerSheet(serviceManager: serviceManager)
         }
         .sheet(isPresented: $showingScheduleSheet) {
             if let currentChannel {

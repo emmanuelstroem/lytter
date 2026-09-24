@@ -941,6 +941,85 @@ class DRServiceManager: ObservableObject {
     
     
     
+    // MARK: - Sleep Timer
+
+    /// The active sleep timer, if any.
+    @Published private(set) var sleepTimer: SleepTimer?
+
+    /// Seconds left, republished every tick so the UI can count down without owning a
+    /// timer of its own.
+    @Published private(set) var sleepTimerRemaining: TimeInterval = 0
+
+    private var sleepTimerTask: Task<Void, Never>?
+
+    /// Starts a sleep timer, replacing any existing one.
+    ///
+    /// Returns false when the mode cannot be satisfied — `.endOfProgramme` on a channel
+    /// whose schedule the API did not give us, which is a real case rather than a
+    /// theoretical one.
+    @discardableResult
+    func startSleepTimer(_ mode: SleepTimerMode) -> Bool {
+        let programmeEnd = playingChannel.flatMap { getCurrentProgram(for: $0)?.endDate }
+        guard let timer = SleepTimer(mode: mode, from: Date(), programmeEnd: programmeEnd) else {
+            Log.playback.warning("sleep timer rejected: no end time for the current programme")
+            return false
+        }
+
+        sleepTimer = timer
+        sleepTimerRemaining = timer.remaining(at: Date())
+        runSleepTimer(timer)
+        return true
+    }
+
+    func cancelSleepTimer() {
+        sleepTimerTask?.cancel()
+        sleepTimerTask = nil
+        sleepTimer = nil
+        sleepTimerRemaining = 0
+        // Undo a fade that was already partway down.
+        audioPlayer.setVolume(1)
+    }
+
+    /// Ticks once a second. The timer itself is a deadline, so this only reads the clock —
+    /// a tick that arrives late, or not at all while suspended, cannot make it drift.
+    private func runSleepTimer(_ timer: SleepTimer) {
+        sleepTimerTask?.cancel()
+        sleepTimerTask = Task { [weak self] in
+            while !Task.isCancelled {
+                guard let self else { return }
+                let now = Date()
+
+                self.sleepTimerRemaining = timer.remaining(at: now)
+                self.audioPlayer.setVolume(timer.volumeMultiplier(at: now))
+
+                if timer.hasFired(at: now) {
+                    self.sleepTimerDidFire()
+                    return
+                }
+                try? await Task.sleep(for: .seconds(1))
+            }
+        }
+    }
+
+    private func sleepTimerDidFire() {
+        Log.playback.debug("sleep timer fired")
+
+        if isPlaying {
+            // The default pause() is the deliberate kind, which is right: this stop should
+            // stand, not be undone by an interruption ending later.
+            audioPlayer.pause()
+            stopPolling()
+            audioPlayer.updateCommandCenterPlaybackState()
+        }
+
+        // Restore the volume the fade took down, or the next play starts silent.
+        audioPlayer.setVolume(1)
+
+        sleepTimer = nil
+        sleepTimerRemaining = 0
+        sleepTimerTask = nil
+    }
+
     func clearPlaybackError() {
         playbackError = nil
     }
