@@ -153,18 +153,19 @@ struct iOSFullPlayerSheet: View {
                             Spacer()
                             
                             // Controls Component
+                            //
+                            // No skip buttons: these are live ICY streams with no
+                            // seekable range, so back-30 and forward did nothing at all.
+                            // The same buttons were removed from the lock screen and
+                            // Control Centre for the same reason.
                             PlayerControlsView(
                                 isPlaying: serviceManager.isPlaying,
-                                onBackwardTap: {
-                                    serviceManager.audioPlayer.skipBackward(by: 30)
-                                },
+                                showBackwardButton: false,
+                                showForwardButton: false,
                                 onPlayPauseTap: {
                                     if let playingChannel = serviceManager.playingChannel {
                                         serviceManager.togglePlayback(for: playingChannel)
                                     }
-                                },
-                                onForwardTap: {
-                                    serviceManager.audioPlayer.skipForward()
                                 }
                             )
                             
