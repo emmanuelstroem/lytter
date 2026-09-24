@@ -194,7 +194,11 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
       Control Centre controls and Shortcuts automations.
 - [ ] **F16. On-demand playback.** Wire up `fetchScheduleSnapshot` and
       `isAvailableOnDemand` for catch-up listening.
-- [ ] **F17. Schedule / EPG view.** Today's programming per channel, from data already cached.
+- [x] ~~**F17. Schedule / EPG view.**~~ Done in #14, reached from the full player's list
+      button. Note the original entry was wrong about the source: `/schedules/all/now`
+      only carries what is on air *now*, so the rest of the day comes from
+      `/schedules/snapshot/{slug}` — which `DRNetworkService` had implemented all along
+      and nothing had ever called. It decodes into the existing models unchanged.
 - [ ] **F18. Widgets + Live Activity** for the currently playing channel.
 - [ ] **F19. iPhone Duo support.** See [IPHONE-DUO.md](IPHONE-DUO.md).
 - [ ] **F20. Decide on macOS/visionOS.** Either implement `ContentView` branches and make
@@ -214,19 +218,13 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
       declares `squares: shared` / `circles: watchOS` and cannot supply tvOS brand assets,
       which now come from `Brand Assets.brandassets`. Likely fixed by excluding
       `AppIcon.icon` from the tvOS target; needs care not to disturb the iOS icon.
-- [ ] **F24. Three buttons in the iOS full player do nothing.** The ellipsis, AirPlay and
-      list buttons in `iOSFullPlayerSheet` had bodies consisting solely of a `print`.
-      Converted to `Log.playback.debug("… (unimplemented)")` in #13 so nothing reaches the
-      release console, but they are still dead controls on a shipping screen. Either
-      implement them or remove them — the working AirPlay control is the
-      `AVRoutePickerView` in the mini player.
-
----
-
-## 6. Todo — Security, privacy & compliance
-
-### P0
-
+- [x] ~~**F24. Three buttons in the iOS full player do nothing.**~~ Done in #14. The
+      ellipsis is now a share button — its menu had exactly one live item, a `ShareLink`,
+      so it cost a tap for nothing. The list button opens the channel schedule (F17). And
+      AirPlay was never broken: `PlayerActionsView` already renders the same
+      `AirPlayButtonView` the mini player uses, an `AVRoutePickerView` that presents the
+      picker itself. What was dead was the `onAirPlayTap` callback, which nothing ever
+      invoked; it has been removed.
 - [ ] **S1. Get the API key out of source *before* there is one.**
       `DRAPIConfig.subscriptionKey` is a `static var` in `DRModels.swift` waiting for an
       Azure APIM key. If a key is ever assigned there it is committed to git and shipped in

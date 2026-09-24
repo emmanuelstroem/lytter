@@ -13,7 +13,6 @@ struct PlayerActionsView: View {
     let showAirPlayButton: Bool
     let showListButton: Bool
     let onQuoteTap: (() -> Void)?
-    let onAirPlayTap: (() -> Void)?
     let onListTap: (() -> Void)?
     
     init(
@@ -21,14 +20,12 @@ struct PlayerActionsView: View {
         showAirPlayButton: Bool = true,
         showListButton: Bool = true,
         onQuoteTap: (() -> Void)? = nil,
-        onAirPlayTap: (() -> Void)? = nil,
         onListTap: (() -> Void)? = nil
     ) {
         self.showQuoteButton = showQuoteButton
         self.showAirPlayButton = showAirPlayButton
         self.showListButton = showListButton
         self.onQuoteTap = onQuoteTap
-        self.onAirPlayTap = onAirPlayTap
         self.onListTap = onListTap
     }
     
@@ -47,7 +44,11 @@ struct PlayerActionsView: View {
                 Spacer()
                 
                 if showAirPlayButton {
-                    // Increase the size slightly to compensate for the AirPlay button's internal sizing
+                    // The same AirPlayButtonView the mini player uses — an
+                    // AVRoutePickerView, which presents the route picker itself. There is
+                    // deliberately no tap callback: there was one, and it was never
+                    // invoked, which is why the full player's "AirPlay tapped" handler
+                    // looked dead while the button actually worked.
                     AirPlayButtonView(size: 24)
                         .foregroundColor(.gray)
                 }
@@ -70,8 +71,7 @@ struct PlayerActionsView: View {
 
 #Preview {
     PlayerActionsView(
-        onQuoteTap: { print("Info tapped") },
-        onAirPlayTap: { print("AirPlay tapped") },
-        onListTap: { print("List tapped") }
+        onQuoteTap: {},
+        onListTap: {}
     )
 } 
