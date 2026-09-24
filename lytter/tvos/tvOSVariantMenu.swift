@@ -65,12 +65,20 @@ struct tvOSVariantMenu<Label: View, Item: Identifiable & Hashable>: View {
                             } label: {
                                 Text(itemTitle(item))
                                     .font(.title3)
-                                    .foregroundStyle(.white)
                                     .lineLimit(1)
                                     .minimumScaleFactor(0.7)
-                                    .frame(maxWidth: .infinity, minHeight: 80)
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 12)
                             }
-                            .buttonStyle(.card)
+                            // Capsules, not cards. A row inside a rounded panel is a
+                            // narrower rounded shape sharing its centre — a square-cornered
+                            // button in a rounded container reads as a mistake, which is
+                            // why the sidebar's own rows are pills.
+                            .buttonStyle(.bordered)
+                            .buttonBorderShape(.capsule)
+                            // No explicit foreground: the bordered style inverts the label
+                            // on focus, and forcing white would make the focused row
+                            // white-on-white.
                             .focused($focusedItemId, equals: item.id)
                         }
                     }
