@@ -327,8 +327,12 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
       nothing when empty, so a first launch shows only the catalogue rather than two empty
       headings. The grid and its three views (`FavouritesSection`,
       `BroadcasterChannelsSection`, `GroupedChannelCard`) are gone.
-      **Remaining: tvOS and macOS.** tvOS has its own layout that already reads as shelves
-      and needs the Favourites and Recently Played rows; macOS has no UI at all (F20).
+      *tvOS done too* — and it went further than adding two rows. The tab bar is gone: the
+      Music app on Apple TV does not spend a permanent strip of screen on navigation, so
+      Home fills it and one control says where you are and pops over the rest. The shelves
+      are the shared `GroupedChannel`, and the district rule from #30 carries over, so
+      picking a region on Apple TV is the same bargain as on the phone.
+      **Remaining: macOS**, which has no UI at all (F20).
       Still true, and worth repeating: other broadcasters do not exist. The shelves are
       broadcaster-shaped but DR is the only source, and a second one is a data change.
 - [ ] **F33. Favourite shows, not just channels.** Store series ids and surface a
@@ -350,17 +354,25 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
       and nothing had ever called. It decodes into the existing models unchanged.
 - [ ] **F18. Widgets + Live Activity** for the currently playing channel.
 - [ ] **F19. iPhone Duo support.** See [IPHONE-DUO.md](IPHONE-DUO.md).
-- [ ] **F20. macOS is unimplemented, not broken.** Diagnosed properly rather than guessed:
-      the reported failure is `Unable to resolve module dependency: 'UIKit'` in
-      `AudioPlayerService`, but that is only the *first* error. Four files import UIKit
-      unguarded, and behind them the shared layer uses `UIImage` ×15, `UIColor` ×8,
-      `UIApplication` ×2 and one `UIViewRepresentable` (the AirPlay button) across five
-      files — tractable with `PlatformImage`/`PlatformColor` typealiases.
-      The larger gap is that **`ContentView` has no macOS branch at all**: it is
-      `#if os(iOS)` / `#elseif os(tvOS)`, so even once it compiles the app opens an empty
-      window. macOS is in `SUPPORTED_PLATFORMS` and was never built.
-      Work is therefore: platform-neutral shared layer, then a real macOS UI — which should
-      follow the sectioned home (F32) rather than precede it, or it gets built twice.
+- [ ] **F20. macOS is unimplemented, not broken.** *Re-measured 2026-09-24 — still the only
+      target that does not compile, and the only item on this list that is broken rather
+      than merely missing.* The build stops at `AudioPlayerService.swift:11: Unable to
+      resolve module dependency: 'UIKit'`, and that one error hides the rest — the compiler
+      gets no further. Behind it, in `shared/`, two files import UIKit unguarded
+      (`AudioPlayerService`, `ImageCacheService`) and the layer uses `UIImage` ×15,
+      `UIColor` ×9, `UIApplication` ×2 and one `UIViewRepresentable` (the AirPlay button).
+      `ContentView` does carry `#if os(iOS) || os(macOS)` in places — for the Siri
+      shortcuts environment object and such — but its **`body` does not**: that is
+      `#if os(iOS)` / `#elseif os(tvOS)` / `#endif`, so macOS falls through to no UI at all,
+      and every screen it would need is itself `#if os(iOS)`. macOS is in
+      `SUPPORTED_PLATFORMS` and has never been built.
+      **Two jobs, worth separating — the first is mechanical, the second is design:**
+      1. *Make the shared layer compile for macOS.* Platform guards plus
+         `PlatformImage`/`PlatformColor` typealiases. Bounded, no design decisions, and
+         worth doing on its own: it stops the target being permanently red, and makes every
+         later change to shared code verifiable on macOS instead of silently iOS-only.
+      2. *Build a macOS UI.* From nothing — no view is shared with it. This should follow
+         the sectioned home (F32) rather than precede it, or it gets built twice.
 - [ ] **F21. CarPlay.** A live-radio app without CarPlay is leaving its best use case unserved.
 - [x] ~~**F22. Move the iOS deep-link handler up to `ContentView`.**~~ Done in #17. The
       `.onChange(of: shouldNavigateToChannel)` was copy-pasted onto `HomeView`,

@@ -2,93 +2,90 @@
 //  tvOSVariantMenu.swift
 //  lytter
 //
-//  Created by Assistant on 12/08/2025.
-//
 
 import SwiftUI
 
 #if os(tvOS)
-/// A custom, focus-friendly overlay menu for tvOS that mimics SwiftUI's Menu interaction.
-/// - Presents a full-screen dimmed background and a centered panel with focusable options.
-/// - Dismisses on background tap or remote's back/menu via onExitCommand.
+/// A pop-over list of choices, presented over whatever is on screen.
+///
+/// Two callers: the district picker on a shelf card, and the app's own navigation, which
+/// replaced the tab bar. Both want the same thing — a control that says what it is, and a
+/// panel of alternatives when it is clicked.
+///
+/// Presented as a `fullScreenCover` rather than laid out in a `ZStack` beside the trigger.
+/// Beside the trigger it centred on *the trigger*, so a control in the top-left corner put
+/// its panel in the top-left corner, and focus could still wander into the content behind.
 struct tvOSVariantMenu<Label: View, Item: Identifiable & Hashable>: View {
     let items: [Item]
     let label: () -> Label
     let itemTitle: (Item) -> String
     let onSelect: (Item) -> Void
 
+    /// Heading on the panel. Defaulted because this was written for one caller and had
+    /// none; it now carries the app's navigation as well as its district picker, and
+    /// "Choose a variant" is the wrong thing to say about either.
+    var panelTitle: String = String(localized: "Choose a variant")
+
     @State private var isPresented = false
     @FocusState private var focusedItemId: Item.ID?
 
     var body: some View {
-        ZStack {
-            // The trigger/control that shows the menu
-            Button(action: { isPresented = true }) {
-                label()
-            }
-            .buttonStyle(.card)
-            .focusEffectDisabled(isPresented)
-
-            if isPresented {
-                // Dimmed backdrop
-                Color.black.opacity(0.6)
-                    .ignoresSafeArea()
-                    .transition(.opacity)
-                    .onTapGesture { isPresented = false }
-                    .zIndex(1)
-
-                // Centered panel with focusable options
-                overlayPanel
-                    .zIndex(2)
-                    .transition(.scale)
-                    .onAppear {
-                        if let first = items.first {
-                            focusedItemId = first.id
-                        }
-                    }
-            }
+        Button {
+            isPresented = true
+        } label: {
+            label()
         }
-        .animation(.easeInOut(duration: 0.2), value: isPresented)
-        .onExitCommand {
-            if isPresented { isPresented = false }
+        .buttonStyle(.card)
+        .fullScreenCover(isPresented: $isPresented) {
+            panel
         }
     }
 
-    private var overlayPanel: some View {
-        VStack(alignment: .leading, spacing: 24) {
-            Text("Choose a variant")
-                .font(.title2)
-                .bold()
-                .foregroundColor(.white)
+    private var panel: some View {
+        ZStack {
+            // Dimmed rather than opaque: a panel that hides the screen entirely loses the
+            // sense of having come from somewhere.
+            Color.black.opacity(0.7)
+                .ignoresSafeArea()
 
-            ScrollView(.vertical) {
-                // Two columns to keep focus movement predictable on tvOS
-                LazyVGrid(columns: [GridItem(.fixed(500)), GridItem(.fixed(500))], spacing: 24) {
-                    ForEach(items) { item in
-                        Button(action: {
-                            onSelect(item)
-                            isPresented = false
-                        }) {
-                            Text(itemTitle(item))
-                                .font(.title3)
-                                .foregroundColor(.white)
-                                .frame(maxWidth: .infinity, minHeight: 80)
-                                .background(Color.white.opacity(0.08))
-                                .clipShape(RoundedRectangle(cornerRadius: 16))
+            VStack(alignment: .leading, spacing: 28) {
+                Text(panelTitle)
+                    .font(.title2)
+                    .bold()
+                    .foregroundStyle(.white)
+
+                ScrollView(.vertical) {
+                    // Two columns keep focus movement predictable — a single tall column of
+                    // ten districts is a long way to travel on a remote.
+                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())],
+                              spacing: 24) {
+                        ForEach(items) { item in
+                            Button {
+                                onSelect(item)
+                                isPresented = false
+                            } label: {
+                                Text(itemTitle(item))
+                                    .font(.title3)
+                                    .foregroundStyle(.white)
+                                    .lineLimit(1)
+                                    .minimumScaleFactor(0.7)
+                                    .frame(maxWidth: .infinity, minHeight: 80)
+                            }
+                            .buttonStyle(.card)
+                            .focused($focusedItemId, equals: item.id)
                         }
-                        .buttonStyle(.card)
-                        .focused($focusedItemId, equals: item.id)
                     }
+                    .padding(.vertical, 8)
                 }
-                .padding(.vertical, 8)
             }
+            .padding(48)
+            .frame(maxWidth: 1100, maxHeight: 760)
+            // A material, so the panel reads as a surface rather than as text floating on
+            // the dimmed screen behind it.
+            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 28))
         }
-        .padding(32)
-        .background(.ultraThinMaterial)
-        .clipShape(RoundedRectangle(cornerRadius: 28))
-        .frame(width: 1100, height: 700)
+        .onExitCommand { isPresented = false }
+        .onAppear { focusedItemId = items.first?.id }
     }
 }
 #endif
-
-

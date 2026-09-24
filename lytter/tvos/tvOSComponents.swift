@@ -187,6 +187,12 @@ class FocusableLockupUIView: UIView {
 /// so the entire item (image and text) scales together on focus.
 struct tvOSChannelCard: View {
     let channel: DRChannel
+
+    /// What to call the channel, when the caller knows better than the card does.
+    ///
+    /// A card on a shelf may stand for a station ("P4") or for one particular district
+    /// ("P4 - København"), and only the shelf knows which — the channel alone cannot say.
+    var titleOverride: String? = nil
     @EnvironmentObject private var serviceManager: DRServiceManager
     @Environment(\.isFocused) private var isFocused
 
@@ -207,7 +213,8 @@ struct tvOSChannelCard: View {
     }
 
     var body: some View {
-        let displayTitle = (channel.district != nil) ? channel.name : channel.title
+        let displayTitle = titleOverride
+            ?? ((channel.district != nil) ? channel.name : channel.title)
 
         VStack(alignment: .leading, spacing: 12) {
             // Square artwork
