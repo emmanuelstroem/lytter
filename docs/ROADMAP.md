@@ -225,6 +225,26 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
       `AirPlayButtonView` the mini player uses, an `AVRoutePickerView` that presents the
       picker itself. What was dead was the `onAirPlayTap` callback, which nothing ever
       invoked; it has been removed.
+- [x] ~~**F25. The iOS full player ignored the system appearance.**~~ Done in #15. It drew
+      a hardcoded black gradient with fixed white and grey content, so in light mode the
+      play/pause glyph — `.primary`, i.e. black — was invisible against it, and the AirPlay
+      button, already `UIColor.label`, was black on black too. It now uses
+      `systemBackground`/`secondarySystemBackground` with `Color.primary`/`Color.secondary`
+      content. Note the concrete `Color.` prefix: the hierarchical `.primary`/`.secondary`
+      shape styles resolve against the *current tint*, so inside a `Button` or `ShareLink`
+      they render in the accent colour, not the label colour.
+- [ ] **F26. The rest of the iOS app is still hardcoded dark.** `HomeView`,
+      `iOSRadioView` and `SearchView` each carry their own copy of the same
+      `Color.black`/`0.95`/`0.9` gradient F25 removed from the player, so in light mode a
+      light player sheet now opens over a black app. Fixing it is not a background swap:
+      those screens put fixed white text on artwork-backed cards, and the mini player puts
+      white text on `.ultraThinMaterial`, which is light in light mode. Factor the gradient
+      into one shared background view while doing it, rather than fixing four copies.
+- [ ] **F27. Shared deep links cannot open the app.** `DeepLinkHandler` generates
+      `lyt:///channel/<id>` for the share sheet, but `Info.plist` registers only the
+      `lytter` scheme, so iOS never routes those URLs anywhere — every shared link is
+      inert. The handler already accepts both schemes; either emit `lytter://` or register
+      `lyt` as well. Check the Top Shelf extension's links before choosing.
 - [ ] **S1. Get the API key out of source *before* there is one.**
       `DRAPIConfig.subscriptionKey` is a `static var` in `DRModels.swift` waiting for an
       Azure APIM key. If a key is ever assigned there it is committed to git and shipped in
