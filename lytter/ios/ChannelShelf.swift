@@ -28,6 +28,14 @@ enum ChannelShelfStyle {
 
     var cardWidth: CGFloat { self == .featured ? 240 : 148 }
     var cardHeight: CGFloat { self == .featured ? 280 : 148 }
+
+    /// How far up the card the glass reaches.
+    ///
+    /// Deliberately far more than the caption needs. Sized to the text, the gradient had
+    /// only the height of two lines to fade across, which reads as the effect starting
+    /// just above the words rather than the artwork gradually going behind glass. Over
+    /// half the card gives it somewhere to happen.
+    var captionFadeHeight: CGFloat { cardHeight * 0.72 }
 }
 
 struct ChannelShelf: View {
@@ -82,8 +90,9 @@ private struct CaptionBackdrop: View {
                 LinearGradient(
                     stops: [
                         .init(color: .clear, location: 0),
-                        .init(color: .black.opacity(0.35), location: 0.3),
-                        .init(color: .black.opacity(0.85), location: 0.6),
+                        .init(color: .black.opacity(0.45), location: 0.28),
+                        .init(color: .black.opacity(0.85), location: 0.52),
+                        .init(color: .black, location: 0.7),
                         .init(color: .black, location: 1)
                     ],
                     startPoint: .top,
@@ -171,10 +180,13 @@ struct ChannelShelfCard: View {
         }
         .padding(.horizontal, 12)
         .padding(.bottom, 10)
-        // Generous above the text so the gradient has somewhere to fade.
-        .padding(.top, 30)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background { CaptionBackdrop() }
+        // The backdrop is sized independently of the text and laid behind it, so the fade
+        // spans the card rather than the caption.
+        .background(alignment: .bottom) {
+            CaptionBackdrop()
+                .frame(height: style.captionFadeHeight)
+        }
     }
 
     private var featuredCard: some View {
