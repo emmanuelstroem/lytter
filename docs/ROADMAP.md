@@ -285,13 +285,9 @@ Ordered by expected impact. The top three are, together, most of the cold-launch
 
 ### P0 — measurable user-visible wins
 
-- [ ] **P1. Collapse to one `DRServiceManager`.** There are three live instances:
-      `ContentView` (`@StateObject`), `ShortcutsView` (its own `@StateObject`), and
-      `SiriShortcutsService.getServiceManager()` — plus more in `#Preview` blocks.
-      **Each `init()` triggers a full `/schedules/all/now` fetch *and* a full image
-      preload.** Opening the Shortcuts tab today fires a second complete network + image
-      storm. Inject one instance through the environment.
-
+- [x] ~~**P1. Collapse to one `DRServiceManager`.**~~ Done in #5 — this entry was simply
+      never ticked. Verified on current `main`: one live instance in `lytterApp`, and every
+      other `DRServiceManager()` is inside a `#Preview`.
 - [x] ~~**P2. Bound and scope image preloading.**~~ Done in #11. The three unbounded
       task groups are one sliding window of four downloads, over the primary image per
       episode only, at thumbnail size, and cancellable. Landscape and "everything else"
@@ -323,22 +319,29 @@ Ordered by expected impact. The top three are, together, most of the cold-launch
 - [ ] **P7. Hoist the `ISO8601DateFormatter`s.** `startDate`, `endDate` and `playedDate`
       each allocate a new formatter on every access, and `isCurrentlyPlaying` calls them
       inside filters over the whole array. One `static let` fixes it.
-- [ ] **P8. Make polling cancellable.** `schedulePoll` uses bare
-      `DispatchQueue.main.asyncAfter` with no handle, so `stopTrackPolling()` only flips a
-      flag while pending closures still fire and re-schedule. `programRefreshTimer` is a
-      repeating `Timer` that is never invalidated on background. Replace both with a single
-      cancellable `Task` per channel, suspended in the background.
-- [ ] **P9. Stop deactivating the audio session on pause.** `pause()` calls
-      `setActive(false, .notifyOthersOnDeactivation)`, so every pause/resume tears down and
-      rebuilds the session — audible resume latency, and it hands audio focus to whatever
-      else is running. For live radio, keep the session active while the app is foregrounded.
-- [ ] **P10. Drop the periodic time observer.** `addPeriodicTimeObserver` fires every 5 s
-      to write a `currentTime` that no view displays, on a live stream with no meaningful
-      elapsed time.
-- [ ] **P11. Fix or disable skip/seek.** `skipForward()` seeks to `.positiveInfinity` and
-      `skipBackward()` seeks to `CMTime.zero` on an ICY stream that has no seekable range —
-      both are no-ops, yet the commands are advertised as enabled in Control Centre and on
-      the lock screen. Either implement a real DVR window or set `isEnabled = false`.
+- [x] ~~**P8. Make polling cancellable.**~~ Done in #12, and the bug was worse than
+      recorded. `getCurrentTrack` scheduled the next poll, which called `getCurrentTrack`
+      again — a self-perpetuating `asyncAfter` chain with no handle, guarded only by
+      `playingChannel` still matching. Pausing leaves `playingChannel` set so the mini
+      player keeps its content, so **pausing never stopped the polling**: the app kept
+      hitting `/indexpoints/live` every ~15s, foreground or background, until the channel
+      changed or the app was killed. Now two cancellable `Task` loops started on play and
+      cancelled on pause, stop and channel switch.
+- [x] ~~**P9. Stop deactivating the audio session on pause.**~~ Done in #12. `pause()`
+      no longer calls `setActive(false, .notifyOthersOnDeactivation)`; the session is
+      released in `stop()`. Pausing live radio is momentary, and tearing the session down
+      meant rebuilding it on every resume — audible delay, and audio focus handed to
+      whatever else was running.
+- [x] ~~**P10. Drop the periodic time observer.**~~ Done in #12. It fired every 5s to
+      write `currentTime`, which I traced to nothing: the two views with a progress bar
+      drive it from their own local `@State`. The observer, the `timeObserver` plumbing
+      and the orphaned `currentTime` property are all gone.
+- [x] ~~**P11. Fix or disable skip/seek.**~~ Done in #12 — disabled, not faked. These
+      are live ICY streams with no seekable range, so `seek(to: .zero)` and
+      `seek(to: .positiveInfinity)` did nothing while the commands were advertised as
+      enabled: the lock screen and Control Centre showed skip buttons that ignored every
+      press. Also removed the same two buttons from the iOS full player, which called the
+      same no-ops.
 - [ ] **P12. Cache `MarqueeText` measurements.** `widthOfString` / `heightOfString`
       construct a `UIFont` and measure on **every body evaluation** — and `MarqueeText` lives
       in the mini player, which re-renders on every player state change.
