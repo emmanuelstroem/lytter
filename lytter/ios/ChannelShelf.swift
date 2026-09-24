@@ -162,16 +162,7 @@ struct ChannelShelfCard: View {
         serviceManager.getCurrentProgram(for: channel)
     }
 
-    /// Artwork for what is on now, falling back to any cached programme for the channel —
-    /// `/schedules/all/now` occasionally returns an entry with no image.
-    private var artworkURL: URL? {
-        if let url = currentProgramme?.primaryImageURL { return URL(string: url) }
-        let cached = serviceManager.getCachedPrograms(for: channel)
-        if let url = cached.first(where: { $0.primaryImageURL != nil })?.primaryImageURL {
-            return URL(string: url)
-        }
-        return nil
-    }
+    private var artworkURL: URL? { serviceManager.artworkURL(for: channel) }
 
     /// What is on now — for a group, whatever the first district is playing.
     ///
@@ -200,7 +191,7 @@ struct ChannelShelfCard: View {
     /// straight onto it is unreadable often enough to matter.
     private var featuredCaption: some View {
         VStack(alignment: .leading, spacing: 1) {
-            Text(group.name)
+            Text(group.displayTitle)
                 .font(.title.weight(.bold))
                 .foregroundStyle(.primary)
                 .lineLimit(1)
@@ -231,7 +222,7 @@ struct ChannelShelfCard: View {
     /// information — the programme goes beneath the card, where it has a plain background
     /// and can simply be read.
     private var nameBand: some View {
-        Text(group.name)
+        Text(group.displayTitle)
             .font(.title2.weight(.bold))
             .foregroundStyle(.primary)
             .lineLimit(1)
@@ -289,7 +280,7 @@ struct ChannelShelfCard: View {
         .accessibilityElement(children: .ignore)
         // Composed, not a phrase: Text(verbatim:)'s equivalent for an accessibility
         // label, so "%@, %@" does not land in the catalog for a translator to puzzle over.
-        .accessibilityLabel(Text(verbatim: "\(group.name), \(subtitle)"))
+        .accessibilityLabel(Text(verbatim: "\(group.displayTitle), \(subtitle)"))
         .accessibilityHint(group.hasMultipleDistricts
                            ? "Choose a district"
                            : "Plays this channel")
