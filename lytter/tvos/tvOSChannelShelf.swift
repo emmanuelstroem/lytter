@@ -46,12 +46,13 @@ struct tvOSChannelShelf: View {
     }
 }
 
-/// One card on a shelf.
+/// One card standing for a station.
 ///
 /// Mirrors the iOS card's rule about districts, because the preference is shared: a station
 /// plays the listener's region when it broadcasts one, and only asks when it does not know
-/// which they want.
-private struct tvOSShelfCard: View {
+/// which they want. Shared with search rather than private to this file, so a result behaves
+/// exactly as the same station does on a shelf.
+struct tvOSShelfCard: View {
     let group: GroupedChannel
     @ObservedObject var serviceManager: DRServiceManager
     let onSelect: (DRChannel) -> Void

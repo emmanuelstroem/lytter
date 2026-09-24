@@ -303,30 +303,4 @@ struct tvOSMusicCardButtonStyle: ButtonStyle {
         }
     }
 }
-
-struct tvOSSearchField: View {
-    @Binding var text: String
-    @FocusState private var isFocused: Bool
-
-    var body: some View {
-        HStack(spacing: 12) {
-            Image(systemName: "magnifyingglass")
-            TextField("Search radios", text: $text)
-                .focused($isFocused)
-                .textInputAutocapitalization(.never)
-                .submitLabel(.search)
-            if !text.isEmpty {
-                Button(action: { text = "" }) { Image(systemName: "xmark.circle.fill") }
-            }
-            Button(action: { isFocused = true }) { // focus to enable dictation via remote mic
-                Image(systemName: "mic.fill")
-            }
-            .buttonStyle(.borderless) // avoid extra highlight styling
-        }
-        .padding(16)
-        .background(.ultraThinMaterial)
-        .clipShape(RoundedRectangle(cornerRadius: 18))
-        .foregroundColor(.white)
-    }
-}
 #endif

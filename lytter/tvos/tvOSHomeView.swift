@@ -46,7 +46,10 @@ struct tvOSHomeView: View {
                         tvOSNowPlayingView(serviceManager: serviceManager)
                             .onExitCommand { section = .home }
                     }
-                    Tab("Search", systemImage: "magnifyingglass", value: tvOSSection.search) {
+                    // role: .search so the sidebar gives it the system's search treatment
+                    // rather than listing it as one destination among four.
+                    Tab("Search", systemImage: "magnifyingglass", value: tvOSSection.search,
+                        role: .search) {
                         tvOSSearchView(serviceManager: serviceManager,
                                        selectionState: selectionState)
                     }

@@ -235,6 +235,17 @@
         }
       }
     },
+    "Channels, districts, programmes": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kanaler, distrikter, programmer"
+          }
+        }
+      }
+    },
     "Choose a district": {
       "extractionState": "manual",
       "localizations": {
@@ -896,17 +907,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Søg efter kanaler …"
-          }
-        }
-      }
-    },
-    "Search radios": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Søg efter kanaler"
           }
         }
       }
