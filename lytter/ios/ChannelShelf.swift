@@ -31,11 +31,11 @@ enum ChannelShelfStyle {
 
     /// How far up the card the glass reaches.
     ///
-    /// Deliberately far more than the caption needs. Sized to the text, the gradient had
-    /// only the height of two lines to fade across, which reads as the effect starting
-    /// just above the words rather than the artwork gradually going behind glass. Over
-    /// half the card gives it somewhere to happen.
-    var captionFadeHeight: CGFloat { cardHeight * 0.72 }
+    /// More than the caption needs — sized to the text, the gradient had only two lines to
+    /// fade across and read as the effect starting just above the words. But not most of
+    /// the card either: glass lightens whatever is behind it, so a tall fade washes the
+    /// artwork out. Half is enough to be gradual while leaving the image intact above it.
+    var captionFadeHeight: CGFloat { cardHeight * 0.52 }
 }
 
 struct ChannelShelf: View {
@@ -87,12 +87,15 @@ private struct CaptionBackdrop: View {
             // artwork; with it the artwork simply becomes unreadable-behind-glass towards
             // the foot of the card.
             .mask(
+                // Slow to start, then decisive. The frost stays out of the way over the
+                // upper half and only reaches full strength where the text actually sits,
+                // so the artwork reads as itself rather than as something behind fog.
                 LinearGradient(
                     stops: [
                         .init(color: .clear, location: 0),
-                        .init(color: .black.opacity(0.45), location: 0.28),
-                        .init(color: .black.opacity(0.85), location: 0.52),
-                        .init(color: .black, location: 0.7),
+                        .init(color: .black.opacity(0.18), location: 0.34),
+                        .init(color: .black.opacity(0.55), location: 0.62),
+                        .init(color: .black.opacity(0.92), location: 0.84),
                         .init(color: .black, location: 1)
                     ],
                     startPoint: .top,
