@@ -21,11 +21,16 @@ import SwiftUI
 final class ImageCacheService {
     static let shared = ImageCacheService()
 
+    // nonisolated because these are read as default arguments of an async method. Under
+    // approachable concurrency a plain static is inferred main-actor isolated, which makes
+    // that read a warning today and an error under Swift 6. They are immutable CGFloats,
+    // so there is nothing to isolate.
+    //
     /// Large enough for the biggest artwork the app shows (the tvOS 400pt card at @2x)
     /// while still being a fraction of the 1920×1080 original.
-    static let defaultMaxPixelSize: CGFloat = 1024
+    nonisolated static let defaultMaxPixelSize: CGFloat = 1024
     /// Lists and thumbnails never need more than this.
-    static let thumbnailMaxPixelSize: CGFloat = 512
+    nonisolated static let thumbnailMaxPixelSize: CGFloat = 512
 
     private let memory = NSCache<NSString, UIImage>()
     private let fileManager = FileManager.default
@@ -39,8 +44,7 @@ final class ImageCacheService {
     /// One task per cache key, so N views asking for the same artwork share one download
     /// instead of starting N. `updateUIView` on tvOS could previously fire a fresh request
     /// on every layout pass.
-    private var inFlight: [String: Task<UIImage?, Never>] = [:]
-    private let inFlightLock = NSLock()
+    private let inFlight = InFlightTasks<UIImage?>()
 
     private var preloadTask: Task<Void, Never>?
 
@@ -81,23 +85,18 @@ final class ImageCacheService {
         let key = cacheKey(for: urlString, maxPixelSize: maxPixelSize)
         if let hit = memory.object(forKey: key as NSString) { return hit }
 
-        let task: Task<UIImage?, Never> = {
-            inFlightLock.lock()
-            defer { inFlightLock.unlock() }
-            if let existing = inFlight[key] { return existing }
-            let created = Task<UIImage?, Never> { [weak self] in
+        let task = inFlight.claim(key) { [weak self] in
+            Task<UIImage?, Never> {
                 guard let self else { return nil }
                 return await self.fetch(urlString, key: key, maxPixelSize: maxPixelSize)
             }
-            inFlight[key] = created
-            return created
-        }()
+        }
 
         let image = await task.value
 
-        inFlightLock.lock()
-        inFlight[key] = nil
-        inFlightLock.unlock()
+        // Passes the task back, so a caller that shared it cannot retire a newer one that
+        // was registered while this one was finishing.
+        inFlight.release(task, for: key)
 
         return image
     }
