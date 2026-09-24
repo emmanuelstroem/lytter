@@ -182,9 +182,10 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
       marquee and focus animations, and a contrast check on the white-on-artwork text.
 - [ ] **F12. Replace `NavigationView` with `NavigationStack`/`NavigationSplitView`.**
       Seven uses, all deprecated. Prerequisite for the iPhone Duo work.
-- [ ] **F13. Reconcile the URL scheme.** `Info.plist` registers only `lytter`, but
-      `DeepLinkHandler` also accepts `lyt` and `generateDeepLinkURL` *emits* `lyt://` —
-      so links the app generates are not registered to it.
+- [x] ~~**F13. Reconcile the URL scheme.**~~ Done in #16 — and note that **F27 was a
+      duplicate of this entry**, written without spotting that the same bug was already on
+      the list. Both are closed by the same change. Worth the lesson: search the roadmap
+      before adding to it.
 - [ ] **F14. Add a README.** Nineteen commits and no entry point for a reader.
 
 ### P2 — expansion
@@ -204,14 +205,20 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
 - [ ] **F20. Decide on macOS/visionOS.** Either implement `ContentView` branches and make
       `AudioPlayerService` platform-clean, or drop `macosx`/`xros` from `SUPPORTED_PLATFORMS`.
 - [ ] **F21. CarPlay.** A live-radio app without CarPlay is leaving its best use case unserved.
-- [ ] **F22. Move the iOS deep-link handler up to `ContentView`.** The
-      `.onChange(of: deepLinkHandler.shouldNavigateToChannel)` handlers live on `HomeView`,
-      `SearchView` and `iOSRadioView` individually, so a link arriving while the
-      **Shortcuts** tab is active is observed by nobody and silently dropped. Found by
-      testing `lytter://radio/channel/p3` on the simulator during #7: it did nothing until
-      the Radio tab was selected. tvOS is unaffected — `tvOSHomeView` attaches its handler
-      to the TabView itself. One handler on `ContentView` fixes it and removes three
-      copies of the same code.
+- [x] ~~**F22. Move the iOS deep-link handler up to `ContentView`.**~~ Done in #17. The
+      `.onChange(of: shouldNavigateToChannel)` was copy-pasted onto `HomeView`,
+      `SearchView` and `iOSRadioView`, so a link arriving while the **Shortcuts** tab was
+      active was observed by nobody and silently dropped — and had more than one been
+      alive, the channel would have been played once per copy. One handler on
+      `ContentView`, which outlives every tab.
+      The larger bug found while doing it: `clearTarget()` also cleared `pendingChannelId`,
+      and the views called it on the *first* failed attempt — which is the attempt that
+      happens before the catalogue loads. So a link opened from cold cleared itself and
+      the retry it was waiting for could never fire. That is the normal case for a shared
+      link, i.e. links were broken for exactly the people receiving them.
+      Verified end to end on the simulator: a cold-start link to `p3` now plays P3; the
+      same link against the previous code left the app on "Not Playing".
+      The three views no longer take a `DeepLinkHandler` at all.
 - [ ] **F23. Silence the `AppIcon.icon` actool warning.** Every build, on both platforms,
       emits `None of the input catalogs contained a matching App Icon & Top Shelf Image
       brand assets collection named "AppIcon"`, attributed to the Icon Composer file. It
@@ -292,10 +299,13 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
       let me finally measure the P8 fix from #12, which I had been unable to verify —
       45s playing gave 4 `indexpoints` requests, 60s paused gave **0**, and 40s after
       resuming gave 4 again.
-- [ ] **S5. Validate deep links before acting on them.** `handleDeepLink` accepts any
-      channel id from any URL and the views immediately call `playChannel`. Low impact (it
-      only starts a public radio stream) but it should resolve against `availableChannels`
-      first, and `pendingChannelId` should expire rather than being retried indefinitely.
+- [x] ~~**S5. Validate deep links before acting on them.**~~ Done in #17. Resolution
+      against `availableChannels` now happens in one place rather than three, identifiers
+      are rejected before being stored if they are empty, longer than 256 characters or
+      carry control characters or newlines, and a pending link expires after 30 seconds
+      instead of being retried on every catalogue refresh for the rest of the session.
+      Impact was always low — the worst case starts a public radio stream — but deep links
+      are attacker-supplied input: anything on the device can hand the app a URL.
 - [x] ~~**S6. Move the image cache out of `Documents`.**~~ Done in #11 — now
       `.cachesDirectory`. Verified on the simulator: `Documents/ImageCache` is empty and
       `Library/Caches/ImageCache` holds the artwork.
