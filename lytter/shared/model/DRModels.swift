@@ -79,6 +79,18 @@ struct DRChannel: Identifiable, Codable, Equatable, Hashable {
         let components = title.split(separator: " ", maxSplits: 1, omittingEmptySubsequences: false)
         return components.count > 1 ? String(components[1]) : nil
     }
+
+    /// The name including the district, where there is one: "P4 - København".
+    ///
+    /// Needed wherever a card stands for one particular channel rather than for a station.
+    /// A pinned favourite is a specific district, and "P4" alone does not say which of the
+    /// ten it is — all ten would caption themselves identically.
+    ///
+    /// Not localised: a separator, not a phrase.
+    var qualifiedName: String {
+        guard let district else { return name }
+        return "\(name) - \(district)"
+    }
     
     // Hashable conformance
     func hash(into hasher: inout Hasher) {
@@ -828,6 +840,22 @@ class DRServiceManager: ObservableObject {
     
     func getCachedPrograms(for channel: DRChannel) -> [DREpisode] {
         return cachedSchedules.filter { $0.channel.id == channel.id }
+    }
+
+    /// Artwork for what is on the channel now, falling back to any cached programme for it.
+    ///
+    /// The fallback is not hypothetical: `/schedules/all/now` returns entries with no image
+    /// often enough that a card would otherwise show an empty placeholder while a perfectly
+    /// good image sat in the schedule cache.
+    func artworkURL(for channel: DRChannel) -> URL? {
+        if let url = getCurrentProgram(for: channel)?.primaryImageURL {
+            return URL(string: url)
+        }
+        let cached = getCachedPrograms(for: channel)
+        if let url = cached.first(where: { $0.primaryImageURL != nil })?.primaryImageURL {
+            return URL(string: url)
+        }
+        return nil
     }
 
     // MARK: - Deep Link Resolution

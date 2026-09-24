@@ -29,6 +29,17 @@ struct GroupedChannel: Identifiable {
         return channels.count > 1
     }
 
+    /// What to call this on a card.
+    ///
+    /// A group of one is a specific channel, so if it has a district, name it: a shelf of
+    /// favourites otherwise shows several cards all captioned "P4" with no way to tell
+    /// København from Bornholm. A group of ten stands for the station as a whole, and is
+    /// named for the station.
+    var displayTitle: String {
+        guard !hasMultipleDistricts, let only = channels.first else { return name }
+        return only.qualifiedName
+    }
+
     var districts: [String] {
         return channels.compactMap { $0.district }.uniqued()
     }
