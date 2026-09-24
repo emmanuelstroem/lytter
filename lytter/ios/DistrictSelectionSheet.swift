@@ -23,19 +23,28 @@ struct DistrictSelectionSheet: View {
 
     var body: some View {
         NavigationStack {
-            List(groupedChannel.channels) { channel in
-                Button {
-                    onChannelSelect(channel)
-                    dismiss()
-                } label: {
-                    row(for: channel)
+            List {
+                Section {
+                    ForEach(groupedChannel.channels) { channel in
+                        Button {
+                            select(channel)
+                        } label: {
+                            row(for: channel)
+                        }
+                        // Without this the row's text takes the button tint and turns blue.
+                        .buttonStyle(.plain)
+                        .swipeActions(edge: .leading, allowsFullSwipe: true) {
+                            favouriteButton(for: channel).tint(.yellow)
+                        }
+                        .contextMenu { favouriteButton(for: channel) }
+                    }
+                } footer: {
+                    // A section footer rather than a safe-area inset: an inset floats over
+                    // the list, and at the medium detent it sat on top of the last row.
+                    // This scrolls with the content, which is also where a listener looks
+                    // for an explanation of what the list just did.
+                    Text("Your region is remembered for other regional stations.")
                 }
-                // Without this the row's text takes the button tint and turns blue.
-                .buttonStyle(.plain)
-                .swipeActions(edge: .leading, allowsFullSwipe: true) {
-                    favouriteButton(for: channel).tint(.yellow)
-                }
-                .contextMenu { favouriteButton(for: channel) }
             }
             .listStyle(.insetGrouped)
             .navigationTitle(groupedChannel.name)
@@ -68,6 +77,13 @@ struct DistrictSelectionSheet: View {
             }
 
             Spacer(minLength: 8)
+
+            if isPreferredRegion(channel) {
+                Image(systemName: "location.fill")
+                    .font(.caption)
+                    .foregroundStyle(Color.accentColor)
+                    .accessibilityHidden(true)
+            }
 
             if serviceManager.userPreferences.isFavourite(channel.id) {
                 Image(systemName: "star.fill")
@@ -107,6 +123,24 @@ struct DistrictSelectionSheet: View {
 
     private func isPlaying(_ channel: DRChannel) -> Bool {
         serviceManager.playingChannel?.id == channel.id
+    }
+
+    private func isPreferredRegion(_ channel: DRChannel) -> Bool {
+        guard let districtID = channel.districtID else { return false }
+        return serviceManager.userPreferences.preferredDistrict?.id == districtID
+    }
+
+    /// Plays the district, and remembers it as the listener's region.
+    ///
+    /// Choosing here is the only signal the app gets about where someone is, and it is a
+    /// reliable one — nobody picks Bornholm by accident. Recording it means the next
+    /// regional station plays the right signal without asking again.
+    private func select(_ channel: DRChannel) {
+        if let name = channel.district {
+            serviceManager.userPreferences.rememberDistrict(District(name: name))
+        }
+        onChannelSelect(channel)
+        dismiss()
     }
 
     /// Pinning a district is only meaningful here, where you have said which one you mean —
