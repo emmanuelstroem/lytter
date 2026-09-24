@@ -27,10 +27,10 @@ struct DRAPIConfig {
     /// Change one and you must change the other, or Top Shelf will silently break while
     /// the app keeps working. Sharing it properly needs the extension to stop duplicating
     /// the model layer — tracked in docs/ROADMAP.md.
-    static let apiVersion = "v5"
+    nonisolated static let apiVersion = "v5"
 
-    static let baseURL = "https://api.dr.dk/radio/\(apiVersion)"
-    static let assetBaseURL = "https://asset.dr.dk/drlyd/images"
+    nonisolated static let baseURL = "https://api.dr.dk/radio/\(apiVersion)"
+    nonisolated static let assetBaseURL = "https://asset.dr.dk/drlyd/images"
 
     /// Optional Azure API Management subscription key (Ocp-Apim-Subscription-Key).
     ///
@@ -39,18 +39,22 @@ struct DRAPIConfig {
     ///
     /// Never commit a real key here: this file is in source control and ships inside the
     /// binary. Read it from a gitignored xcconfig or proxy the API instead.
-    static var subscriptionKey: String? = nil
+    /// Supplied by the build, never assigned at runtime — which is why it is a `let`.
+    /// A mutable global is shared mutable state and rejected outright under Swift 6, and
+    /// nothing ever wrote to this one.
+    nonisolated static let subscriptionKey: String? =
+        Bundle.main.object(forInfoDictionaryKey: "DRSubscriptionKey") as? String
 
     // API Endpoints
-    static let schedulesAllNow = "\(baseURL)/schedules/all/now"
-    static let scheduleSnapshot = "\(baseURL)/schedules/snapshot"
-    static let indexpointsLive = "\(baseURL)/indexpoints/live"
+    nonisolated static let schedulesAllNow = "\(baseURL)/schedules/all/now"
+    nonisolated static let scheduleSnapshot = "\(baseURL)/schedules/snapshot"
+    nonisolated static let indexpointsLive = "\(baseURL)/indexpoints/live"
     
     // Polling Configuration
-    static let trackPollingInterval: TimeInterval = 15 // 30 seconds for finished tracks
-    static let trackUpdateBuffer: TimeInterval = 5 // 5 seconds buffer before track ends
+    nonisolated static let trackPollingInterval: TimeInterval = 15 // 30 seconds for finished tracks
+    nonisolated static let trackUpdateBuffer: TimeInterval = 5 // 5 seconds buffer before track ends
     
-    static func imageURL(for imageAssetURN: String) -> String {
+    nonisolated static func imageURL(for imageAssetURN: String) -> String {
         return "\(assetBaseURL)/\(imageAssetURN)"
     }
 }

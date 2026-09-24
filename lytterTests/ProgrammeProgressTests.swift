@@ -10,6 +10,10 @@ import Testing
 /// The full player's progress bar was driven by two `@State` values that nothing ever
 /// wrote, so it sat permanently at zero. It now reports progress through the programme on
 /// air, which is arithmetic worth pinning rather than re-checking against a screenshot.
+/// @MainActor because the project builds with SWIFT_DEFAULT_ACTOR_ISOLATION
+/// = MainActor, so the types under test are main-actor isolated by inference. Swift 6
+/// rejects calling them from a nonisolated suite.
+@MainActor
 struct ProgrammeProgressTests {
 
     /// 13:30–14:03, the P1 slot this was first verified against.

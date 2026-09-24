@@ -54,11 +54,14 @@ class AudioPlayerService: NSObject, ObservableObject {
     }
     
     deinit {
-            // Remove notification observers
         NotificationCenter.default.removeObserver(self)
-        
-            // Clean up Command Center
-        cleanupCommandCenter()
+
+        // The Command Center is deliberately not cleaned up here. Its targets capture self
+        // weakly, so they are inert once this object is gone, and `stop()` already clears
+        // the now-playing info. Reaching for it from deinit means touching main-actor
+        // state from a nonisolated context — a warning today and an error under Swift 6,
+        // for a cleanup that cannot run anyway: the one instance is owned by the app-wide
+        // DRServiceManager and outlives everything that could observe it.
     }
     
     private var audioSessionSetup = false

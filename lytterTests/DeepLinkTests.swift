@@ -11,6 +11,10 @@ import Testing
 /// registered only `lytter`, so every shared link was inert — iOS does not deliver an
 /// unregistered scheme to anybody, and the handler accepting `lyt` hid it from review.
 /// These tests pin the two invariants that would have caught it.
+/// @MainActor because the project builds with SWIFT_DEFAULT_ACTOR_ISOLATION
+/// = MainActor, so the types under test are main-actor isolated by inference. Swift 6
+/// rejects calling them from a nonisolated suite.
+@MainActor
 struct DeepLinkTests {
 
     private let channel = DRChannel(
