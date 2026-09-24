@@ -62,7 +62,7 @@ class AudioPlayerService: NSObject, ObservableObject {
     }
     
     private var audioSessionSetup = false
-    private var wasPlayingBeforeInterruption = false
+    private var interruption = InterruptionState()
     
     // MARK: - Audio Interruption Handling
     
@@ -94,9 +94,11 @@ class AudioPlayerService: NSObject, ObservableObject {
         switch type {
         case .began:
             // Audio interruption started (e.g., phone call, alarm, etc.)
-            wasPlayingBeforeInterruption = isPlaying
+            interruption.began(wasPlaying: isPlaying)
             if isPlaying {
-                pause()
+                // resumable: this pause is the system's doing, so it must not clear the
+                // intent that was just recorded.
+                pause(resumable: true)
             }
             
         case .ended:
@@ -107,8 +109,10 @@ class AudioPlayerService: NSObject, ObservableObject {
             
             let options = AVAudioSession.InterruptionOptions(rawValue: optionsValue)
             
-            if options.contains(.shouldResume) && wasPlayingBeforeInterruption {
-                // Resume playback if it was playing before interruption
+            // ended() clears the intent whether or not it resumes. Previously an
+            // interruption that ended without .shouldResume left the flag set, and the
+            // next route change found it and started playing.
+            if interruption.ended(systemAllowsResume: options.contains(.shouldResume)) {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
                     self?.resumeAfterInterruption()
                 }
@@ -128,30 +132,27 @@ class AudioPlayerService: NSObject, ObservableObject {
         
         switch reason {
         case .oldDeviceUnavailable:
-            // Audio output device was disconnected (e.g., headphones unplugged)
+            // The output device went away — headphones unplugged, Bluetooth disconnected.
+            // Pausing is required behaviour; audio must not carry on out of the speaker.
+            // The default pause() clears any resume intent, because Apple's guidance is
+            // not to restart when the route comes back.
             if isPlaying {
                 pause()
             }
-            
-        case .newDeviceAvailable:
-            // New audio output device available
-            // Optionally resume if it was playing before
-            if wasPlayingBeforeInterruption {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
-                    self?.resumeAfterInterruption()
-                }
-            }
-            
+
+            // .newDeviceAvailable is deliberately not handled. Plugging something in means
+            // a route became available, not that the listener wants audio — and resuming
+            // here is what turned a stale interruption flag into the radio starting by
+            // itself an hour after the call that set it.
+
         default:
             break
         }
     }
     
     private func resumeAfterInterruption() {
-        // Only resume if we have a valid player and it was playing before interruption
-        guard let player = player, wasPlayingBeforeInterruption else {
-            return
-        }
+        // The decision was made by InterruptionState.ended(); this only carries it out.
+        guard let player = player else { return }
         
         // Reactivate audio session
         do {
@@ -167,7 +168,6 @@ class AudioPlayerService: NSObject, ObservableObject {
         // Resume playback
         player.play()
         isPlaying = true
-        wasPlayingBeforeInterruption = false
         
         // Update Command Center playback state
         updateCommandCenterPlaybackState()
@@ -460,7 +460,8 @@ class AudioPlayerService: NSObject, ObservableObject {
     func play(url: URL) {
         isLoading = true
         error = nil
-        wasPlayingBeforeInterruption = false
+        // Starting a channel is deliberate, so any pending resume intent is void.
+        interruption.playbackSettledDeliberately()
         
             // Setup and activate audio session when starting playback
         do {
@@ -550,13 +551,21 @@ class AudioPlayerService: NSObject, ObservableObject {
             .store(in: &playerObservations)
     }
     
-    func pause() {
+    /// Pauses playback.
+    ///
+    /// - Parameter resumable: whether a later interruption-ended event may resume. Only
+    ///   the interruption handler passes `true`; every other caller — the listener, the
+    ///   Command Center, an unplugged output device — means the pause to stand, and
+    ///   clearing the intent here is what stops a stale one firing later.
+    ///
+    ///   The condition this replaces read `if !wasPlayingBeforeInterruption { ... = false }`,
+    ///   which assigns false only when it is already false. It never cleared anything.
+    func pause(resumable: Bool = false) {
         player?.pause()
         isPlaying = false
-        
-        // Only reset the interruption flag if this is a manual pause (not due to interruption)
-        if !wasPlayingBeforeInterruption {
-            wasPlayingBeforeInterruption = false
+
+        if !resumable {
+            interruption.playbackSettledDeliberately()
         }
 
             // The session deliberately stays active. Pausing live radio is momentary, and
@@ -609,6 +618,7 @@ class AudioPlayerService: NSObject, ObservableObject {
         playerObservations.removeAll()
         player = nil
         isPlaying = false
+        interruption.playbackSettledDeliberately()
         duration = 0
             // Clear Command Center info
         clearCommandCenterInfo()

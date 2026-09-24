@@ -229,6 +229,38 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
       duplicate of this entry**, written without spotting that the same bug was already on
       the list. Both are closed by the same change. Worth the lesson: search the roadmap
       before adding to it.
+- [x] ~~**F30. Playback could start on its own.**~~ Done in #22. Found by audit, not by
+      report, and it is the kind that would be hard to report: the trigger is arbitrarily
+      far from the cause.
+      `wasPlayingBeforeInterruption` was set when an interruption began and cleared only
+      when it resulted in a resume. An interruption that ended **without** `.shouldResume`
+      left it set — and the route-change handler resumed on `.newDeviceAvailable`. So a
+      call that ended quietly, then plugging in headphones an hour later, started the radio
+      unprompted.
+      Two further defects in the same place. `pause()` read
+      `if !wasPlayingBeforeInterruption { wasPlayingBeforeInterruption = false }` — it
+      assigns false only when already false, so it never cleared anything, which is exactly
+      the escape hatch that would otherwise have masked the first bug. And resuming on
+      `.newDeviceAvailable` is against Apple's guidance to begin with: a route becoming
+      available is not a request to play.
+      The flag is now an `InterruptionState` value type whose `ended(systemAllowsResume:)`
+      clears the intent either way, with `pause(resumable:)` distinguishing a pause the
+      system caused from one the listener asked for. Six tests; confirmed that the one
+      encoding the reported sequence fails against the old behaviour and the other five
+      still pass.
+      Unchanged deliberately: `.oldDeviceUnavailable` still pauses. Audio must not carry on
+      out of the speaker when headphones are unplugged.
+- [ ] **P18. `ImageCacheService` in-flight map has a race.** Two callers coalesced onto one
+      task both clear `inFlight[key]` when it finishes. If a third registers between those
+      two clears, its entry is wiped and the next request downloads the same image twice.
+      Invisible to users — a duplicate fetch, not a wrong result — but it defeats the
+      coalescing it was added for. Fix with an actor, which also settles P19.
+- [ ] **P19. Three Swift 6 concurrency warnings, all in `ImageCacheService`.** `NSLock`'s
+      `lock`/`unlock` called in an async context (lines 98/100) and a main-actor-isolated
+      `defaultMaxPixelSize` read from a nonisolated one (line 80). The lock warning is a
+      false positive as written — `defer` releases before the `await` — but all three are
+      hard errors under Swift 6, so this is the concrete content of S10 and the place to
+      start it.
 - [ ] **F14. Add a README.** Nineteen commits and no entry point for a reader.
 
 ### P2 — expansion
