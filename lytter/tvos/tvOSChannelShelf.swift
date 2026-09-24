@@ -71,14 +71,35 @@ struct tvOSShelfCard: View {
     /// does not.
     private var title: String { preferredChannel?.qualifiedName ?? group.displayTitle }
 
-    /// Card, then what is on it — the subtitle outside whatever button wraps the card, so
-    /// the card style's container does not box it in with the artwork.
-    var body: some View {
+    /// Artwork and the programme beneath it, as one focusable thing.
+    ///
+    /// Both inside the button, so focus lifts the whole item rather than the picture alone —
+    /// on Apple TV a card and its label move together, and a subtitle left behind while the
+    /// artwork grows reads as a glitch.
+    ///
+    /// That only works with a button style that draws no container of its own.
+    /// `tvOSMusicCardButtonStyle` scales and shadows and nothing else, so the subtitle sits
+    /// on the page. `.card` would box it in with the artwork, which is the arrangement iOS
+    /// deliberately does not use.
+    private var item: some View {
         VStack(alignment: .leading, spacing: 10) {
+            tvOSChannelCard(channel: channel, titleOverride: title)
+
+            StationCard.Subtitle(
+                text: serviceManager.getCurrentProgram(for: channel)?.programmeName ?? "",
+                font: .system(size: 18)
+            )
+            .frame(minHeight: 22)
+        }
+        .frame(width: 300, alignment: .leading)
+    }
+
+    var body: some View {
+        Group {
             if opensPicker {
                 tvOSVariantMenu(
                     items: group.channels,
-                    label: { tvOSChannelCard(channel: channel, titleOverride: title) },
+                    label: { item },
                     itemTitle: { $0.district ?? $0.name },
                     onSelect: { picked in
                         // Same bargain as on iOS: choosing here says where the listener is,
@@ -94,18 +115,25 @@ struct tvOSShelfCard: View {
                 Button {
                     onSelect(channel)
                 } label: {
-                    tvOSChannelCard(channel: channel, titleOverride: title)
+                    item
                 }
-                .buttonStyle(.card)
+                .buttonStyle(tvOSMusicCardButtonStyle())
             }
-
-            StationCard.Subtitle(
-                text: serviceManager.getCurrentProgram(for: channel)?.programmeName ?? "",
-                font: .system(size: 18)
-            )
-            .frame(minHeight: 22)
         }
-        .frame(width: 300, alignment: .leading)
+        // Hold select to pin, as on iOS. Without this there was no way to add a favourite
+        // outside the Radio tab — so the Favourites shelf stayed empty and looked as though
+        // tvOS simply did not have the feature.
+        .contextMenu {
+            if !opensPicker {
+                let isFavourite = serviceManager.userPreferences.isFavourite(channel.id)
+                Button {
+                    serviceManager.userPreferences.toggleFavourite(channel.id)
+                } label: {
+                    Label(isFavourite ? "Remove from Favourites" : "Add to Favourites",
+                          systemImage: isFavourite ? "star.slash" : "star")
+                }
+            }
+        }
     }
 }
 #endif

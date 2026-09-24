@@ -82,30 +82,10 @@ struct tvOSRadioView: View {
                                 LazyHStack(alignment: .top, spacing: 40) {
                                     ForEach(primaryChannels, id: \.id) { channel in
                                         let variants = serviceManager.availableChannels.filter { $0.name == channel.name }
-                                        VStack(alignment: .leading, spacing: 10) {
-                                            if variants.count <= 1 {
-                                                Button {
-                                                    serviceManager.playChannel(channel)
-                                                    selectionState.selectChannel(channel)
-                                                } label: {
-                                                    tvOSChannelCard(channel: channel)
-                                                }
-                                                .buttonStyle(tvOSMusicCardButtonStyle())
-                                                .focused($focusedMenuChannelId, equals: channel.id)
-                                                .contextMenu {
-                                                    favouriteButton(for: channel)
-                                                }
-                                            } else {
-                                                Button {
-                                                    lastFocusedChannelId = channel.id
-                                                    selectedChannelForVariants = channel
-                                                } label: {
-                                                    tvOSChannelCard(channel: channel)
-                                                }
-                                                .buttonStyle(tvOSMusicCardButtonStyle())
-                                                .focused($focusedMenuChannelId, equals: channel.id)
-                                            }
-
+                                        // Artwork and programme inside the button, so
+                                        // focus lifts them together.
+                                        let item = VStack(alignment: .leading, spacing: 10) {
+                                            tvOSChannelCard(channel: channel)
                                             StationCard.Subtitle(
                                                 text: serviceManager.getCurrentProgram(for: channel)?.programmeName ?? "",
                                                 font: .system(size: 18)
@@ -113,6 +93,25 @@ struct tvOSRadioView: View {
                                             .frame(minHeight: 22)
                                         }
                                         .frame(width: 300, alignment: .leading)
+
+                                        if variants.count <= 1 {
+                                            Button {
+                                                serviceManager.playChannel(channel)
+                                                selectionState.selectChannel(channel)
+                                            } label: { item }
+                                            .buttonStyle(tvOSMusicCardButtonStyle())
+                                            .focused($focusedMenuChannelId, equals: channel.id)
+                                            .contextMenu {
+                                                favouriteButton(for: channel)
+                                            }
+                                        } else {
+                                            Button {
+                                                lastFocusedChannelId = channel.id
+                                                selectedChannelForVariants = channel
+                                            } label: { item }
+                                            .buttonStyle(tvOSMusicCardButtonStyle())
+                                            .focused($focusedMenuChannelId, equals: channel.id)
+                                        }
                                     }
                                 }
                                 .padding(.horizontal, 60)
