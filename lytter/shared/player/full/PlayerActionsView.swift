@@ -40,6 +40,7 @@ struct PlayerActionsView: View {
                             .font(.system(size: min(geometry.size.width, geometry.size.height) * 0.3, weight: .medium))
                             .foregroundStyle(Color.secondary)
                     }
+                    .accessibilityLabel("Programme information")
                 }
                 Spacer()
                 
@@ -63,6 +64,7 @@ struct PlayerActionsView: View {
                             .font(.system(size: min(geometry.size.width, geometry.size.height) * 0.3, weight: .medium))
                             .foregroundStyle(Color.secondary)
                     }
+                    .accessibilityLabel("Today's schedule")
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)

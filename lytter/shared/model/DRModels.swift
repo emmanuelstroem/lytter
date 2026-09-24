@@ -217,6 +217,23 @@ struct DREpisode: Identifiable, Codable, Equatable {
     /// name one broadcast.
     var broadcastID: String { "\(channel.id)|\(startTime)" }
 
+    /// How far through this broadcast `date` falls, from 0 to 1.
+    ///
+    /// `nil` when the schedule does not give both ends, or gives a zero-length slot —
+    /// callers show no progress at all rather than an empty bar.
+    func progress(at date: Date) -> Double? {
+        guard let start = startDate, let end = endDate else { return nil }
+        let total = end.timeIntervalSince(start)
+        guard total > 0 else { return nil }
+        return min(max(date.timeIntervalSince(start) / total, 0), 1)
+    }
+
+    /// Whole minutes left of this broadcast at `date`, never negative.
+    func minutesRemaining(at date: Date) -> Int? {
+        guard let end = endDate else { return nil }
+        return max(Int(end.timeIntervalSince(date) / 60), 0)
+    }
+
     var startDate: Date? {
         let formatter = ISO8601DateFormatter()
         return formatter.date(from: startTime)
