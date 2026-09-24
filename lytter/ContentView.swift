@@ -92,6 +92,10 @@ struct ContentView: View {
                     .frame(alignment: .bottom)
             }
         }
+        // Presented here, not from the mini player: see SelectionState.isShowingFullPlayer.
+        .sheet(isPresented: $selectionState.isShowingFullPlayer) {
+            FullPlayerSheet(serviceManager: serviceManager, selectionState: selectionState)
+        }
         .onContinueUserActivity("PlayChannelActivity") { userActivity in
             #if os(iOS) || os(macOS)
             siriShortcutsService.handleUserActivity(userActivity)

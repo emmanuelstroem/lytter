@@ -43,7 +43,6 @@ struct MiniPlayerComponents: View {
     @EnvironmentObject var serviceManager: DRServiceManager
     @EnvironmentObject var selectionState: SelectionState
     let config: MiniPlayerConfig
-    @State private var showingFullPlayer = false
     
     var body: some View {
         HStack(spacing: 12) {
@@ -178,7 +177,7 @@ struct MiniPlayerComponents: View {
                 }
             }
             .contentShape(Rectangle())
-            .onTapGesture { showingFullPlayer = true }
+            .onTapGesture { selectionState.isShowingFullPlayer = true }
 
             // Right: Controls
             HStack(spacing: 12) {
@@ -211,9 +210,6 @@ struct MiniPlayerComponents: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
         .frame(maxWidth: .infinity)
-        .sheet(isPresented: $showingFullPlayer) {
-            FullPlayerSheet(serviceManager: serviceManager, selectionState: selectionState)
-        }
     }
 }
 
