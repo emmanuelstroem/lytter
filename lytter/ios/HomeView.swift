@@ -42,14 +42,16 @@ struct HomeView: View {
                             }
                         )
 
-                        DRChannelsSection(
-                            serviceManager: serviceManager,
-                            onChannelTap: { channel in
-                                // Start streaming the channel
-                                serviceManager.playChannel(channel)
-                                selectionState.selectChannel(channel, showSheet: false)
-                            }
-                        )
+                        ForEach(serviceManager.broadcasterSections) { section in
+                            BroadcasterChannelsSection(
+                                section: section,
+                                serviceManager: serviceManager,
+                                onChannelTap: { channel in
+                                    serviceManager.playChannel(channel)
+                                    selectionState.selectChannel(channel, showSheet: false)
+                                }
+                            )
+                        }
                     }
                     
                     // Playback error alert
@@ -224,18 +226,24 @@ struct FavouritesSection: View {
     }
 }
 
-struct DRChannelsSection: View {
+/// One broadcaster's channels, under its name.
+///
+/// This was `DRChannelsSection` with "DR" written into the heading. The name now comes
+/// from the section, so a second broadcaster needs no new view — which is the whole reason
+/// the model exists while there is still only one.
+struct BroadcasterChannelsSection: View {
+    let section: BroadcasterSection
     @ObservedObject var serviceManager: DRServiceManager
     let onChannelTap: (DRChannel) -> Void
-    
+
     private var groupedChannels: [GroupedChannel] {
-        GroupedChannel.grouped(from: serviceManager.availableChannels)
+        GroupedChannel.grouped(from: section.channels)
     }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
-                Text("DR")
+                Text(section.broadcaster.name)
                     .font(.title2)
                     .fontWeight(.semibold)
                     .foregroundStyle(Color.primary)
