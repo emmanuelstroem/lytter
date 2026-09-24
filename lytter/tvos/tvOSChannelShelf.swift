@@ -71,30 +71,41 @@ struct tvOSShelfCard: View {
     /// does not.
     private var title: String { preferredChannel?.qualifiedName ?? group.displayTitle }
 
+    /// Card, then what is on it — the subtitle outside whatever button wraps the card, so
+    /// the card style's container does not box it in with the artwork.
     var body: some View {
-        if opensPicker {
-            tvOSVariantMenu(
-                items: group.channels,
-                label: { tvOSChannelCard(channel: channel, titleOverride: title) },
-                itemTitle: { $0.district ?? $0.name },
-                onSelect: { picked in
-                    // Same bargain as on iOS: choosing here says where the listener is, so
-                    // the next regional station does not have to ask.
-                    if let district = picked.district {
-                        serviceManager.userPreferences.rememberDistrict(District(name: district))
-                    }
-                    onSelect(picked)
-                },
-                panelTitle: String(localized: "Choose a district")
-            )
-        } else {
-            Button {
-                onSelect(channel)
-            } label: {
-                tvOSChannelCard(channel: channel, titleOverride: title)
+        VStack(alignment: .leading, spacing: 10) {
+            if opensPicker {
+                tvOSVariantMenu(
+                    items: group.channels,
+                    label: { tvOSChannelCard(channel: channel, titleOverride: title) },
+                    itemTitle: { $0.district ?? $0.name },
+                    onSelect: { picked in
+                        // Same bargain as on iOS: choosing here says where the listener is,
+                        // so the next regional station does not have to ask.
+                        if let district = picked.district {
+                            serviceManager.userPreferences.rememberDistrict(District(name: district))
+                        }
+                        onSelect(picked)
+                    },
+                    panelTitle: String(localized: "Choose a district")
+                )
+            } else {
+                Button {
+                    onSelect(channel)
+                } label: {
+                    tvOSChannelCard(channel: channel, titleOverride: title)
+                }
+                .buttonStyle(.card)
             }
-            .buttonStyle(.card)
+
+            StationCard.Subtitle(
+                text: serviceManager.getCurrentProgram(for: channel)?.programmeName ?? "",
+                font: .system(size: 18)
+            )
+            .frame(minHeight: 22)
         }
+        .frame(width: 300, alignment: .leading)
     }
 }
 #endif

@@ -82,28 +82,37 @@ struct tvOSRadioView: View {
                                 LazyHStack(alignment: .top, spacing: 40) {
                                     ForEach(primaryChannels, id: \.id) { channel in
                                         let variants = serviceManager.availableChannels.filter { $0.name == channel.name }
-                                        if variants.count <= 1 {
-                                            Button {
-                                                serviceManager.playChannel(channel)
-                                                selectionState.selectChannel(channel)
-                                            } label: {
-                                                tvOSChannelCard(channel: channel)
+                                        VStack(alignment: .leading, spacing: 10) {
+                                            if variants.count <= 1 {
+                                                Button {
+                                                    serviceManager.playChannel(channel)
+                                                    selectionState.selectChannel(channel)
+                                                } label: {
+                                                    tvOSChannelCard(channel: channel)
+                                                }
+                                                .buttonStyle(tvOSMusicCardButtonStyle())
+                                                .focused($focusedMenuChannelId, equals: channel.id)
+                                                .contextMenu {
+                                                    favouriteButton(for: channel)
+                                                }
+                                            } else {
+                                                Button {
+                                                    lastFocusedChannelId = channel.id
+                                                    selectedChannelForVariants = channel
+                                                } label: {
+                                                    tvOSChannelCard(channel: channel)
+                                                }
+                                                .buttonStyle(tvOSMusicCardButtonStyle())
+                                                .focused($focusedMenuChannelId, equals: channel.id)
                                             }
-                                            .buttonStyle(tvOSMusicCardButtonStyle())
-                                            .focused($focusedMenuChannelId, equals: channel.id)
-                                            .contextMenu {
-                                                favouriteButton(for: channel)
-                                            }
-                                        } else {
-                                            Button {
-                                                lastFocusedChannelId = channel.id
-                                                selectedChannelForVariants = channel
-                                            } label: {
-                                                tvOSChannelCard(channel: channel)
-                                            }
-                                            .buttonStyle(tvOSMusicCardButtonStyle())
-                                            .focused($focusedMenuChannelId, equals: channel.id)
+
+                                            StationCard.Subtitle(
+                                                text: serviceManager.getCurrentProgram(for: channel)?.programmeName ?? "",
+                                                font: .system(size: 18)
+                                            )
+                                            .frame(minHeight: 22)
                                         }
+                                        .frame(width: 300, alignment: .leading)
                                     }
                                 }
                                 .padding(.horizontal, 60)

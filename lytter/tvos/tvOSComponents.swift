@@ -212,17 +212,17 @@ struct tvOSChannelCard: View {
         serviceManager.playingChannel?.name == channel.name
     }
 
-    /// The same anatomy as the iOS card: the station's name on a band of glass across the
-    /// foot of the artwork, and what is on it now beneath the card, on the background.
+    /// The card proper: artwork, with the station's name on a band of glass across its foot.
     ///
-    /// Two lines of text under the artwork was the old arrangement, and it made a station
-    /// look like a different product on the television than it does on the phone. The band
-    /// also puts the name where the eye already is — on the image.
+    /// What is on the station now is *not* here. A card button style draws its container
+    /// around the whole label, so a subtitle inside this view came out boxed in with the
+    /// artwork rather than printed beneath it on the page — which is not what iOS does. The
+    /// caller places it, outside the button.
     var body: some View {
         let displayTitle = titleOverride
             ?? ((channel.district != nil) ? channel.name : channel.title)
 
-        VStack(alignment: .leading, spacing: 10) {
+        Group {
             CachedAsyncImage(url: artworkURL,
                              maxPixelSize: ImageCacheService.thumbnailMaxPixelSize) { image in
                 image
@@ -252,33 +252,19 @@ struct tvOSChannelCard: View {
             }
             .shadow(color: .white.opacity(isFocused ? 0.55 : 0), radius: 18, x: 0, y: 0)
             .animation(.spring(response: 0.28, dampingFraction: 0.72), value: isFocused)
-
-            // Beneath the card, on the background, where it needs no scrim to be read.
-            //
-            // Inset by 6: the card button style rounds its own container, and text starting
-            // flush at x=0 had its first letter clipped by that corner — "Orientering" read
-            // as "rientering".
-            Text(currentProgram?.programmeName ?? "")
-                .font(.system(size: 18, weight: .regular))
-                .foregroundStyle(.gray)
-                .lineLimit(1)
-                .padding(.horizontal, 6)
-                .frame(width: 300, alignment: .leading)
-                .frame(minHeight: 22)
         }
     }
 
+    /// What is on the channel now, for a caller to place beneath the card.
+    var subtitle: String { currentProgram?.programmeName ?? "" }
+
     private func nameBand(_ title: String) -> some View {
-        Text(title)
-            .font(.system(size: 26, weight: .bold))
-            .foregroundStyle(.primary)
-            .lineLimit(1)
-            .minimumScaleFactor(0.7)
-            .padding(.horizontal, 14)
-            .padding(.vertical, 10)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background { CaptionBackdrop(fades: false) }
-            .captionOnArtwork()
+        StationCard.NameBand(
+            title: title,
+            font: .system(size: 26, weight: .bold),
+            horizontalPadding: 14,
+            verticalPadding: 10
+        )
     }
 }
 

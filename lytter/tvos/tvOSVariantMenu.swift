@@ -82,7 +82,11 @@ struct tvOSVariantMenu<Label: View, Item: Identifiable & Hashable>: View {
                             .focused($focusedItemId, equals: item.id)
                         }
                     }
-                    .padding(.vertical, 8)
+                    // Focus scales a button up by about a tenth, and at the panel's edge
+                    // that growth had nowhere to go — the leftmost and rightmost pills were
+                    // clipped. This is the room it needs.
+                    .padding(.horizontal, 28)
+                    .padding(.vertical, 12)
                 }
             }
             .padding(48)

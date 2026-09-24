@@ -200,23 +200,16 @@ struct ChannelShelfCard: View {
     /// information — the programme goes beneath the card, where it has a plain background
     /// and can simply be read.
     private var nameBand: some View {
-        HStack(spacing: 6) {
-            Text(title)
-                .font(.title2.weight(.bold))
-                .foregroundStyle(.primary)
-                .lineLimit(1)
-                .minimumScaleFactor(0.7)
-
-            if opensPicker {
-                Spacer(minLength: 4)
-                chevron
+        // The band itself is shared with tvOS; the chevron is not, because a remote has no
+        // equivalent of a tap that might open a sheet.
+        StationCard.NameBand(title: title)
+            .overlay(alignment: .trailing) {
+                if opensPicker {
+                    chevron
+                        .padding(.trailing, 10)
+                        .captionOnArtwork()
+                }
             }
-        }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 7)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background { CaptionBackdrop(fades: false) }
-        .captionOnArtwork()
     }
 
     private var featuredCard: some View {
@@ -237,13 +230,7 @@ struct ChannelShelfCard: View {
                 .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                 .shadow(color: .black.opacity(0.14), radius: 10, y: 2)
 
-            // Concrete rather than hierarchical: this text is on the background, not on a
-            // material, and inside a Button hierarchical styles resolve against the tint.
-            Text(subtitle)
-                .font(.caption)
-                .foregroundStyle(Color.secondary)
-                .lineLimit(1)
-                .padding(.horizontal, 2)
+            StationCard.Subtitle(text: subtitle)
         }
         .frame(width: style.cardWidth, alignment: .leading)
     }
