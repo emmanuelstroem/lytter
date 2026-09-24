@@ -812,6 +812,17 @@
       },
       "shouldTranslate": false
     },
+    "Recently Played": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Senest afspillet"
+          }
+        }
+      }
+    },
     "Remove from Favourites": {
       "extractionState": "manual",
       "localizations": {
