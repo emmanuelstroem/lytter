@@ -12,23 +12,19 @@ struct PlayerInfoView: View {
     let subtitle: String
     let channel: DRChannel?
     let serviceManager: DRServiceManager?
-    let onEllipsisTap: (() -> Void)?
     
-    @State private var showingMenu = false
     @State private var shareImage: UIImage?
     
     init(
         title: String,
         subtitle: String,
         channel: DRChannel? = nil,
-        serviceManager: DRServiceManager? = nil,
-        onEllipsisTap: (() -> Void)? = nil
+        serviceManager: DRServiceManager? = nil
     ) {
         self.title = title
         self.subtitle = subtitle
         self.channel = channel
         self.serviceManager = serviceManager
-        self.onEllipsisTap = onEllipsisTap
     }
     
     private var deepLinkURL: URL? {
@@ -98,59 +94,26 @@ struct PlayerInfoView: View {
                     
                     Spacer()
                     
-                    Menu {
-                        #if os(iOS) || os(macOS)
-                        ShareLink(
-                            item: shareText,
-                            preview: SharePreview(
-                                title,
-                                image: shareImage != nil ? Image(uiImage: shareImage!) : Image(systemName: "music.note")
-                            )
-                        ) {
-                            Label("Share", systemImage: "square.and.arrow.up")
-                        }
-                        .onAppear {
-                            loadShareImage()
-                        }
-                        
-                        #endif
-                        
-                        // Button(action: {
-                        //     // Add to favorites functionality
-                        //     print("Add to favorites")
-                        // }) {
-                        //     Label("Add to Favorites", systemImage: "heart")
-                        // }
-                        
-                        // Button(action: {
-                        //     // Show more info functionality
-                        //     print("Show more info")
-                        // }) {
-                        //     Label("Show More Info", systemImage: "info.circle")
-                        // }
-                        
-                        // Divider()
-                        
-                        // Button(action: {
-                        //     // Report issue functionality
-                        //     print("Report issue")
-                        // }) {
-                        //     Label("Report Issue", systemImage: "exclamationmark.triangle")
-                        // }
-                    } label: {
-                        ZStack {
-                            // Icon
-                            Image(systemName: "ellipsis.circle.fill")
-                                .font(.system(size: min(geometry.size.width, geometry.size.height) * 0.375, weight: .medium))
-                                .foregroundColor(.white)
-                                .symbolRenderingMode(.hierarchical)
-                        }
-                        .frame(width: 44, height: 44)
+                    // A share button, not a menu. The menu had exactly one live item —
+                    // this same ShareLink — so it cost a tap for nothing.
+                    #if os(iOS) || os(macOS)
+                    ShareLink(
+                        item: shareText,
+                        preview: SharePreview(
+                            title,
+                            image: shareImage != nil ? Image(uiImage: shareImage!) : Image(systemName: "music.note")
+                        )
+                    ) {
+                        Image(systemName: "square.and.arrow.up.circle.fill")
+                            .font(.system(size: min(geometry.size.width, geometry.size.height) * 0.375,
+                                          weight: .medium))
+                            .foregroundColor(.white)
+                            .symbolRenderingMode(.hierarchical)
+                            // 44pt is the minimum comfortable target in the HIG.
+                            .frame(width: 44, height: 44)
                     }
-                    .onTapGesture {
-                        // Call the original callback if provided
-                        onEllipsisTap?()
-                    }
+                    .accessibilityLabel("Share")
+                    #endif
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -182,7 +145,5 @@ struct PlayerInfoView: View {
             type: "Channel",
             presentationUrl: "https://www.dr.dk/radio/p1"
         )
-    ) {
-        print("Ellipsis tapped")
-    }
+    )
 } 

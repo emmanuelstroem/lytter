@@ -8,6 +8,7 @@
 import Foundation
 import SwiftUI
 import Combine
+import os
 
 // MARK: - iOS DR Models
 
@@ -755,6 +756,21 @@ class DRServiceManager: ObservableObject {
     func getCurrentProgram(for channel: DRChannel) -> DREpisode? {
         let channelPrograms = cachedSchedules.filter { $0.channel.id == channel.id }
         return channelPrograms.first { $0.isCurrentlyPlaying } ?? channelPrograms.first
+    }
+    
+    /// Today's full schedule for a channel.
+    ///
+    /// `/schedules/all/now` only carries what is on air right now, so the rest of the
+    /// day comes from the snapshot endpoint — which `DRNetworkService` has always
+    /// implemented and nothing has ever called.
+    func loadSchedule(for channel: DRChannel) async -> [DREpisode] {
+        do {
+            return try await networkService.fetchScheduleSnapshot(for: channel.slug).items
+        } catch {
+            Log.network.error(
+                "schedule snapshot failed for \(channel.slug, privacy: .public): \(error.localizedDescription, privacy: .public)")
+            return []
+        }
     }
     
     func getCachedPrograms(for channel: DRChannel) -> [DREpisode] {
