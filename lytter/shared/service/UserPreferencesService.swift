@@ -18,14 +18,37 @@ class UserPreferencesService: ObservableObject {
         static let lastPlayedChannelDistrict = "lastPlayedChannelDistrict"
         static let lastPlayedChannelName = "lastPlayedChannelName"
         static let lastPlayedTimestamp = "lastPlayedTimestamp"
+        static let favouriteChannelIDs = "favouriteChannelIDs"
     }
     
     // MARK: - Published Properties
     @Published var lastPlayedChannel: DRChannel?
     @Published var lastPlayedTimestamp: Date?
-    
+
+    /// Pinned channels. Only ids are stored: a channel's title and artwork come from the
+    /// catalogue, and persisting a copy would leave stale names on screen after DR renames
+    /// something.
+    @Published private(set) var favourites = Favourites()
+
     init() {
         loadLastPlayedChannel()
+        favourites = Favourites(
+            channelIDs: userDefaults.stringArray(forKey: Keys.favouriteChannelIDs) ?? [])
+    }
+
+    // MARK: - Favourites
+
+    @discardableResult
+    func toggleFavourite(_ channelID: String) -> Bool {
+        var updated = favourites
+        let isNowFavourite = updated.toggle(channelID)
+        favourites = updated
+        userDefaults.set(updated.channelIDs, forKey: Keys.favouriteChannelIDs)
+        return isNowFavourite
+    }
+
+    func isFavourite(_ channelID: String) -> Bool {
+        favourites.contains(channelID)
     }
     
     // MARK: - Save Last Played Channel
