@@ -15,6 +15,26 @@ class DeepLinkHandler: ObservableObject {
     /// in Info.plist; `DeepLinkTests` asserts that it does.
     static let urlScheme = "lytter"
 
+    /// How long an unresolved link is worth holding on to.
+    ///
+    /// A link opened from cold arrives before the catalogue does, so it has to survive
+    /// long enough to be retried once channels load. Past that window it names a channel
+    /// that is not in the catalogue at all, and holding it would re-fire on every
+    /// catalogue refresh for the rest of the session.
+    static let pendingLinkTimeout: TimeInterval = 30
+
+    /// The longest channel identifier worth storing. Real ones are slugs (`p1`) or URNs
+    /// of about 45 characters; anything beyond this is not a channel we could resolve.
+    static let maximumIdentifierLength = 256
+
+    private var pendingSince: Date?
+
+    /// Whether an unresolved link is still young enough to retry.
+    var isPendingLinkWorthRetrying: Bool {
+        guard pendingChannelId != nil, let pendingSince else { return false }
+        return Date().timeIntervalSince(pendingSince) < Self.pendingLinkTimeout
+    }
+
     @Published var targetChannel: DRChannel?
     @Published var shouldNavigateToChannel = false
     @Published var pendingChannelId: String?
@@ -40,8 +60,14 @@ class DeepLinkHandler: ObservableObject {
             let channelId = pathComponents[1]
             Log.deepLink.debug("resolving channel \(channelId, privacy: .private)")
             
+            guard Self.isPlausibleIdentifier(channelId) else {
+                Log.deepLink.warning("rejected an implausible channel identifier")
+                return
+            }
+
             // Store the pending channel ID for retry if needed
             self.pendingChannelId = channelId
+            self.pendingSince = Date()
             
             // Create a placeholder channel that will be replaced with the actual channel
             // when the app finds it in the available channels
@@ -60,8 +86,14 @@ class DeepLinkHandler: ObservableObject {
             let channelId = pathComponents[2]
             Log.deepLink.debug("resolving Top Shelf channel \(channelId, privacy: .private)")
             
+            guard Self.isPlausibleIdentifier(channelId) else {
+                Log.deepLink.warning("rejected an implausible channel identifier")
+                return
+            }
+
             // Store the pending channel ID for retry if needed
             self.pendingChannelId = channelId
+            self.pendingSince = Date()
             
             // Create a placeholder channel that will be replaced with the actual channel
             // when the app finds it in the available channels
@@ -84,23 +116,20 @@ class DeepLinkHandler: ObservableObject {
         targetChannel = nil
         shouldNavigateToChannel = false
         pendingChannelId = nil
+        pendingSince = nil
+    }
+
+    /// Rejects identifiers that could not name a channel, before one is stored and
+    /// retried. Deep links are attacker-supplied input: anything can send us a URL.
+    static func isPlausibleIdentifier(_ identifier: String) -> Bool {
+        guard !identifier.isEmpty, identifier.count <= maximumIdentifierLength else {
+            return false
+        }
+        return !identifier.contains { $0.isNewline || $0.unicodeScalars.contains { s in
+            s.properties.generalCategory == .control
+        } }
     }
     
-    func retryPendingDeepLink() {
-        if let channelId = pendingChannelId {
-            Log.deepLink.debug("retrying pending link for \(channelId, privacy: .private)")
-            DispatchQueue.main.async {
-                self.targetChannel = DRChannel(
-                    id: channelId,
-                    title: "Channel \(channelId)",
-                    slug: channelId,
-                    type: "Channel",
-                    presentationUrl: nil
-                )
-                self.shouldNavigateToChannel = true
-            }
-        }
-    }
 }
 
 // MARK: - Deep Link URL Generator

@@ -72,4 +72,58 @@ struct DeepLinkTests {
 
         #expect(handler.pendingChannelId == nil)
     }
+
+    // MARK: - Pending link lifecycle
+
+    /// A link opened from cold arrives before the catalogue, so it has to stay pending
+    /// long enough to be retried. It used to be cleared on that first failed attempt,
+    /// which is why cold-start links never resolved.
+    @Test func aFreshLinkSurvivesForRetry() {
+        let handler = DeepLinkHandler()
+
+        handler.handleDeepLink(URL(string: "lytter:///channel/p1")!)
+
+        #expect(handler.pendingChannelId == "p1")
+        #expect(handler.isPendingLinkWorthRetrying)
+    }
+
+    @Test func clearingALinkEndsItsRetryWindow() {
+        let handler = DeepLinkHandler()
+        handler.handleDeepLink(URL(string: "lytter:///channel/p1")!)
+
+        handler.clearTarget()
+
+        #expect(handler.pendingChannelId == nil)
+        #expect(!handler.isPendingLinkWorthRetrying)
+    }
+
+    // MARK: - Identifier validation
+
+    @Test(arguments: [
+        "p1",
+        "urn:dr:radio:channel:5fa156d1da351264f87b462d",
+        "p4kbh",
+    ])
+    func realIdentifiersAreAccepted(identifier: String) {
+        #expect(DeepLinkHandler.isPlausibleIdentifier(identifier))
+    }
+
+    /// Deep links are attacker-supplied: anything on the device can hand us a URL. These
+    /// are rejected before an identifier is stored and retried.
+    @Test func implausibleIdentifiersAreRejected() {
+        #expect(!DeepLinkHandler.isPlausibleIdentifier(""))
+        #expect(!DeepLinkHandler.isPlausibleIdentifier(
+            String(repeating: "p", count: DeepLinkHandler.maximumIdentifierLength + 1)))
+        #expect(!DeepLinkHandler.isPlausibleIdentifier("p1\nInjected"))
+        #expect(!DeepLinkHandler.isPlausibleIdentifier("p1\u{0000}"))
+    }
+
+    @Test func anImplausibleIdentifierIsNeverStored() {
+        let handler = DeepLinkHandler()
+        let overlong = String(repeating: "p", count: DeepLinkHandler.maximumIdentifierLength + 1)
+
+        handler.handleDeepLink(URL(string: "lytter:///channel/\(overlong)")!)
+
+        #expect(handler.pendingChannelId == nil)
+    }
 }

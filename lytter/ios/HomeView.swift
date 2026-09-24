@@ -12,7 +12,6 @@ import os
 struct HomeView: View {
     @ObservedObject var serviceManager: DRServiceManager
     @ObservedObject var selectionState: SelectionState
-    @ObservedObject var deepLinkHandler: DeepLinkHandler
     
     var body: some View {
         NavigationView {
@@ -57,36 +56,6 @@ struct HomeView: View {
                 }
             }
         }
-        .onChange(of: deepLinkHandler.shouldNavigateToChannel) { oldValue, newValue in
-            if newValue, let targetChannel = deepLinkHandler.targetChannel {
-                handleDeepLinkChannel(targetChannel)
-            }
-        }
-        .onChange(of: serviceManager.availableChannels.count) { oldCount, newCount in
-            // If we have a pending deep link and channels are now loaded, retry
-            if newCount > 0 && deepLinkHandler.pendingChannelId != nil {
-                deepLinkHandler.retryPendingDeepLink()
-            }
-        }
-    }
-    
-    private func handleDeepLinkChannel(_ targetChannel: DRChannel) {
-        
-        // Find the actual channel in available channels
-        if let actualChannel = serviceManager.channel(forDeepLinkIdentifier: targetChannel.id) {
-            // Play the channel
-            serviceManager.playChannel(actualChannel)
-            selectionState.selectChannel(actualChannel, showSheet: false)
-        } else {
-            Log.deepLink.warning("deep link named a channel that is not in the catalogue")
-            // If channels aren't loaded yet, try to load them and retry
-            if serviceManager.availableChannels.isEmpty {
-                serviceManager.loadChannels()
-            }
-        }
-        
-        // Clear the deep link target
-        deepLinkHandler.clearTarget()
     }
 }
 
@@ -486,7 +455,6 @@ struct PlaybackErrorAlert: View {
 #Preview {
     HomeView(
         serviceManager: DRServiceManager(),
-        selectionState: SelectionState(),
-        deepLinkHandler: DeepLinkHandler()
+        selectionState: SelectionState()
     )
 }
