@@ -36,6 +36,20 @@ class DRNetworkService {
         Log.network.debug("GET \(url.path, privacy: .public)")
     }
     
+    /// Builds an endpoint URL from a base and one path component.
+    ///
+    /// The component is a channel slug, which comes from the API and is therefore not
+    /// trusted to be URL-safe. These call sites used to force-unwrap `URL(string:)`, so a
+    /// slug containing a space would have crashed the app rather than failed the request.
+    private func endpoint(_ base: String, _ pathComponent: String) throws -> URL {
+        guard let encoded = pathComponent
+                .addingPercentEncoding(withAllowedCharacters: .urlPathAllowed),
+              let url = URL(string: "\(base)/\(encoded)") else {
+            throw NetworkError.invalidURL
+        }
+        return url
+    }
+
     private func makeRequest(for url: URL) -> URLRequest {
         log(url)
         var request = URLRequest(url: url)
@@ -49,7 +63,9 @@ class DRNetworkService {
 
     // MARK: - Fetch All Schedules (with retry)
     func fetchAllSchedules(retries: Int = 3) async throws -> [DREpisode] {
-        let url = URL(string: DRAPIConfig.schedulesAllNow)!
+        guard let url = URL(string: DRAPIConfig.schedulesAllNow) else {
+            throw NetworkError.invalidURL
+        }
         var lastError: Error = NetworkError.invalidResponse
 
         for attempt in 0..<retries {
@@ -86,7 +102,7 @@ class DRNetworkService {
 
     // MARK: - Fetch Schedule Snapshot for Channel
     func fetchScheduleSnapshot(for channelSlug: String) async throws -> DRScheduleResponse {
-        let url = URL(string: "\(DRAPIConfig.scheduleSnapshot)/\(channelSlug)")!
+        let url = try endpoint(DRAPIConfig.scheduleSnapshot, channelSlug)
         let (data, response) = try await session.data(for: makeRequest(for: url))
 
         guard let httpResponse = response as? HTTPURLResponse else {
@@ -105,7 +121,7 @@ class DRNetworkService {
 
     // MARK: - Fetch Index Points (Currently Playing Tracks)
     func fetchIndexPoints(for channelSlug: String) async throws -> DRIndexPointsResponse {
-        let url = URL(string: "\(DRAPIConfig.indexpointsLive)/\(channelSlug)")!
+        let url = try endpoint(DRAPIConfig.indexpointsLive, channelSlug)
         let (data, response) = try await session.data(for: makeRequest(for: url))
 
         guard let httpResponse = response as? HTTPURLResponse else {

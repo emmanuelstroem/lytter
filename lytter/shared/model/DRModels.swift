@@ -965,8 +965,14 @@ class DRServiceManager: ObservableObject {
 
 // MARK: - Array Extension
 extension Array where Element: Hashable {
+    /// Order-preserving.
+    ///
+    /// This was `Array(Set(self))`, which discards order — and Swift seeds its hashing
+    /// per process, so the district list under P4 and P5 came out in a different order on
+    /// every launch.
     func uniqued() -> [Element] {
-        return Array(Set(self))
+        var seen = Set<Element>()
+        return filter { seen.insert($0).inserted }
     }
 }
 
