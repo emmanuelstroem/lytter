@@ -46,6 +46,7 @@ struct PlayerControlsView: View {
                                 .font(.system(size: min(geometry.size.width, geometry.size.height) * 0.3, weight: .medium))
                                 .foregroundStyle(Color.secondary)
                         }
+                        .accessibilityLabel("Skip back 30 seconds")
                     }
                     
                     if showPlayPauseButton {
@@ -56,6 +57,9 @@ struct PlayerControlsView: View {
                                 .font(.system(size: min(geometry.size.width, geometry.size.height) * 0.8, weight: .medium))
                                 .foregroundStyle(Color.primary)
                         }
+                        // The label has to track the action, not the glyph: VoiceOver
+                        // announces what the button will do.
+                        .accessibilityLabel(isPlaying ? "Pause" : "Play")
                     }
                     
                     if showForwardButton {
@@ -66,6 +70,7 @@ struct PlayerControlsView: View {
                                 .font(.system(size: min(geometry.size.width, geometry.size.height) * 0.3, weight: .medium))
                                 .foregroundStyle(Color.secondary)
                         }
+                        .accessibilityLabel("Skip forward")
                     }
                 }
             }

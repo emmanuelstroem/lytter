@@ -178,6 +178,12 @@ struct MiniPlayerComponents: View {
             }
             .contentShape(Rectangle())
             .onTapGesture { selectionState.isShowingFullPlayer = true }
+            // One element rather than a stack of separate Texts, and marked as a button:
+            // as a plain tap gesture there was nothing to tell VoiceOver this opens
+            // anything.
+            .accessibilityElement(children: .combine)
+            .accessibilityAddTraits(.isButton)
+            .accessibilityHint("Opens the player")
 
             // Right: Controls
             HStack(spacing: 12) {
@@ -203,6 +209,7 @@ struct MiniPlayerComponents: View {
                             .frame(width: 32, height: 32)
                     }
                     .disabled(playingChannel == nil && serviceManager.availableChannels.isEmpty)
+                    .accessibilityLabel(serviceManager.isPlaying ? "Pause" : "Play")
                 }
             }
             .frame(alignment: .trailing)

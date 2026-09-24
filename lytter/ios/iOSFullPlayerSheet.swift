@@ -13,9 +13,6 @@ struct iOSFullPlayerSheet: View {
     @ObservedObject var serviceManager: DRServiceManager
     @ObservedObject var selectionState: SelectionState
     @Environment(\.dismiss) private var dismiss
-    @State private var currentTime: Double = 0
-    @State private var totalTime: Double = 100
-    @State private var volume: Double = 0.7
     @State private var showingDescriptionSheet: Bool = false
     @State private var showingScheduleSheet: Bool = false
     
@@ -109,37 +106,9 @@ struct iOSFullPlayerSheet: View {
                                 serviceManager: serviceManager
                             )
                             
-                            // Progress Bar with centered LIVE text and transparency fade
-                            VStack(spacing: 8) {
-                                GeometryReader { geometry in
-                                    ZStack {
-                                        ProgressView(value: currentTime, total: totalTime)
-                                            .progressViewStyle(LinearProgressViewStyle(tint: .purple))
-                                            .scaleEffect(y: 2)
-                                            // A mask reads only the alpha channel, so
-                                            // the black here is not a colour choice and
-                                            // does not need to follow the appearance.
-                                            .mask(
-                                                RadialGradient(
-                                                    colors: [
-                                                        Color.black.opacity(0.0),
-                                                        Color.black.opacity(0.5),
-                                                        Color.black.opacity(1.0)
-                                                    ],
-                                                    center: .center,
-                                                    startRadius: 0,
-                                                    endRadius: geometry.size.width * 0.5 // 3/4 of half width
-                                                )
-                                            )
-                                        
-                                        Text("LIVE")
-                                            .font(.caption)
-                                            .fontWeight(.bold)
-                                            .foregroundStyle(Color.secondary)
-                                    }
-                                }
-                                .frame(height: 20) // Fixed height for the progress view
-                            }
+                            PlayerProgressView(
+                                programme: serviceManager.getCurrentProgram(for: currentChannel)
+                            )
                             .padding(.horizontal, 20)
                             
                             Spacer()
@@ -162,14 +131,6 @@ struct iOSFullPlayerSheet: View {
                             )
                             
                             Spacer()
-                            
-                            // // Volume Component
-                            // PlayerVolumeView(
-                            //     volume: $volume
-                            // ) { newVolume in
-                            //     // Handle volume change
-                            //     print("Volume changed to: \(newVolume)")
-                            // }
                             
                             // Actions Component
                             PlayerActionsView(
