@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import os
 
 #if os(iOS)
 struct HomeView: View {
@@ -67,38 +68,29 @@ struct HomeView: View {
             }
         }
         .onChange(of: deepLinkHandler.shouldNavigateToChannel) { oldValue, newValue in
-            print("🏠 HomeView: shouldNavigateToChannel changed to: \(newValue)")
             if newValue, let targetChannel = deepLinkHandler.targetChannel {
-                print("🏠 HomeView: Handling deep link for channel: \(targetChannel.id)")
                 handleDeepLinkChannel(targetChannel)
             }
         }
         .onChange(of: serviceManager.availableChannels.count) { oldCount, newCount in
-            print("🏠 HomeView: Channel count changed to: \(newCount)")
             // If we have a pending deep link and channels are now loaded, retry
             if newCount > 0 && deepLinkHandler.pendingChannelId != nil {
-                print("🏠 HomeView: Channels loaded, retrying pending deep link")
                 deepLinkHandler.retryPendingDeepLink()
             }
         }
     }
     
     private func handleDeepLinkChannel(_ targetChannel: DRChannel) {
-        print("🏠 HomeView: handleDeepLinkChannel called for channel: \(targetChannel.id)")
-        print("🏠 HomeView: Available channels count: \(serviceManager.availableChannels.count)")
         
         // Find the actual channel in available channels
         if let actualChannel = serviceManager.channel(forDeepLinkIdentifier: targetChannel.id) {
-            print("🏠 HomeView: Found actual channel: \(actualChannel.title)")
             // Play the channel
             serviceManager.playChannel(actualChannel)
             selectionState.selectChannel(actualChannel, showSheet: false)
-            print("🏠 HomeView: Started playing channel")
         } else {
-            print("🏠 HomeView: Channel not found in available channels")
+            Log.deepLink.warning("deep link named a channel that is not in the catalogue")
             // If channels aren't loaded yet, try to load them and retry
             if serviceManager.availableChannels.isEmpty {
-                print("🏠 HomeView: No channels loaded, loading channels...")
                 serviceManager.loadChannels()
             }
         }

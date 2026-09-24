@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import os
 
 #if os(iOS)
 struct iOSFullPlayerSheet: View {
@@ -115,8 +116,8 @@ struct iOSFullPlayerSheet: View {
                                 channel: currentChannel,
                                 serviceManager: serviceManager
                             ) {
-                                // Ellipsis button action
-                                print("Show more options")
+                                // Unimplemented — this button currently does nothing.
+                                Log.playback.debug("full player: ellipsis tapped (unimplemented)")
                             }
                             
                             // Progress Bar with centered LIVE text and transparency fade
@@ -185,10 +186,13 @@ struct iOSFullPlayerSheet: View {
                                     showingDescriptionSheet = true
                                 },
                                 onAirPlayTap: {
-                                    print("AirPlay tapped")
+                                    // Unimplemented — the working AirPlay control is the
+                                    // AVRoutePickerView in the mini player.
+                                    Log.playback.debug("full player: AirPlay tapped (unimplemented)")
                                 },
                                 onListTap: {
-                                    print("List tapped")
+                                    // Unimplemented.
+                                    Log.playback.debug("full player: list tapped (unimplemented)")
                                 }
                             )
                         }

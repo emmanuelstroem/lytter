@@ -9,6 +9,7 @@ import Foundation
 import Intents
 import IntentsUI
 import Combine
+import os
 
 // MARK: - Siri Shortcuts Service
 
@@ -73,11 +74,11 @@ class SiriShortcutsService: ObservableObject {
     
     func handleShortcutInvocation(channelId: String) {
         guard let serviceManager else {
-            print("SiriShortcutsService has no service manager; ignoring shortcut for \(channelId)")
+            Log.siri.error("no service manager configured; ignoring shortcut")
             return
         }
         guard let channel = serviceManager.availableChannels.first(where: { $0.id == channelId }) else {
-            print("Channel not found for ID: \(channelId)")
+            Log.siri.warning("shortcut named a channel that is not in the catalogue")
             return
         }
 
