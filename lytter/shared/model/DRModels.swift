@@ -205,6 +205,18 @@ struct DREpisode: Identifiable, Codable, Equatable {
     let episodeNumber: Int? // Made optional based on API analysis
     let seasonNumber: Int? // Made optional based on API analysis
     
+    /// Identifies this *broadcast*, as opposed to the episode being broadcast.
+    ///
+    /// `id` is an episode URN, and a channel airs the same episode more than once a day:
+    /// P1 ran `…:episode:6a01c544` at 10:15, 16:05 and again at 17:03 on 2026-09-24, all
+    /// three carrying that one id. A `ForEach` keyed on `id` therefore sees duplicate
+    /// identities and renders the *first* matching row for each repeat — three rows with
+    /// the same title, the same time, and the same "On air" badge.
+    ///
+    /// A channel cannot air two things at once, so the channel and start time together
+    /// name one broadcast.
+    var broadcastID: String { "\(channel.id)|\(startTime)" }
+
     var startDate: Date? {
         let formatter = ISO8601DateFormatter()
         return formatter.date(from: startTime)

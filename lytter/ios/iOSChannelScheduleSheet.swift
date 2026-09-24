@@ -33,7 +33,9 @@ struct iOSChannelScheduleSheet: View {
                     )
                 } else {
                     List {
-                        ForEach(items) { episode in
+                        // Keyed by broadcast, not by episode: the same episode is aired
+                        // several times a day and those repeats share one id.
+                        ForEach(items, id: \.broadcastID) { episode in
                             ScheduleRow(episode: episode, isOnAir: episode.isCurrentlyPlaying)
                                 .listRowBackground(
                                     episode.isCurrentlyPlaying
