@@ -115,10 +115,13 @@ private struct CaptionBackdrop: View {
         )
     }
 
+    /// `clear` rather than `regular`: it is the variant meant to sit on media, more
+    /// transparent and carrying its own dimming layer to keep whatever is on top legible.
+    /// Regular glass frosted the artwork more than it needed to.
     @ViewBuilder
     private var glass: some View {
         if #available(iOS 26.0, *) {
-            Rectangle().fill(.clear).glassEffect(.regular, in: .rect)
+            Rectangle().fill(.clear).glassEffect(.clear.tint(.black.opacity(0.45)), in: .rect)
         } else {
             Rectangle().fill(.ultraThinMaterial)
         }
@@ -170,11 +173,14 @@ struct ChannelShelfCard: View {
         return nil
     }
 
+    /// What is on now — for a group, whatever the first district is playing.
+    ///
+    /// Grouped stations used to caption themselves "10 districts", which named the card's
+    /// behaviour rather than its content: every other card says what is on, and P4 said how
+    /// many of it there were. The first district is the one whose artwork is already shown,
+    /// so the card at least agrees with itself.
     private var subtitle: String {
-        if group.hasMultipleDistricts {
-            return String(localized: "\(group.channels.count) districts")
-        }
-        return currentProgramme?.programmeName ?? String(localized: "Live")
+        currentProgramme?.programmeName ?? String(localized: "Live")
     }
 
     private var artwork: some View {
