@@ -307,6 +307,23 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
       handler is a `nonisolated static` helper now.
       The lesson is the cheap one: a language-mode change that moves checks from compile
       time to *runtime* cannot be signed off by a green build.
+- [x] ~~**F32a. A broadcaster model.**~~ Done in #27. The home screen reads as one section
+      per broadcaster rather than a section literally called "DR". While DR is the only
+      source those are indistinguishable, which is exactly why the seam was worth building
+      before the second one arrives: `Broadcaster.sections(from:)` groups and orders, a
+      broadcaster with no channels is omitted rather than left as an empty heading, and
+      `BroadcasterChannelsSection` takes its name from the model.
+      Adding a source is now a `Broadcaster`, a network service returning its channels, and
+      an entry in `registered` — no layout changes.
+- [ ] **F32. Apple Music-style home, all four platforms.** Shelves rather than a grid:
+      Favourites, Recently Played, then one section per broadcaster. Depends on F32a (done)
+      and F8, and on F20 for macOS.
+      Note what does **not** exist yet: other broadcasters. The app calls one API, so the
+      extra sections stay empty until there is a second source behind them — that is a data
+      change, not a UI one.
+- [ ] **F33. Favourite shows, not just channels.** Store series ids and surface a
+      favourited programme with when it is next on. Needs the per-channel schedule snapshot
+      that #14 wired up. Deliberately deferred: favourites are channels for now.
 - [ ] **F14. Add a README.** Nineteen commits and no entry point for a reader.
 
 ### P2 — expansion
@@ -323,8 +340,17 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
       and nothing had ever called. It decodes into the existing models unchanged.
 - [ ] **F18. Widgets + Live Activity** for the currently playing channel.
 - [ ] **F19. iPhone Duo support.** See [IPHONE-DUO.md](IPHONE-DUO.md).
-- [ ] **F20. Decide on macOS/visionOS.** Either implement `ContentView` branches and make
-      `AudioPlayerService` platform-clean, or drop `macosx`/`xros` from `SUPPORTED_PLATFORMS`.
+- [ ] **F20. macOS is unimplemented, not broken.** Diagnosed properly rather than guessed:
+      the reported failure is `Unable to resolve module dependency: 'UIKit'` in
+      `AudioPlayerService`, but that is only the *first* error. Four files import UIKit
+      unguarded, and behind them the shared layer uses `UIImage` ×15, `UIColor` ×8,
+      `UIApplication` ×2 and one `UIViewRepresentable` (the AirPlay button) across five
+      files — tractable with `PlatformImage`/`PlatformColor` typealiases.
+      The larger gap is that **`ContentView` has no macOS branch at all**: it is
+      `#if os(iOS)` / `#elseif os(tvOS)`, so even once it compiles the app opens an empty
+      window. macOS is in `SUPPORTED_PLATFORMS` and was never built.
+      Work is therefore: platform-neutral shared layer, then a real macOS UI — which should
+      follow the sectioned home (F32) rather than precede it, or it gets built twice.
 - [ ] **F21. CarPlay.** A live-radio app without CarPlay is leaving its best use case unserved.
 - [x] ~~**F22. Move the iOS deep-link handler up to `ContentView`.**~~ Done in #17. The
       `.onChange(of: shouldNavigateToChannel)` was copy-pasted onto `HomeView`,

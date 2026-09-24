@@ -786,6 +786,15 @@ class DRServiceManager: ObservableObject {
         }
     }
     
+    /// The catalogue as home-screen sections, one per broadcaster that has channels.
+    ///
+    /// DR is the only source today, so this is a single section — but the home screen
+    /// renders whatever this returns, which is what makes adding a broadcaster a data
+    /// change rather than a layout one.
+    var broadcasterSections: [BroadcasterSection] {
+        Broadcaster.sections(from: availableChannels)
+    }
+
     func getCurrentProgram(for channel: DRChannel) -> DREpisode? {
         let channelPrograms = cachedSchedules.filter { $0.channel.id == channel.id }
         return channelPrograms.first { $0.isCurrentlyPlaying } ?? channelPrograms.first
