@@ -18,6 +18,19 @@ struct tvOSRadioView: View {
     @State private var lastFocusedChannelId: String?
     @State private var selectedChannelForVariants: DRChannel?
     
+    /// Held-select on the remote pins a channel. Single-channel cards only: a station with
+    /// variants opens the picker, and pinning "P4" would not say which district.
+    @ViewBuilder
+    private func favouriteButton(for channel: DRChannel) -> some View {
+        let isFavourite = serviceManager.userPreferences.isFavourite(channel.id)
+        Button {
+            serviceManager.userPreferences.toggleFavourite(channel.id)
+        } label: {
+            Label(isFavourite ? "Remove from Favourites" : "Add to Favourites",
+                  systemImage: isFavourite ? "star.slash" : "star")
+        }
+    }
+
     // One representative per base channel (deduped by name)
     private var primaryChannels: [DRChannel] {
         let grouped = Dictionary(grouping: serviceManager.availableChannels, by: { $0.name })
@@ -28,7 +41,15 @@ struct tvOSRadioView: View {
             }
             return group.sorted { $0.title < $1.title }.first
         }
-        return representatives.sorted { $0.title < $1.title }
+        let ordered = representatives.sorted { $0.title < $1.title }
+
+        // Favourites first, as themselves. A pinned district channel is not a station
+        // representative, so it would otherwise not appear at all — and putting it in
+        // front is the whole point: one click, no variant menu.
+        let favourites = serviceManager.userPreferences.favourites
+            .resolve(in: serviceManager.availableChannels)
+        let pinned = Set(favourites.map(\.id))
+        return favourites + ordered.filter { !pinned.contains($0.id) }
     }
     
     var body: some View {
@@ -73,6 +94,9 @@ struct tvOSRadioView: View {
                                             }
                                             .buttonStyle(tvOSMusicCardButtonStyle())
                                             .focused($focusedMenuChannelId, equals: channel.id)
+                                            .contextMenu {
+                                                favouriteButton(for: channel)
+                                            }
                                         } else {
                                             Button {
                                                 lastFocusedChannelId = channel.id

@@ -33,6 +33,15 @@ struct HomeView: View {
                     } else if serviceManager.availableChannels.isEmpty {
                         EmptyStateView()
                     } else {
+                        FavouritesSection(
+                            serviceManager: serviceManager,
+                            preferences: serviceManager.userPreferences,
+                            onChannelTap: { channel in
+                                serviceManager.playChannel(channel)
+                                selectionState.selectChannel(channel, showSheet: false)
+                            }
+                        )
+
                         DRChannelsSection(
                             serviceManager: serviceManager,
                             onChannelTap: { channel in
@@ -167,6 +176,54 @@ struct HomeHeader: View {
 
 // MARK: - Grouped Channel Structure
 // MARK: - DR Channels Section
+/// Pinned channels, above the catalogue.
+///
+/// These are individual channels rather than stations, so a favourited *P4 København*
+/// plays on one tap — the district picker is exactly the friction this removes. It draws
+/// nothing at all when there are no favourites, rather than an empty heading.
+struct FavouritesSection: View {
+    @ObservedObject var serviceManager: DRServiceManager
+    /// Observed directly. `userPreferences` is its own ObservableObject, and a nested one
+    /// does not republish through its owner — observing only `serviceManager` meant pinning
+    /// a channel changed the stored list and redrew nothing.
+    @ObservedObject var preferences: UserPreferencesService
+    let onChannelTap: (DRChannel) -> Void
+
+    private var favourites: [DRChannel] {
+        preferences.favourites.resolve(in: serviceManager.availableChannels)
+    }
+
+    var body: some View {
+        if !favourites.isEmpty {
+            VStack(alignment: .leading, spacing: 16) {
+                Text("Favourites")
+                    .font(.title2)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(Color.primary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                LazyVGrid(columns: [
+                    GridItem(.adaptive(minimum: 160, maximum: 200), spacing: 12)
+                ], spacing: 12) {
+                    ForEach(favourites) { channel in
+                        // Wrapped as a single-channel group so it reuses the catalogue
+                        // card — and because a group of one has no districts, tapping it
+                        // plays rather than opening the picker.
+                        GroupedChannelCard(
+                            groupedChannel: GroupedChannel(channels: [channel]),
+                            serviceManager: serviceManager,
+                            onTap: onChannelTap,
+                            cardWidth: 160,
+                            cardHeight: 100
+                        )
+                        .id(channel.id)
+                    }
+                }
+            }
+        }
+    }
+}
+
 struct DRChannelsSection: View {
     @ObservedObject var serviceManager: DRServiceManager
     let onChannelTap: (DRChannel) -> Void
@@ -375,9 +432,25 @@ struct GroupedChannelCard: View {
         .accessibilityHint(groupedChannel.hasMultipleDistricts
                            ? "Choose a district"
                            : "Plays this channel")
+        .contextMenu {
+            // Only for a station that is one channel. Favouriting "P4" would be ambiguous —
+            // it is ten district channels — so those are pinned from the district picker,
+            // where you have said which one you mean.
+            if !groupedChannel.hasMultipleDistricts {
+                let channel = primaryChannel
+                let isFavourite = serviceManager.userPreferences.isFavourite(channel.id)
+                Button {
+                    serviceManager.userPreferences.toggleFavourite(channel.id)
+                } label: {
+                    Label(isFavourite ? "Remove from Favourites" : "Add to Favourites",
+                          systemImage: isFavourite ? "star.slash" : "star")
+                }
+            }
+        }
         .sheet(isPresented: $showingDistrictSheet) {
             DistrictSelectionSheet(
                 groupedChannel: groupedChannel,
+                serviceManager: serviceManager,
                 onChannelSelect: onTap
             )
         }

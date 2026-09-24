@@ -220,6 +220,21 @@ struct iOSGroupedRadioChannelCard: View {
         .accessibilityHint(groupedChannel.hasMultipleDistricts
                            ? "Choose a district"
                            : "Plays this channel")
+        .contextMenu {
+            // Only for a station that is one channel. Favouriting "P4" would be ambiguous —
+            // it is ten district channels — so those are pinned from the district picker,
+            // where you have said which one you mean.
+            if !groupedChannel.hasMultipleDistricts {
+                let channel = primaryChannel
+                let isFavourite = serviceManager.userPreferences.isFavourite(channel.id)
+                Button {
+                    serviceManager.userPreferences.toggleFavourite(channel.id)
+                } label: {
+                    Label(isFavourite ? "Remove from Favourites" : "Add to Favourites",
+                          systemImage: isFavourite ? "star.slash" : "star")
+                }
+            }
+        }
         .buttonStyle(PlainButtonStyle())
         .onLongPressGesture(minimumDuration: 0, maximumDistance: .infinity, pressing: { pressing in
             isPressed = pressing
@@ -227,6 +242,7 @@ struct iOSGroupedRadioChannelCard: View {
         .sheet(isPresented: $showingDistrictSheet) {
             DistrictSelectionSheet(
                 groupedChannel: groupedChannel,
+                serviceManager: serviceManager,
                 onChannelSelect: onTap
             )
         }

@@ -190,7 +190,21 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
       and rendered the first match for each repeat. Rows key off `broadcastID` (channel +
       start time) now. The episode id is untouched — it is correct for what it names, and
       on-demand playback will want it.
-- [ ] **F7. Favourites.** Pin channels; surface them first on Home and on the tvOS shelf.
+- [x] ~~**F7. Favourites.**~~ Done in #26. Pinned channels appear above the catalogue on
+      Home and first in the tvOS grid.
+      **Channels, not stations.** P4 and P5 are ten district channels each, reached through
+      a picker sheet — so pinning *P4 København* specifically is what removes the repeated
+      interaction. Pinning "P4" would leave the picker in the way, which is why the card
+      for a multi-district station offers no pin control and the district rows do.
+      Order is insertion order and is preserved; a `Set` would reshuffle the list between
+      launches, which is the trap `uniqued()` fell into (P15). Only ids are stored, so a
+      channel DR renames does not keep a stale title, and ids DR retires are dropped rather
+      than left as gaps.
+      Worth knowing for the next screen that reads preferences: `userPreferences` is its own
+      `ObservableObject`, and **a nested one does not republish through its owner**.
+      Observing `serviceManager` alone meant pinning a channel wrote the list and redrew
+      nothing — the section stayed empty. `FavouritesSection` observes the preferences
+      object directly. Found by running it; the build was clean.
 - [ ] **F8. Recently played.** More than one entry; the data is already in `UserDefaults`.
 - [x] ~~**F9. Sleep timer.**~~ Done in #25. 15/30/45/60 minutes, plus **end of
       programme**, which is the one a listener actually wants on live radio and which the

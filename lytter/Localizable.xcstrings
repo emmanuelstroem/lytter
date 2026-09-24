@@ -42,6 +42,47 @@
         }
       }
     },
+    "%lld minutes": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld minut"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld minutter"
+                }
+              }
+            }
+          }
+        },
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld minute"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld minutes"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "%lld minutes remaining": {
       "extractionState": "manual",
       "localizations": {
@@ -112,6 +153,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Tilføj alle kanaler til Siri"
+          }
+        }
+      }
+    },
+    "Add to Favourites": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Føj til favoritter"
           }
         }
       }
@@ -305,6 +357,17 @@
         }
       }
     },
+    "End of programme": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Når programmet slutter"
+          }
+        }
+      }
+    },
     "Ending now": {
       "extractionState": "manual",
       "localizations": {
@@ -334,6 +397,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Svaret kunne ikke afkodes"
+          }
+        }
+      }
+    },
+    "Favourites": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Favoritter"
           }
         }
       }
@@ -571,6 +645,17 @@
         }
       }
     },
+    "Off": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fra"
+          }
+        }
+      }
+    },
     "On air": {
       "extractionState": "manual",
       "localizations": {
@@ -660,6 +745,17 @@
         }
       }
     },
+    "Playback fades out before it stops.": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lyden toner ud, før afspilningen stopper."
+          }
+        }
+      }
+    },
     "Plays this channel": {
       "extractionState": "manual",
       "localizations": {
@@ -715,6 +811,17 @@
         }
       },
       "shouldTranslate": false
+    },
+    "Remove from Favourites": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fjern fra favoritter"
+          }
+        }
+      }
     },
     "Retry": {
       "extractionState": "manual",
@@ -881,6 +988,28 @@
         }
       }
     },
+    "Sleep timer": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sleep-timer"
+          }
+        }
+      }
+    },
+    "Stopping": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stopper"
+          }
+        }
+      }
+    },
     "Tap play to start": {
       "extractionState": "manual",
       "localizations": {
@@ -943,6 +1072,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Prøv at opdatere for at hente kanaler"
+          }
+        }
+      }
+    },
+    "Turn off": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Slå fra"
           }
         }
       }
