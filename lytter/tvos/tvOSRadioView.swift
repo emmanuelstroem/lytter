@@ -33,15 +33,12 @@ struct tvOSRadioView: View {
 
     // One representative per base channel (deduped by name)
     private var primaryChannels: [DRChannel] {
-        let grouped = Dictionary(grouping: serviceManager.availableChannels, by: { $0.name })
-        let representatives: [DRChannel] = grouped.values.compactMap { group in
-            // Prefer the variant without a district if it exists; otherwise pick the first by title
-            if let noDistrict = group.first(where: { $0.district == nil }) {
-                return noDistrict
-            }
-            return group.sorted { $0.title < $1.title }.first
-        }
-        let ordered = representatives.sorted { $0.title < $1.title }
+        // Was a local copy of the grouping. `GroupedChannel` is shared now, so tvOS and iOS
+        // agree on what a station is by construction rather than by two functions happening
+        // to behave the same.
+        let ordered = GroupedChannel.grouped(from: serviceManager.availableChannels)
+            .compactMap(\.representative)
+            .sorted { $0.title < $1.title }
 
         // Favourites first, as themselves. A pinned district channel is not a station
         // representative, so it would otherwise not appear at all — and putting it in

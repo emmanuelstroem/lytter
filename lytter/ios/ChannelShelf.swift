@@ -156,7 +156,47 @@ struct ChannelShelfCard: View {
 
     @State private var showingDistrictSheet = false
 
-    private var channel: DRChannel { group.channels.first! }
+    /// The listener's own region, when this station broadcasts one for it.
+    ///
+    /// Nil for a station with no districts, and nil when they have not chosen a region yet
+    /// — in both cases there is no region to apply.
+    private var preferredChannel: DRChannel? {
+        guard group.hasMultipleDistricts,
+              let preferred = serviceManager.userPreferences.preferredDistrict else { return nil }
+        return group.channel(in: preferred)
+    }
+
+    /// The channel this card stands for: their region where there is one, otherwise the
+    /// first variant, which is also the one whose artwork is shown.
+    private var channel: DRChannel { preferredChannel ?? group.channels.first! }
+
+    /// Whether tapping has a question to ask before it can play anything.
+    ///
+    /// A station with districts and no chosen region opens the picker; once a region is
+    /// remembered the card plays it directly, and says so by naming it.
+    private var opensPicker: Bool { group.hasMultipleDistricts && preferredChannel == nil }
+
+    /// What to call this card.
+    ///
+    /// A station playing the listener's region names it, so that the card says what it will
+    /// do — "P4 - København" rather than a bare "P4" that plays something unstated.
+    private var title: String { preferredChannel?.qualifiedName ?? group.displayTitle }
+
+    /// The cue that this card asks rather than plays.
+    ///
+    /// Without it the sheet arrives unannounced: nothing else distinguishes a station that
+    /// opens a picker from one that starts playing. VoiceOver already had the hint.
+    ///
+    /// Added by the caller rather than self-hiding, together with the spacer that pushes
+    /// it over: an always-present `Spacer(minLength:)` costs the name ten points of width
+    /// even when no chevron follows it, which was enough to truncate "P4 - København" on
+    /// the small card that had fitted it before.
+    private var chevron: some View {
+        Image(systemName: "chevron.right")
+            .font(.footnote.weight(.bold))
+            .foregroundStyle(.secondary)
+            .accessibilityHidden(true)
+    }
 
     private var currentProgramme: DREpisode? {
         serviceManager.getCurrentProgram(for: channel)
@@ -191,13 +231,20 @@ struct ChannelShelfCard: View {
     /// straight onto it is unreadable often enough to matter.
     private var featuredCaption: some View {
         VStack(alignment: .leading, spacing: 1) {
-            Text(group.displayTitle)
-                .font(.title.weight(.bold))
-                .foregroundStyle(.primary)
-                .lineLimit(1)
-                // Shrinks rather than truncates. The station is the thing being chosen —
-                // "P4 Køben…" is a worse card than slightly smaller type.
-                .minimumScaleFactor(0.7)
+            HStack(spacing: 6) {
+                Text(title)
+                    .font(.title.weight(.bold))
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+                    // Shrinks rather than truncates. The station is the thing being chosen
+                    // — "P4 Køben…" is a worse card than slightly smaller type.
+                    .minimumScaleFactor(0.7)
+
+                if opensPicker {
+                    Spacer(minLength: 4)
+                    chevron
+                }
+            }
 
             Text(subtitle)
                 .font(.caption)
@@ -222,16 +269,23 @@ struct ChannelShelfCard: View {
     /// information — the programme goes beneath the card, where it has a plain background
     /// and can simply be read.
     private var nameBand: some View {
-        Text(group.displayTitle)
-            .font(.title2.weight(.bold))
-            .foregroundStyle(.primary)
-            .lineLimit(1)
-            .minimumScaleFactor(0.7)
-            .padding(.horizontal, 10)
-            .padding(.vertical, 7)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background { CaptionBackdrop(fades: false) }
-            .captionOnArtwork()
+        HStack(spacing: 6) {
+            Text(title)
+                .font(.title2.weight(.bold))
+                .foregroundStyle(.primary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+
+            if opensPicker {
+                Spacer(minLength: 4)
+                chevron
+            }
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 7)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background { CaptionBackdrop(fades: false) }
+        .captionOnArtwork()
     }
 
     private var featuredCard: some View {
@@ -265,7 +319,7 @@ struct ChannelShelfCard: View {
 
     var body: some View {
         Button {
-            if group.hasMultipleDistricts {
+            if opensPicker {
                 showingDistrictSheet = true
             } else {
                 onTap(channel)
@@ -280,18 +334,28 @@ struct ChannelShelfCard: View {
         .accessibilityElement(children: .ignore)
         // Composed, not a phrase: Text(verbatim:)'s equivalent for an accessibility
         // label, so "%@, %@" does not land in the catalog for a translator to puzzle over.
-        .accessibilityLabel(Text(verbatim: "\(group.displayTitle), \(subtitle)"))
-        .accessibilityHint(group.hasMultipleDistricts
-                           ? "Choose a district"
-                           : "Plays this channel")
+        .accessibilityLabel(Text(verbatim: "\(title), \(subtitle)"))
+        .accessibilityHint(opensPicker ? "Choose a district" : "Plays this channel")
         .contextMenu {
-            if !group.hasMultipleDistricts {
+            // Favouriting needs to know which channel is meant, which is true of a station
+            // with no districts and of one playing the listener's region — but not of a
+            // card that still stands for ten.
+            if !opensPicker {
                 let isFavourite = serviceManager.userPreferences.isFavourite(channel.id)
                 Button {
                     serviceManager.userPreferences.toggleFavourite(channel.id)
                 } label: {
                     Label(isFavourite ? "Remove from Favourites" : "Add to Favourites",
                           systemImage: isFavourite ? "star.slash" : "star")
+                }
+            }
+
+            // The only way back to the picker once a region is remembered.
+            if group.hasMultipleDistricts {
+                Button {
+                    showingDistrictSheet = true
+                } label: {
+                    Label("Choose district", systemImage: "list.bullet")
                 }
             }
         }

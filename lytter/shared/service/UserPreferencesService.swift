@@ -20,6 +20,7 @@ class UserPreferencesService: ObservableObject {
         static let lastPlayedTimestamp = "lastPlayedTimestamp"
         static let favouriteChannelIDs = "favouriteChannelIDs"
         static let recentlyPlayedChannelIDs = "recentlyPlayedChannelIDs"
+        static let preferredDistrictName = "preferredDistrictName"
     }
     
     // MARK: - Published Properties
@@ -35,12 +36,23 @@ class UserPreferencesService: ObservableObject {
     /// title and district so the mini player can be populated before the catalogue loads.
     @Published private(set) var recentlyPlayed = RecentlyPlayed()
 
+    /// Where the listener lives, as far as the app is concerned.
+    ///
+    /// Set by choosing a district, and then applied to every station that broadcasts one —
+    /// pick København on P4 and P5 plays København too. A listener has one region; being
+    /// asked for it once per station is the thing this removes.
+    @Published private(set) var preferredDistrict: District?
+
     init() {
         loadLastPlayedChannel()
         favourites = Favourites(
             channelIDs: userDefaults.stringArray(forKey: Keys.favouriteChannelIDs) ?? [])
         recentlyPlayed = RecentlyPlayed(
             channelIDs: userDefaults.stringArray(forKey: Keys.recentlyPlayedChannelIDs) ?? [])
+        // The name is stored and the id derived, rather than the other way round: an id is
+        // not showable, and a name that no longer matches any channel is at least readable.
+        preferredDistrict = userDefaults.string(forKey: Keys.preferredDistrictName)
+            .map(District.init(name:))
     }
 
     // MARK: - Favourites
@@ -56,6 +68,19 @@ class UserPreferencesService: ObservableObject {
 
     func isFavourite(_ channelID: String) -> Bool {
         favourites.contains(channelID)
+    }
+
+    // MARK: - Region
+
+    /// Remembers the listener's region, or forgets it when passed nil.
+    func rememberDistrict(_ district: District?) {
+        preferredDistrict = district
+
+        if let district {
+            userDefaults.set(district.name, forKey: Keys.preferredDistrictName)
+        } else {
+            userDefaults.removeObject(forKey: Keys.preferredDistrictName)
+        }
     }
 
     // MARK: - Recently played

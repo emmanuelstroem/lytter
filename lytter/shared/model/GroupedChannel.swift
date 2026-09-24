@@ -3,13 +3,16 @@
 //  lytter
 //
 
-import SwiftUI
+import Foundation
 
-#if os(iOS)
 /// One station, with its regional variants folded in.
 ///
 /// P4 and P5 are broadcast as ten district channels each; everywhere but the district
 /// picker they should read as a single station.
+///
+/// Shared rather than per-platform. This is domain, not presentation: tvOS had its own
+/// copy of the grouping and macOS would have needed a third. A station is a station
+/// whatever is drawing it.
 struct GroupedChannel: Identifiable {
     let id: String
     let name: String
@@ -43,6 +46,28 @@ struct GroupedChannel: Identifiable {
     var districts: [String] {
         return channels.compactMap { $0.district }.uniqued()
     }
+
+    /// The channel serving `district`, if this station broadcasts one for it.
+    ///
+    /// Matched on the district's identifier rather than its name, so a region chosen on
+    /// P4 finds its counterpart on P5 — which is the point of `District` having an id at
+    /// all.
+    func channel(in district: District) -> DRChannel? {
+        channels.first { $0.districtID == district.id }
+    }
+
+    /// The single channel this station stands for, where it stands for only one.
+    var soleChannel: DRChannel? {
+        hasMultipleDistricts ? nil : channels.first
+    }
+
+    /// One channel to represent the station in a flat list.
+    ///
+    /// The variant without a district when there is one — a list of stations wants "P1",
+    /// not "P1 something" — and otherwise the first, which `init` has already ordered.
+    var representative: DRChannel? {
+        channels.first { $0.district == nil } ?? channels.first
+    }
 }
 
 extension GroupedChannel {
@@ -74,4 +99,3 @@ extension GroupedChannel {
         }
     }
 }
-#endif
