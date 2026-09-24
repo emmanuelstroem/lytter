@@ -71,14 +71,34 @@ struct ChannelShelf: View {
 /// so the layout does not shift across versions. Both refract what is behind them, which
 /// is the point: the card's artwork is arbitrary photography and plain text on it is
 /// unreadable often enough to matter.
-private struct GlassBadge: ViewModifier {
-    var shape: AnyShape = AnyShape(Capsule())
+private struct CaptionBackdrop: View {
+    var body: some View {
+        glass
+            // Masked so the effect fades in from nothing instead of beginning at a hard
+            // edge. Without this the band announces itself as a rectangle laid over the
+            // artwork; with it the artwork simply becomes unreadable-behind-glass towards
+            // the foot of the card.
+            .mask(
+                LinearGradient(
+                    stops: [
+                        .init(color: .clear, location: 0),
+                        .init(color: .black.opacity(0.35), location: 0.3),
+                        .init(color: .black.opacity(0.85), location: 0.6),
+                        .init(color: .black, location: 1)
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+            )
+            .allowsHitTesting(false)
+    }
 
-    func body(content: Content) -> some View {
+    @ViewBuilder
+    private var glass: some View {
         if #available(iOS 26.0, *) {
-            content.glassEffect(.regular, in: shape)
+            Rectangle().fill(.clear).glassEffect(.regular, in: .rect)
         } else {
-            content.background(.ultraThinMaterial, in: shape)
+            Rectangle().fill(.ultraThinMaterial)
         }
     }
 }
@@ -113,7 +133,7 @@ struct ChannelShelfCard: View {
         if group.hasMultipleDistricts {
             return String(localized: "\(group.channels.count) districts")
         }
-        return currentProgramme?.cleanTitle() ?? String(localized: "Live")
+        return currentProgramme?.programmeName ?? String(localized: "Live")
     }
 
     private var artwork: some View {
@@ -150,9 +170,11 @@ struct ChannelShelfCard: View {
                 .lineLimit(subtitleLines)
         }
         .padding(.horizontal, 12)
-        .padding(.vertical, 10)
+        .padding(.bottom, 10)
+        // Generous above the text so the gradient has somewhere to fade.
+        .padding(.top, 30)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .modifier(GlassBadge(shape: AnyShape(Rectangle())))
+        .background { CaptionBackdrop() }
     }
 
     private var featuredCard: some View {
