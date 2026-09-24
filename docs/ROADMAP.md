@@ -250,17 +250,28 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
       still pass.
       Unchanged deliberately: `.oldDeviceUnavailable` still pauses. Audio must not carry on
       out of the speaker when headphones are unplugged.
-- [ ] **P18. `ImageCacheService` in-flight map has a race.** Two callers coalesced onto one
-      task both clear `inFlight[key]` when it finishes. If a third registers between those
-      two clears, its entry is wiped and the next request downloads the same image twice.
-      Invisible to users — a duplicate fetch, not a wrong result — but it defeats the
-      coalescing it was added for. Fix with an actor, which also settles P19.
-- [ ] **P19. Three Swift 6 concurrency warnings, all in `ImageCacheService`.** `NSLock`'s
-      `lock`/`unlock` called in an async context (lines 98/100) and a main-actor-isolated
-      `defaultMaxPixelSize` read from a nonisolated one (line 80). The lock warning is a
-      false positive as written — `defer` releases before the `await` — but all three are
-      hard errors under Swift 6, so this is the concrete content of S10 and the place to
-      start it.
+- [x] ~~**P18. `ImageCacheService` in-flight map had a race.**~~ Done in #23. Cleanup was
+      unconditional — `inFlight[key] = nil` — but two callers can await the same task, and
+      by the time the second retires it a third may already have registered a new one under
+      that key. The second wiped the third's entry and the next request downloaded an image
+      that was already on its way. `release` now takes the task it is retiring and removes
+      it only if it is still the registered one.
+- [x] ~~**P19. Three Swift 6 concurrency warnings in `ImageCacheService`.**~~ Done in #23.
+      The `NSLock` critical sections moved into a synchronous type, so the lock is never
+      taken inside an `async` function — which is both what the warning was about and a
+      structural guarantee it cannot be held across a suspension. The two size constants
+      became `nonisolated`; under approachable concurrency a plain `static let` is inferred
+      main-actor isolated, and they are read as default arguments of an async method.
+      **Not done with an actor**, which is what P18/P19 originally proposed. An actor would
+      have made every call `await`, including the synchronous memory-cache hit in
+      `loadImage(from:completion:)` that exists specifically to avoid a flicker during
+      layout. `NSCache` is already thread-safe, so the only state that needed protecting
+      was the coalescing map, and `InFlightTasks` protects exactly that.
+      The app's source now builds with **no Swift warnings** on either platform; the two
+      that remain are the `AppIcon.icon` asset ones tracked as F23.
+- [ ] **S10 remains open.** These were the concrete warnings, not the whole job. Full Swift 6
+      still means auditing `@unchecked Sendable` (which `InFlightTasks` now uses, with the
+      lock as its justification), the observable services, and `SWIFT_VERSION = 5.0`.
 - [ ] **F14. Add a README.** Nineteen commits and no entry point for a reader.
 
 ### P2 — expansion
