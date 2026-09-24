@@ -10,6 +10,10 @@ import Testing
 /// left the resume flag set, and the route-change handler resumed on
 /// `.newDeviceAvailable` — so plugging in headphones long afterwards started the radio,
 /// with nothing on screen connecting it to the call that set the flag.
+/// @MainActor because the project builds with SWIFT_DEFAULT_ACTOR_ISOLATION
+/// = MainActor, so the types under test are main-actor isolated by inference. Swift 6
+/// rejects calling them from a nonisolated suite.
+@MainActor
 struct InterruptionStateTests {
 
     /// The reported sequence, and the reason the bug was hard to attribute: the trigger is

@@ -72,11 +72,6 @@ final class ImageCacheService {
         }
     }
 
-    deinit {
-        NotificationCenter.default.removeObserver(self)
-        preloadTask?.cancel()
-    }
-
     // MARK: - Loading
 
     /// Returns the artwork, downsampled to `maxPixelSize` on its longest edge.

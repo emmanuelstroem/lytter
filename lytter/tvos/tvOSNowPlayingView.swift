@@ -4,6 +4,7 @@
 //
 
 import SwiftUI
+import os
 import UIKit
 import CoreImage
 #if canImport(GroupActivities)
@@ -57,11 +58,11 @@ private class RemoteDetectorHostView: UIView {
         }
     }
 
-    deinit {
-        if let old = installedRecognizer {
-            old.view?.removeGestureRecognizer(old)
-        }
-    }
+    // No deinit. Removing the recognizer here duplicated what didMoveToWindow already
+    // does — it clears the old one on every move, including the move to a nil window when
+    // the view leaves the hierarchy, which is what happens just before deallocation. And
+    // deinit is nonisolated, so reaching for UIKit from it is a concurrency violation for
+    // a cleanup that has already run.
 }
 
 private struct RemoteInteractionDetector: UIViewRepresentable {
@@ -451,14 +452,15 @@ struct tvOSNowPlayingControls: View {
     private func startSharePlay(for channel: DRChannel) {
         #if canImport(GroupActivities)
         if #available(tvOS 15.0, *) {
-            struct RadioShareActivity: GroupActivity {
-                static let activityIdentifier = "com.eopio.lytter.shareplay.radio"
-                let channelId: String; let channelTitle: String
-                var metadata: GroupActivityMetadata {
-                    var d = GroupActivityMetadata(); d.title = channelTitle; d.type = .watchTogether; return d
+            let activity = RadioShareActivity(channelId: channel.id, channelTitle: channel.title)
+            Task {
+                do {
+                    _ = try await activity.activate()
+                } catch {
+                    Log.playback.error(
+                        "SharePlay activation failed: \(error.localizedDescription, privacy: .public)")
                 }
             }
-            Task { do { _ = try await RadioShareActivity(channelId: channel.id, channelTitle: channel.title).activate() } catch {} }
         }
         #endif
     }
@@ -601,6 +603,29 @@ struct tvOSNowPlayingInfoSheet: View {
         .clipShape(RoundedRectangle(cornerRadius: 36, style: .continuous))
         .shadow(color: .black.opacity(0.6), radius: 80, x: 0, y: 40)
         .padding(60)
+    }
+}
+#endif
+
+#if canImport(GroupActivities)
+/// The SharePlay activity for listening together.
+///
+/// Declared here rather than inside `startSharePlay`, and `nonisolated`: nested in a
+/// main-actor method its `GroupActivity` conformance was main-actor isolated, and
+/// `activate()` is awaited from a concurrent task. Swift 6 rejects that — an isolated
+/// conformance cannot cross into a concurrent context.
+@available(tvOS 15.0, *)
+nonisolated struct RadioShareActivity: GroupActivity {
+    static let activityIdentifier = "com.eopio.lytter.shareplay.radio"
+
+    let channelId: String
+    let channelTitle: String
+
+    var metadata: GroupActivityMetadata {
+        var metadata = GroupActivityMetadata()
+        metadata.title = channelTitle
+        metadata.type = .watchTogether
+        return metadata
     }
 }
 #endif

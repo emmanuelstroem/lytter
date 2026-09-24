@@ -358,7 +358,11 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
       Worth knowing for any future link: the empty authority is load-bearing.
       `lytter://channel/<id>` parses `channel` as the host and matches nothing, failing
       silently. There is a test for that too.
-- [ ] **S1. Get the API key out of source *before* there is one.**
+- [ ] **S1. Get the API key out of source *before* there is one.** *Partly addressed in
+      #24: `subscriptionKey` is now an immutable value read from `DRSubscriptionKey` in
+      Info.plist rather than a mutable `static var` in source, so an xcconfig can supply it
+      without anyone editing a Swift file. It had to change — a mutable global is rejected
+      outright under Swift 6 — and nothing had ever assigned it.* Remaining:
       `DRAPIConfig.subscriptionKey` is a `static var` in `DRModels.swift` waiting for an
       Azure APIM key. If a key is ever assigned there it is committed to git and shipped in
       the binary. Move it to a gitignored `.xcconfig` (or, better, proxy the API server-side)
@@ -408,13 +412,29 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
       (×3), `TopShelfNetworkService`, plus `.first!` on grouped-channel arrays in `HomeView`
       and `iOSRadioView`, and `.first!` on the documents directory. Each is a crash waiting
       for an edge case.
-- [ ] **S10. Adopt Swift 6 / strict concurrency.** `SWIFT_VERSION = 5.0` today.
-      `DRServiceManager` mutates `@Published` state from background contexts;
-      `AudioPlayerService` stores a mutable `onRequestPlay` closure on a non-isolated class.
-      Move to `@MainActor` classes + `Sendable` DTOs.
-
-### P2 — legal/operational, worth writing down before any public release
-
+- [x] ~~**S10. Adopt Swift 6 / strict concurrency.**~~ Done in #24. `SWIFT_VERSION` is
+      6.0 in all eight configurations, and both platforms plus the Top Shelf extension
+      build with **no errors and no warnings**.
+      The job was far smaller than the entry implied: a build with
+      `SWIFT_STRICT_CONCURRENCY=complete` surfaced three warnings, and Swift 6 language
+      mode exactly one hard error. What it found was mostly **cleanup that could not run**:
+      `ImageCacheService.deinit` cancelled a task on a singleton that only deallocates at
+      process exit; `AudioPlayerService.deinit` called main-actor command-centre cleanup
+      whose targets already capture `self` weakly, and which `stop()` does anyway;
+      `RemoteDetectorHostView.deinit` removed a gesture recognizer that `didMoveToWindow`
+      had already removed on the way out of the hierarchy. All three deleted.
+      Two real ones: `DRAPIConfig`'s members are read from the nonisolated network layer,
+      so they are `nonisolated` now; and `RadioShareActivity` was declared *inside* a
+      main-actor method, which made its `GroupActivity` conformance main-actor isolated and
+      unusable from the concurrent task that awaits `activate()`. Hoisted to file scope.
+      Test suites are `@MainActor`: the project sets
+      `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor`, so the types under test are main-actor by
+      inference while suites are nonisolated by default.
+- [ ] **S15. Revisit what default main-actor isolation actually buys.** With
+      `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor`, types are main-actor unless they say
+      otherwise — including `InFlightTasks`, whose whole purpose is to be touched from
+      several tasks. Its lock is then belt-and-braces rather than load-bearing. Worth
+      deciding deliberately which types are nonisolated, rather than inheriting it.
 - [ ] **S11. Document the DR API posture.** The app consumes an undocumented public API,
       hardcodes 24 DR stream URLs, and displays DR-supplied artwork and trademarks. Confirm
       terms of use and attribution requirements before submitting to the App Store.

@@ -10,6 +10,10 @@ import Testing
 /// Cleanup used to be unconditional, which broke that in a way nothing would notice: two
 /// callers can await the same task, and by the time the second retires it a third may
 /// already have registered a new one under that key.
+/// @MainActor because the project builds with SWIFT_DEFAULT_ACTOR_ISOLATION
+/// = MainActor, so the types under test are main-actor isolated by inference. Swift 6
+/// rejects calling them from a nonisolated suite.
+@MainActor
 struct InFlightTasksTests {
 
     @Test func callersForTheSameKeyShareOneTask() {
