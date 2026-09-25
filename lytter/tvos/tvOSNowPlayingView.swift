@@ -13,168 +13,38 @@ import GroupActivities
 
 #if os(tvOS)
 
-// MARK: - Remote Interaction Detector
-/// Attaches a pass-through gesture recognizer to the UIWindow so it sees
-/// ALL remote input — touchpad swipes, directional presses, and select —
-/// before the focus engine routes events to individual views.
-/// Setting state = .failed immediately means events are never consumed.
-private class PassThroughGestureRecognizer: UIGestureRecognizer {
-    var onInteraction: (() -> Void)?
-
-    // Touchpad begin (swipe start, tap start)
-    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent) {
-        onInteraction?()
-        state = .failed
-    }
-
-    // All physical button presses (select, menu, play/pause, d-pad directions)
-    override func pressesBegan(_ presses: Set<UIPress>, with event: UIPressesEvent) {
-        onInteraction?()
-        state = .failed
-    }
-}
-
-/// A transparent view that, as soon as it enters the window hierarchy,
-/// installs the pass-through recognizer onto the UIWindow itself.
-private class RemoteDetectorHostView: UIView {
-    var onInteraction: (() -> Void)?
-    private weak var installedRecognizer: PassThroughGestureRecognizer?
-
-    override func didMoveToWindow() {
-        super.didMoveToWindow()
-        // Remove any previously installed recognizer
-        if let old = installedRecognizer {
-            old.view?.removeGestureRecognizer(old)
-            installedRecognizer = nil
-        }
-        // Install onto the window so it fires ahead of the focus engine
-        if let win = window {
-            let recognizer = PassThroughGestureRecognizer()
-            recognizer.onInteraction = { [weak self] in self?.onInteraction?() }
-            recognizer.cancelsTouchesInView = false
-            recognizer.delaysTouchesBegan = false
-            win.addGestureRecognizer(recognizer)
-            installedRecognizer = recognizer
-        }
-    }
-
-    // No deinit. Removing the recognizer here duplicated what didMoveToWindow already
-    // does — it clears the old one on every move, including the move to a nil window when
-    // the view leaves the hierarchy, which is what happens just before deallocation. And
-    // deinit is nonisolated, so reaching for UIKit from it is a concurrency violation for
-    // a cleanup that has already run.
-}
-
-private struct RemoteInteractionDetector: UIViewRepresentable {
-    let onInteraction: () -> Void
-
-    func makeUIView(context: Context) -> RemoteDetectorHostView {
-        let view = RemoteDetectorHostView()
-        view.backgroundColor = .clear
-        view.onInteraction = onInteraction
-        return view
-    }
-
-    func updateUIView(_ uiView: RemoteDetectorHostView, context: Context) {
-        uiView.onInteraction = onInteraction
-    }
-}
-
-// MARK: - Tab Bar Visibility Helper
-/// Hides/shows the tab bar by toggling both alpha (for a smooth fade) and
-/// isUserInteractionEnabled.  Setting isUserInteractionEnabled = false removes
-/// the bar from the tvOS focus system entirely, preventing the focus engine
-/// from cycling to invisible tab-bar items and causing a show/hide flicker.
-private func setTabBarVisible(_ visible: Bool) {
-    guard let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-          let window = scene.windows.first else { return }
-    func findTabBar(in vc: UIViewController?) -> UITabBarController? {
-        if let tbc = vc as? UITabBarController { return tbc }
-        return vc?.children.compactMap { findTabBar(in: $0) }.first
-    }
-    guard let tbc = findTabBar(in: window.rootViewController) else { return }
-    if visible {
-        // Re-enable interaction before the fade-in so focus can return to it.
-        tbc.tabBar.isUserInteractionEnabled = true
-    }
-    UIView.animate(withDuration: 0.4) {
-        tbc.tabBar.alpha = visible ? 1 : 0
-    } completion: { finished in
-        // A fade-out interrupted by a later setTabBarVisible(true) still runs this
-        // block, with finished == false. Disabling interaction then would leave a
-        // fully opaque tab bar that the focus engine ignores, which is the exact
-        // flicker this helper exists to prevent — so only act on a fade that ran
-        // to completion.
-        guard finished, !visible else { return }
-        // Disable after fade-out so the focus engine ignores it completely.
-        tbc.tabBar.isUserInteractionEnabled = false
-    }
-}
-
 // MARK: - Now Playing
+/// The controls are always on screen.
+///
+/// They used to fade out after five seconds and come back on any remote input, which took a
+/// pass-through gesture recognizer attached to the window and a helper that reached into
+/// UIKit to hide the tab bar. It did not work: the controls came back only on the back
+/// button, direction presses moved focus instead of waking anything, and the tab-bar helper
+/// was reaching for a tab bar that no longer exists now that navigation is a sidebar.
+///
+/// Nothing replaced it. A row of three buttons is not worth hiding, and every part of the
+/// machinery that hid them was a way for focus to go wrong.
 struct tvOSNowPlayingView: View {
     @ObservedObject var serviceManager: DRServiceManager
     @State private var showingInfoSheet = false
-    @State private var controlsVisible = true
-    @State private var hideTask: Task<Void, Never>?
 
+    /// Artwork on the left, everything about it on the right — the arrangement the Music app
+    /// uses on Apple TV, and a better fit for a television than the centred stack this
+    /// replaces. A 16:9 screen has width to spare and very little height; stacking artwork,
+    /// title, track and controls down the middle spent the scarce dimension and left two
+    /// wide empty margins.
     var body: some View {
         ZStack {
             if let channel = serviceManager.playingChannel {
-                // Full-screen blurred artwork background
                 tvOSNowPlayingBackground(channel: channel, serviceManager: serviceManager)
                     .ignoresSafeArea()
 
-                VStack(spacing: 0) {
-                    Spacer()
-
-                    // Artwork — centred, large
+                HStack(alignment: .center, spacing: 72) {
                     tvOSNowPlayingArtworkCard(channel: channel, serviceManager: serviceManager)
 
-                    Spacer().frame(height: 36)
-
-                    // Program title
-                    if let title = serviceManager.getCurrentProgram(for: channel)?.cleanTitle(),
-                       !title.isEmpty {
-                        Text(title)
-                            .font(.system(size: 36, weight: .bold))
-                            .foregroundStyle(.white)
-                            .multilineTextAlignment(.center)
-                            .lineLimit(2)
-                            .shadow(color: .black.opacity(0.6), radius: 6, x: 0, y: 3)
-                    }
-
-                    // Currently playing track
-                    if let track = serviceManager.currentTrack {
-                        Text(track.displayText)
-                            .font(.system(size: 22, weight: .medium))
-                            .foregroundStyle(.white.opacity(0.6))
-                            .multilineTextAlignment(.center)
-                            .lineLimit(1)
-                            .padding(.top, 6)
-                    }
-
-                    Spacer().frame(height: 44)
-
-                    // Controls row: Info | Play/Pause | SharePlay
-                    HStack(spacing: 40) {
-                        tvOSNowPlayingControls(
-                            serviceManager: serviceManager,
-                            showingInfoSheet: $showingInfoSheet,
-                            channel: channel,
-                            onInteraction: wakeControls
-                        )
-                    }
-                    .padding(.bottom, 60)
-                    .opacity(controlsVisible ? 1 : 0)
-                    .animation(.easeInOut(duration: 0.4), value: controlsVisible)
-
-                    Spacer()
+                    details(for: channel)
                 }
-                .frame(maxWidth: .infinity)
-                // UIKit-level pass-through: fires on any remote press/swipe
-                // without consuming the event, so buttons and focus still work.
-                .background(RemoteInteractionDetector(onInteraction: wakeControls))
+                .padding(.horizontal, 90)
                 .sheet(isPresented: $showingInfoSheet) {
                     if let ch = serviceManager.playingChannel {
                         tvOSNowPlayingInfoSheet(
@@ -189,30 +59,95 @@ struct tvOSNowPlayingView: View {
                 tvOSEmptyState(serviceManager: serviceManager)
             }
         }
-        .onAppear { startHideTimer() }
-        .onDisappear {
-            hideTask?.cancel()
-            setTabBarVisible(true) // always restore when leaving
+    }
+
+    /// The right-hand column: what is playing, how far through it is, and what you can do.
+    private func details(for channel: DRChannel) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Spacer(minLength: 0)
+
+            // The station leads. On live radio it is the thing you chose; the programme is
+            // what happens to be on it, which is the opposite of an album and a track.
+            Text(channel.qualifiedName)
+                .font(.system(size: 54, weight: .bold))
+                .foregroundStyle(.white)
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
+
+            if let programme = serviceManager.getCurrentProgram(for: channel)?.programmeName,
+               !programme.isEmpty {
+                Text(programme)
+                    .font(.system(size: 30, weight: .medium))
+                    .foregroundStyle(.white.opacity(0.8))
+                    .lineLimit(2)
+                    .padding(.top, 10)
+            }
+
+            if let track = serviceManager.currentTrack {
+                Text(track.displayText)
+                    .font(.system(size: 24))
+                    .foregroundStyle(.white.opacity(0.55))
+                    .lineLimit(1)
+                    .padding(.top, 12)
+            }
+
+            Spacer(minLength: 36)
+
+            programmeProgress(for: channel)
+
+            tvOSNowPlayingControls(
+                serviceManager: serviceManager,
+                showingInfoSheet: $showingInfoSheet,
+                channel: channel
+            )
+            .padding(.top, 34)
+
+            Spacer(minLength: 0)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .shadow(color: .black.opacity(0.5), radius: 8, x: 0, y: 4)
     }
 
-    private func wakeControls() {
-        startHideTimer()
-    }
+    /// How far through the programme the broadcast is, with the hour it started and the hour
+    /// it ends.
+    ///
+    /// Live radio has nothing to scrub, so this is a read-out rather than a control — which
+    /// is also why it is not focusable and does not wake the controls.
+    ///
+    /// Driven by a `TimelineView` rather than a timer of its own: the bar only has to be
+    /// right to the nearest minute on a screen someone is looking at, and a view that
+    /// redraws itself needs no state to keep in sync.
+    @ViewBuilder
+    private func programmeProgress(for channel: DRChannel) -> some View {
+        if let programme = serviceManager.getCurrentProgram(for: channel),
+           let start = programme.startDate,
+           let end = programme.endDate {
+            TimelineView(.periodic(from: .now, by: 30)) { context in
+                VStack(alignment: .leading, spacing: 12) {
+                    GeometryReader { proxy in
+                        ZStack(alignment: .leading) {
+                            Capsule().fill(.white.opacity(0.22))
+                            Capsule()
+                                .fill(.white)
+                                .frame(width: proxy.size.width
+                                       * (programme.progress(at: context.date) ?? 0))
+                        }
+                    }
+                    .frame(height: 8)
 
-    private func startHideTimer() {
-        hideTask?.cancel()
-        withAnimation(.easeInOut(duration: 0.3)) { controlsVisible = true }
-        setTabBarVisible(true)
-        hideTask = Task {
-            try? await Task.sleep(nanoseconds: 5_000_000_000)
-            guard !Task.isCancelled else { return }
-            await MainActor.run {
-                withAnimation(.easeInOut(duration: 0.5)) { controlsVisible = false }
-                setTabBarVisible(false)
+                    HStack {
+                        Text(start.formatted(date: .omitted, time: .shortened))
+                        Spacer()
+                        Text(end.formatted(date: .omitted, time: .shortened))
+                    }
+                    .font(.system(size: 20))
+                    .foregroundStyle(.white.opacity(0.6))
+                    .monospacedDigit()
+                }
             }
         }
     }
+
 }
 
 // MARK: - Blurred Background
@@ -296,7 +231,10 @@ struct tvOSNowPlayingArtworkCard: View {
             .foregroundStyle(pillForeground)
             .padding(.horizontal, 14)
             .padding(.vertical, 9)
-            .background(pillBackground, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+            // 12, not 10: the badge is inset 12 from a card with a 24 radius, and a nested
+            // shape that meets a corner takes the outer radius minus that inset. At 10 the
+            // gap between the two curves narrowed as it went round the corner.
+            .background(pillBackground, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
             .padding(12)
             .animation(.easeInOut(duration: 0.4), value: pillBackground)
         }
@@ -366,7 +304,6 @@ struct tvOSNowPlayingControls: View {
     @ObservedObject var serviceManager: DRServiceManager
     @Binding var showingInfoSheet: Bool
     let channel: DRChannel
-    var onInteraction: (() -> Void)? = nil
     @FocusState private var focused: ControlButton?
 
     enum ControlButton: Hashable { case info, play, shareplay }
@@ -374,7 +311,6 @@ struct tvOSNowPlayingControls: View {
     var body: some View {
         HStack(spacing: 32) {
             Button {
-                onInteraction?()
                 showingInfoSheet = true
             } label: {
                 IconCircleLabel(systemImage: "info.circle", size: 64, iconSize: 28)
@@ -384,7 +320,6 @@ struct tvOSNowPlayingControls: View {
 
             // Play / Pause (centre, larger)
             Button {
-                onInteraction?()
                 serviceManager.togglePlayback(for: channel)
             } label: {
                 PlayPauseLabel(isPlaying: serviceManager.isPlaying)
@@ -393,7 +328,6 @@ struct tvOSNowPlayingControls: View {
             .focused($focused, equals: .play)
 
             Button {
-                onInteraction?()
                 if let ch = serviceManager.playingChannel { startSharePlay(for: ch) }
             } label: {
                 IconCircleLabel(systemImage: "shareplay", size: 64, iconSize: 28)
@@ -401,8 +335,6 @@ struct tvOSNowPlayingControls: View {
             .buttonStyle(tvOSMusicCardButtonStyle())
             .focused($focused, equals: .shareplay)
         }
-        // Wake controls on focus change within the row
-        .onChange(of: focused) { onInteraction?() }
     }
 
     // Inner view: small icon buttons (info, shareplay)

@@ -20,24 +20,12 @@ import SwiftUI
 /// Apple Music does this too: the top row is larger and captions its artwork, the rows
 /// below are smaller and caption beneath. Two sizes is the whole hierarchy — a third would
 /// stop reading as "this one matters more".
-enum ChannelShelfStyle {
-    /// Large card, text laid over the artwork behind a translucent scrim.
-    case featured
-    /// Smaller card, text underneath.
-    case standard
+typealias ChannelShelfStyle = StationCardStyle
 
-    var cardWidth: CGFloat { self == .featured ? 240 : 148 }
-    var cardHeight: CGFloat { self == .featured ? 280 : 148 }
-
-    /// How far up the large card the glass reaches.
-    ///
-    /// More than the caption needs — sized to the text, the gradient had only two lines to
-    /// fade across and read as the effect starting just above the words. But not most of
-    /// the card either: glass lightens whatever is behind it, so a tall fade washes the
-    /// artwork out. Half is enough to be gradual while leaving the image intact above it.
-    ///
-    /// Unused by `standard`, whose band does not fade.
-    var captionFadeHeight: CGFloat { cardHeight * 0.52 }
+extension StationCardStyle {
+    /// This platform's sizes. The design itself — proportions, type scale, which glass —
+    /// lives in `StationCardMetrics`, shared with tvOS.
+    var metrics: StationCardMetrics { .iOS(self) }
 }
 
 struct ChannelShelf: View {
@@ -75,79 +63,10 @@ struct ChannelShelf: View {
     }
 }
 
-/// Backdrop for a caption sitting on artwork.
-///
-/// Liquid Glass on iOS 26, an `.ultraThinMaterial` below it — the same shape either way,
-/// so the layout does not shift across versions. Both refract what is behind them, which
-/// is the point: the card's artwork is arbitrary photography and plain text on it is
-/// unreadable often enough to matter.
-private struct CaptionBackdrop: View {
-
-    /// Whether the glass fades in over the artwork or meets it at a straight edge.
-    ///
-    /// The large card fades: its caption sits well inside the image, and a hard line across
-    /// the middle would cut the artwork in two. The small card does not — the band is one
-    /// line of text deep and sits on the very edge, where a straight edge reads as a label
-    /// laid on the artwork rather than as a seam through it.
-    let fades: Bool
-
-    var body: some View {
-        Group {
-            if fades { glass.mask(fade) } else { glass }
-        }
-        .allowsHitTesting(false)
-    }
-
-    /// Slow to start, then decisive. The frost stays out of the way over the upper part of
-    /// the card and only reaches full strength where the text actually sits, so the artwork
-    /// reads as itself rather than as something behind fog.
-    private var fade: LinearGradient {
-        LinearGradient(
-            stops: [
-                .init(color: .clear, location: 0),
-                .init(color: .black.opacity(0.18), location: 0.34),
-                .init(color: .black.opacity(0.55), location: 0.62),
-                .init(color: .black.opacity(0.92), location: 0.84),
-                .init(color: .black, location: 1)
-            ],
-            startPoint: .top,
-            endPoint: .bottom
-        )
-    }
-
-    /// `clear` rather than `regular`: it is the variant meant to sit on media, more
-    /// transparent and carrying its own dimming layer to keep whatever is on top legible.
-    /// Regular glass frosted the artwork more than it needed to.
-    @ViewBuilder
-    private var glass: some View {
-        if #available(iOS 26.0, *) {
-            Rectangle().fill(.clear).glassEffect(.clear.tint(.black.opacity(0.45)), in: .rect)
-        } else {
-            Rectangle().fill(.ultraThinMaterial)
-        }
-    }
-}
-
-private extension View {
-
-    /// Pins a caption that sits on artwork to the dark appearance.
-    ///
-    /// Glass has no automatic contrast against what it covers — `Glass` offers `regular`,
-    /// `clear`, `tint` and `interactive`, and none of them adapt the text. So in light mode
-    /// `.primary` resolved to black while the glass over a night photograph rendered dark,
-    /// and the station's name disappeared into its own backdrop.
-    ///
-    /// Forcing the appearance fixes both halves at once: the glass renders its dark variant
-    /// and `.primary` becomes white, so the caption is light-on-dark over any artwork in
-    /// either theme. It is what Apple Music does — text laid on album art is white there
-    /// whatever the system appearance. The card's own artwork is unaffected, and text
-    /// outside the artwork still follows the app's theme.
-    func captionOnArtwork() -> some View {
-        environment(\.colorScheme, .dark)
-    }
-}
-
 /// One card: square artwork, the station's name, and what is on it now.
+///
+/// The caption's backdrop lives in `shared/views` — tvOS builds its cards from the same
+/// piece, so the two platforms cannot drift apart.
 struct ChannelShelfCard: View {
     let group: GroupedChannel
     var style: ChannelShelfStyle = .standard
@@ -221,7 +140,7 @@ struct ChannelShelfCard: View {
         } placeholder: {
             Rectangle().fill(Color(.tertiarySystemFill))
         }
-        .frame(width: style.cardWidth, height: style.cardHeight)
+        .frame(width: style.metrics.width, height: style.metrics.height)
         .clipped()
     }
 
@@ -229,69 +148,22 @@ struct ChannelShelfCard: View {
     ///
     /// The backdrop is not decoration. Artwork is arbitrary photography, so text laid
     /// straight onto it is unreadable often enough to matter.
-    private var featuredCaption: some View {
-        VStack(alignment: .leading, spacing: 1) {
-            HStack(spacing: 6) {
-                Text(title)
-                    .font(.title.weight(.bold))
-                    .foregroundStyle(.primary)
-                    .lineLimit(1)
-                    // Shrinks rather than truncates. The station is the thing being chosen
-                    // — "P4 Køben…" is a worse card than slightly smaller type.
-                    .minimumScaleFactor(0.7)
-
-                if opensPicker {
-                    Spacer(minLength: 4)
-                    chevron
-                }
-            }
-
-            Text(subtitle)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .lineLimit(2)
-        }
-        .padding(.horizontal, 12)
-        .padding(.bottom, 10)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        // The backdrop is sized independently of the text and laid behind it, so the fade
-        // spans the card rather than the caption.
-        .background(alignment: .bottom) {
-            CaptionBackdrop(fades: true)
-                .frame(height: style.captionFadeHeight)
-        }
-        .captionOnArtwork()
-    }
-
-    /// The small card's caption: the station's name alone, on a band of glass.
-    ///
-    /// Only the name. At this size a second line over artwork is clutter rather than
-    /// information — the programme goes beneath the card, where it has a plain background
-    /// and can simply be read.
-    private var nameBand: some View {
-        HStack(spacing: 6) {
-            Text(title)
-                .font(.title2.weight(.bold))
-                .foregroundStyle(.primary)
-                .lineLimit(1)
-                .minimumScaleFactor(0.7)
-
+    /// The caption is shared with tvOS; the chevron is not, because a remote has no
+    /// equivalent of a tap that might open a sheet.
+    private var caption: some View {
+        StationCard.Caption(title: title, subtitle: subtitle, metrics: style.metrics) {
             if opensPicker {
                 Spacer(minLength: 4)
                 chevron
             }
         }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 7)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background { CaptionBackdrop(fades: false) }
-        .captionOnArtwork()
     }
 
     private var featuredCard: some View {
         artwork
-            .overlay(alignment: .bottom) { featuredCaption }
-            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+            .overlay(alignment: .bottom) { caption }
+            .clipShape(RoundedRectangle(cornerRadius: style.metrics.cornerRadius,
+                                        style: .continuous))
             // Diffuse, barely offset. At radius 7 with y: 4 the shadow hugged the card's
             // straight bottom edge and read as a drawn line rather than a shadow.
             .shadow(color: .black.opacity(0.16), radius: 14, y: 3)
@@ -302,19 +174,14 @@ struct ChannelShelfCard: View {
     private var standardCard: some View {
         VStack(alignment: .leading, spacing: 6) {
             artwork
-                .overlay(alignment: .bottom) { nameBand }
-                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .overlay(alignment: .bottom) { caption }
+                .clipShape(RoundedRectangle(cornerRadius: style.metrics.cornerRadius,
+                                            style: .continuous))
                 .shadow(color: .black.opacity(0.14), radius: 10, y: 2)
 
-            // Concrete rather than hierarchical: this text is on the background, not on a
-            // material, and inside a Button hierarchical styles resolve against the tint.
-            Text(subtitle)
-                .font(.caption)
-                .foregroundStyle(Color.secondary)
-                .lineLimit(1)
-                .padding(.horizontal, 2)
+            StationCard.Subtitle(text: subtitle, metrics: style.metrics)
         }
-        .frame(width: style.cardWidth, alignment: .leading)
+        .frame(width: style.metrics.width, alignment: .leading)
     }
 
     var body: some View {

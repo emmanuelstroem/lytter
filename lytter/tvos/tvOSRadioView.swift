@@ -82,13 +82,23 @@ struct tvOSRadioView: View {
                                 LazyHStack(alignment: .top, spacing: 40) {
                                     ForEach(primaryChannels, id: \.id) { channel in
                                         let variants = serviceManager.availableChannels.filter { $0.name == channel.name }
+                                        // Artwork and programme inside the button, so
+                                        // focus lifts them together.
+                                        let item = VStack(alignment: .leading, spacing: 10) {
+                                            tvOSChannelCard(channel: channel)
+                                            StationCard.Subtitle(
+                                                text: serviceManager.getCurrentProgram(for: channel)?.programmeName ?? "",
+                                                metrics: .tvOS(.standard)
+                                            )
+                                            .frame(minHeight: 22)
+                                        }
+                                        .frame(width: 300, alignment: .leading)
+
                                         if variants.count <= 1 {
                                             Button {
                                                 serviceManager.playChannel(channel)
                                                 selectionState.selectChannel(channel)
-                                            } label: {
-                                                tvOSChannelCard(channel: channel)
-                                            }
+                                            } label: { item }
                                             .buttonStyle(tvOSMusicCardButtonStyle())
                                             .focused($focusedMenuChannelId, equals: channel.id)
                                             .contextMenu {
@@ -98,9 +108,7 @@ struct tvOSRadioView: View {
                                             Button {
                                                 lastFocusedChannelId = channel.id
                                                 selectedChannelForVariants = channel
-                                            } label: {
-                                                tvOSChannelCard(channel: channel)
-                                            }
+                                            } label: { item }
                                             .buttonStyle(tvOSMusicCardButtonStyle())
                                             .focused($focusedMenuChannelId, equals: channel.id)
                                         }

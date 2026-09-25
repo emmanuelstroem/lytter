@@ -187,6 +187,16 @@ class FocusableLockupUIView: UIView {
 /// so the entire item (image and text) scales together on focus.
 struct tvOSChannelCard: View {
     let channel: DRChannel
+
+    /// Sizes and type scale. Defaulted to the smaller card, which is what the Radio tab and
+    /// every broadcaster shelf use.
+    var metrics: StationCardMetrics = .tvOS(.standard)
+
+    /// What to call the channel, when the caller knows better than the card does.
+    ///
+    /// A card on a shelf may stand for a station ("P4") or for one particular district
+    /// ("P4 - København"), and only the shelf knows which — the channel alone cannot say.
+    var titleOverride: String? = nil
     @EnvironmentObject private var serviceManager: DRServiceManager
     @Environment(\.isFocused) private var isFocused
 
@@ -206,11 +216,17 @@ struct tvOSChannelCard: View {
         serviceManager.playingChannel?.name == channel.name
     }
 
+    /// The card proper: artwork, with the station's name on a band of glass across its foot.
+    ///
+    /// What is on the station now is *not* here. A card button style draws its container
+    /// around the whole label, so a subtitle inside this view came out boxed in with the
+    /// artwork rather than printed beneath it on the page — which is not what iOS does. The
+    /// caller places it, outside the button.
     var body: some View {
-        let displayTitle = (channel.district != nil) ? channel.name : channel.title
+        let displayTitle = titleOverride
+            ?? ((channel.district != nil) ? channel.name : channel.title)
 
-        VStack(alignment: .leading, spacing: 12) {
-            // Square artwork
+        Group {
             CachedAsyncImage(url: artworkURL,
                              maxPixelSize: ImageCacheService.thumbnailMaxPixelSize) { image in
                 image
@@ -224,11 +240,14 @@ struct tvOSChannelCard: View {
                         .foregroundStyle(.white.opacity(0.35))
                 }
             }
-            .frame(width: 300, height: 300)
+            .frame(width: metrics.width, height: metrics.height)
             .clipped()
-            .clipShape(RoundedRectangle(cornerRadius: 16))
+            .overlay(alignment: .bottom) {
+                StationCard.Caption(title: displayTitle, subtitle: subtitle, metrics: metrics)
+            }
+            .clipShape(RoundedRectangle(cornerRadius: metrics.cornerRadius, style: .continuous))
             .overlay(
-                RoundedRectangle(cornerRadius: 16)
+                RoundedRectangle(cornerRadius: metrics.cornerRadius, style: .continuous)
                     .stroke(.white.opacity(isFocused ? 0.85 : 0), lineWidth: 0.5)
             )
             .overlay(alignment: .topTrailing) {
@@ -239,23 +258,13 @@ struct tvOSChannelCard: View {
             }
             .shadow(color: .white.opacity(isFocused ? 0.55 : 0), radius: 18, x: 0, y: 0)
             .animation(.spring(response: 0.28, dampingFraction: 0.72), value: isFocused)
-
-            // Channel name
-            Text(displayTitle)
-                .font(.system(size: 24, weight: .bold))
-                .foregroundStyle(.white)
-                .lineLimit(1)
-                .frame(width: 300, alignment: .leading)
-
-            // Currently playing program
-            Text(currentProgram?.cleanTitle() ?? "")
-                .font(.system(size: 18, weight: .regular))
-                .foregroundStyle(.gray)
-                .lineLimit(1)
-                .frame(width: 300, alignment: .leading)
-                .frame(minHeight: 22)
         }
     }
+
+    /// What is on the channel now, for a caller to place beneath the card.
+    var subtitle: String { currentProgram?.programmeName ?? "" }
+
+
 }
 
 /// Small badge shown on the top-right corner of a channel card when that channel is playing.
@@ -294,32 +303,6 @@ struct tvOSMusicCardButtonStyle: ButtonStyle {
                 // focus lift effect — we own all focus visuals above.
                 .focusEffectDisabled()
         }
-    }
-}
-
-struct tvOSSearchField: View {
-    @Binding var text: String
-    @FocusState private var isFocused: Bool
-
-    var body: some View {
-        HStack(spacing: 12) {
-            Image(systemName: "magnifyingglass")
-            TextField("Search radios", text: $text)
-                .focused($isFocused)
-                .textInputAutocapitalization(.never)
-                .submitLabel(.search)
-            if !text.isEmpty {
-                Button(action: { text = "" }) { Image(systemName: "xmark.circle.fill") }
-            }
-            Button(action: { isFocused = true }) { // focus to enable dictation via remote mic
-                Image(systemName: "mic.fill")
-            }
-            .buttonStyle(.borderless) // avoid extra highlight styling
-        }
-        .padding(16)
-        .background(.ultraThinMaterial)
-        .clipShape(RoundedRectangle(cornerRadius: 18))
-        .foregroundColor(.white)
     }
 }
 #endif
