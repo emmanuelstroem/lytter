@@ -34,9 +34,8 @@ struct tvOSVariantMenu<Label: View, Item: Identifiable & Hashable>: View {
         } label: {
             label()
         }
-        // Scales without drawing a container, so a caller can put a caption inside the label
-        // and have it lift with the artwork instead of being boxed in with it.
-        .buttonStyle(tvOSMusicCardButtonStyle())
+        // The system's card lift. The label is artwork, so the card is the artwork.
+        .buttonStyle(.card)
         .fullScreenCover(isPresented: $isPresented) {
             panel
         }

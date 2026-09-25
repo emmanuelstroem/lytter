@@ -889,6 +889,17 @@
         }
       }
     },
+    "Schedule": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sendeplan"
+          }
+        }
+      }
+    },
     "Search": {
       "extractionState": "manual",
       "localizations": {
