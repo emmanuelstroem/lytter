@@ -76,19 +76,13 @@ struct tvOSShelfCard: View {
     /// does not.
     private var title: String { preferredChannel?.qualifiedName ?? group.displayTitle }
 
-    /// Artwork and the programme beneath it, as one focusable thing.
-    ///
-    /// Both inside the button, so focus lifts the whole item rather than the picture alone —
-    /// on Apple TV a card and its label move together, and a subtitle left behind while the
-    /// artwork grows reads as a glitch.
-    ///
-    /// That only works with a button style that draws no container of its own.
-    /// `tvOSMusicCardButtonStyle` scales and shadows and nothing else, so the subtitle sits
-    /// on the page. `.card` would box it in with the artwork, which is the arrangement iOS
-    /// deliberately does not use.
-    private var item: some View {
+    /// The button is the artwork and nothing else, so `.card` lifts a picture rather than a
+    /// picture with a caption stuck to it — which is what Apple's own shelves do. The
+    /// programme is printed underneath, outside the button, and stays put while the card
+    /// lifts.
+    var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            tvOSChannelCard(channel: channel, metrics: metrics, titleOverride: title)
+            card
 
             // A featured card carries the programme under its own glass, so there is nothing
             // to print beneath it.
@@ -103,37 +97,36 @@ struct tvOSShelfCard: View {
         .frame(width: metrics.width, alignment: .leading)
     }
 
-    var body: some View {
-        Group {
-            if opensPicker {
-                tvOSVariantMenu(
-                    items: group.channels,
-                    label: { item },
-                    itemTitle: { $0.district ?? $0.name },
-                    onSelect: { picked in
-                        // Same bargain as on iOS: choosing here says where the listener is,
-                        // so the next regional station does not have to ask.
-                        if let district = picked.district {
-                            serviceManager.userPreferences.rememberDistrict(District(name: district))
-                        }
-                        onSelect(picked)
-                    },
-                    panelTitle: String(localized: "Choose a district")
-                )
-            } else {
-                Button {
-                    onSelect(channel)
-                } label: {
-                    item
-                }
-                .buttonStyle(tvOSMusicCardButtonStyle())
+    @ViewBuilder
+    private var card: some View {
+        let artwork = tvOSChannelCard(channel: channel, metrics: metrics, titleOverride: title)
+
+        if opensPicker {
+            tvOSVariantMenu(
+                items: group.channels,
+                label: { artwork },
+                itemTitle: { $0.district ?? $0.name },
+                onSelect: { picked in
+                    // Same bargain as on iOS: choosing here says where the listener is,
+                    // so the next regional station does not have to ask.
+                    if let district = picked.district {
+                        serviceManager.userPreferences.rememberDistrict(District(name: district))
+                    }
+                    onSelect(picked)
+                },
+                panelTitle: String(localized: "Choose a district")
+            )
+        } else {
+            Button {
+                onSelect(channel)
+            } label: {
+                artwork
             }
-        }
-        // Hold select to pin, as on iOS. Without this there was no way to add a favourite
-        // outside the Radio tab — so the Favourites shelf stayed empty and looked as though
-        // tvOS simply did not have the feature.
-        .contextMenu {
-            if !opensPicker {
+            .buttonStyle(.card)
+            // On the button itself, not on a container around it. tvOS attaches a context
+            // menu to a focusable view; hung on the enclosing Group it had nothing to
+            // attach to, which is why hold-select did nothing.
+            .contextMenu {
                 let isFavourite = serviceManager.userPreferences.isFavourite(channel.id)
                 Button {
                     serviceManager.userPreferences.toggleFavourite(channel.id)

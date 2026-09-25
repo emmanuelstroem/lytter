@@ -27,6 +27,7 @@ import GroupActivities
 struct tvOSNowPlayingView: View {
     @ObservedObject var serviceManager: DRServiceManager
     @State private var showingInfoSheet = false
+    @State private var showingScheduleSheet = false
 
     /// Artwork on the left, everything about it on the right — the arrangement the Music app
     /// uses on Apple TV, and a better fit for a television than the centred stack this
@@ -45,6 +46,11 @@ struct tvOSNowPlayingView: View {
                     details(for: channel)
                 }
                 .padding(.horizontal, 90)
+                .sheet(isPresented: $showingScheduleSheet) {
+                    if let ch = serviceManager.playingChannel {
+                        tvOSChannelScheduleSheet(channel: ch, serviceManager: serviceManager)
+                    }
+                }
                 .sheet(isPresented: $showingInfoSheet) {
                     if let ch = serviceManager.playingChannel {
                         tvOSNowPlayingInfoSheet(
@@ -98,6 +104,7 @@ struct tvOSNowPlayingView: View {
             tvOSNowPlayingControls(
                 serviceManager: serviceManager,
                 showingInfoSheet: $showingInfoSheet,
+                showingScheduleSheet: $showingScheduleSheet,
                 channel: channel
             )
             .padding(.top, 34)
@@ -303,10 +310,11 @@ struct tvOSNowPlayingArtworkCard: View {
 struct tvOSNowPlayingControls: View {
     @ObservedObject var serviceManager: DRServiceManager
     @Binding var showingInfoSheet: Bool
+    @Binding var showingScheduleSheet: Bool
     let channel: DRChannel
     @FocusState private var focused: ControlButton?
 
-    enum ControlButton: Hashable { case info, play, shareplay }
+    enum ControlButton: Hashable { case info, play, shareplay, schedule }
 
     var body: some View {
         HStack(spacing: 32) {
@@ -334,6 +342,17 @@ struct tvOSNowPlayingControls: View {
             }
             .buttonStyle(tvOSMusicCardButtonStyle())
             .focused($focused, equals: .shareplay)
+
+            // What else is on. iOS has had this from the full player since the list button
+            // was wired up; the television could not ask at all.
+            Button {
+                showingScheduleSheet = true
+            } label: {
+                IconCircleLabel(systemImage: "list.bullet", size: 64, iconSize: 28)
+            }
+            .buttonStyle(tvOSMusicCardButtonStyle())
+            .focused($focused, equals: .schedule)
+            .accessibilityLabel("Schedule")
         }
     }
 

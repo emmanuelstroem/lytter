@@ -183,7 +183,11 @@ class FocusableLockupUIView: UIView {
 
 #if os(tvOS)
 /// Full shelf item: square artwork + title + subtitle.
-/// Designed to be used as a Button label with tvOSMusicCardButtonStyle,
+/// Designed to be used as the label of a `.card` button, which supplies the lift,
+/// the parallax and the shadow. This view draws none of that: it used to add a white
+/// stroke and a white glow on focus and call `.focusEffectDisabled()` to suppress the
+/// system's, which is why a focused card looked lit from inside rather than raised.
+/// Formerly paired with tvOSMusicCardButtonStyle,
 /// so the entire item (image and text) scales together on focus.
 struct tvOSChannelCard: View {
     let channel: DRChannel
@@ -198,7 +202,6 @@ struct tvOSChannelCard: View {
     /// ("P4 - København"), and only the shelf knows which — the channel alone cannot say.
     var titleOverride: String? = nil
     @EnvironmentObject private var serviceManager: DRServiceManager
-    @Environment(\.isFocused) private var isFocused
 
     private var currentProgram: DREpisode? {
         serviceManager.getCurrentProgram(for: channel)
@@ -246,18 +249,12 @@ struct tvOSChannelCard: View {
                 StationCard.Caption(title: displayTitle, subtitle: subtitle, metrics: metrics)
             }
             .clipShape(RoundedRectangle(cornerRadius: metrics.cornerRadius, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: metrics.cornerRadius, style: .continuous)
-                    .stroke(.white.opacity(isFocused ? 0.85 : 0), lineWidth: 0.5)
-            )
             .overlay(alignment: .topTrailing) {
                 if isCurrentChannel {
                     NowPlayingBadge(isPlaying: serviceManager.isPlaying)
                         .padding(10)
                 }
             }
-            .shadow(color: .white.opacity(isFocused ? 0.55 : 0), radius: 18, x: 0, y: 0)
-            .animation(.spring(response: 0.28, dampingFraction: 0.72), value: isFocused)
         }
     }
 
