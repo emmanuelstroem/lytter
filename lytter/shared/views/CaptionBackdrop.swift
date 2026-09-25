@@ -57,10 +57,19 @@ struct CaptionBackdrop: View {
     /// pale artwork white text came out weaker than it had been under regular glass, and a
     /// subtitle over a bright photograph all but vanished. Tinting darkens the band by a
     /// fixed amount instead of leaving it to whatever is behind.
+    /// How hard the glass is tinted.
+    ///
+    /// One number, in one place, because it is the dial that decides whether the station's
+    /// name can be read. Clear glass alone does almost nothing over bright artwork — a
+    /// yellow-and-white album cover left a white name barely visible — and the tint is what
+    /// puts a floor under the contrast regardless of what is behind it.
+    private static let tint = 0.6
+
     @ViewBuilder
     private var glass: some View {
         if #available(iOS 26.0, tvOS 26.0, *) {
-            Rectangle().fill(.clear).glassEffect(.clear.tint(.black.opacity(0.45)), in: .rect)
+            Rectangle().fill(.clear)
+                .glassEffect(.clear.tint(.black.opacity(Self.tint)), in: .rect)
         } else {
             // The same tint, by hand. Before 26 there is no Liquid Glass, and an untinted
             // material is a flat bar rather than tinted glass — which is how the tvOS cards
@@ -68,7 +77,7 @@ struct CaptionBackdrop: View {
             // band recognisably the same thing on an older system.
             Rectangle()
                 .fill(.ultraThinMaterial)
-                .overlay(Color.black.opacity(0.45))
+                .overlay(Color.black.opacity(Self.tint))
         }
     }
 }
