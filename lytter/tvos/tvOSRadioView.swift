@@ -13,24 +13,8 @@ struct tvOSRadioView: View {
     @ObservedObject var selectionState: SelectionState
     // Sheet removed; districts are presented via Menu wrapping the channel card
     
-    @State private var menuIsFocused = false
     @FocusState private var focusedMenuChannelId: String?
-    @State private var lastFocusedChannelId: String?
-    @State private var selectedChannelForVariants: DRChannel?
     
-    /// Held-select on the remote pins a channel. Single-channel cards only: a station with
-    /// variants opens the picker, and pinning "P4" would not say which district.
-    @ViewBuilder
-    private func favouriteButton(for channel: DRChannel) -> some View {
-        let isFavourite = serviceManager.userPreferences.isFavourite(channel.id)
-        Button {
-            serviceManager.userPreferences.toggleFavourite(channel.id)
-        } label: {
-            Label(isFavourite ? "Remove from Favourites" : "Add to Favourites",
-                  systemImage: isFavourite ? "star.slash" : "star")
-        }
-    }
-
     // One representative per base channel (deduped by name)
     private var primaryChannels: [DRChannel] {
         // Was a local copy of the grouping. `GroupedChannel` is shared now, so tvOS and iOS
@@ -81,40 +65,23 @@ struct tvOSRadioView: View {
                             ScrollView(.horizontal, showsIndicators: false) {
                                 LazyHStack(alignment: .top, spacing: 40) {
                                     ForEach(primaryChannels, id: \.id) { channel in
-                                        let variants = serviceManager.availableChannels.filter { $0.name == channel.name }
-                                        // The button is the artwork; the programme is
-                                        // printed under it, outside the button.
-                                        VStack(alignment: .leading, spacing: 10) {
-                                            if variants.count <= 1 {
-                                                Button {
-                                                    serviceManager.playChannel(channel)
-                                                    selectionState.selectChannel(channel)
-                                                } label: {
-                                                    tvOSChannelCard(channel: channel)
-                                                }
-                                                .buttonStyle(.card)
-                                                .focused($focusedMenuChannelId, equals: channel.id)
-                                                .contextMenu {
-                                                    favouriteButton(for: channel)
-                                                }
-                                            } else {
-                                                Button {
-                                                    lastFocusedChannelId = channel.id
-                                                    selectedChannelForVariants = channel
-                                                } label: {
-                                                    tvOSChannelCard(channel: channel)
-                                                }
-                                                .buttonStyle(.card)
-                                                .focused($focusedMenuChannelId, equals: channel.id)
-                                            }
+                                        // The same card as Home and Search. Radio used to
+                                        // build its own, with its own variant overlay and
+                                        // its own focus bookkeeping; a station should not
+                                        // look or behave differently depending on which
+                                        // screen it is listed on.
+                                        let variants = serviceManager.availableChannels
+                                            .filter { $0.name == channel.name }
 
-                                            StationCard.Subtitle(
-                                                text: serviceManager.getCurrentProgram(for: channel)?.programmeName ?? "",
-                                                metrics: .tvOS(.standard)
-                                            )
-                                            .frame(minHeight: 22)
-                                        }
-                                        .frame(width: 300, alignment: .leading)
+                                        tvOSStationCard(
+                                            group: GroupedChannel(channels: variants),
+                                            serviceManager: serviceManager,
+                                            onSelect: { picked in
+                                                serviceManager.playChannel(picked)
+                                                selectionState.selectChannel(picked)
+                                            }
+                                        )
+                                        .focused($focusedMenuChannelId, equals: channel.id)
                                     }
                                 }
                                 .padding(.horizontal, 60)
@@ -126,36 +93,10 @@ struct tvOSRadioView: View {
                     }
                     .padding(.top, 50)
                     // While variants overlay is visible, block interaction and hide focus effects behind it
-                    .allowsHitTesting(selectedChannelForVariants == nil)
-                    .focusEffectDisabled(selectedChannelForVariants != nil)
                     .edgesIgnoringSafeArea(.horizontal)
                     
                 }
 
-                if let selectedChannel = selectedChannelForVariants {
-                    // Build variants for selected channel
-                    let selectedVariants = serviceManager.availableChannels.filter { $0.name == selectedChannel.name }
-                    tvOSVariantOverlay(
-                        title: selectedChannel.title,
-                        variants: selectedVariants,
-                        onSelect: { variant in
-                            serviceManager.playChannel(variant)
-                            selectionState.selectChannel(variant)
-                            selectedChannelForVariants = nil
-                        },
-                        onDismiss: {
-                            selectedChannelForVariants = nil
-                            if let id = lastFocusedChannelId { focusedMenuChannelId = id }
-                        }
-                    )
-                    .transition(.opacity)
-                    .zIndex(100)
-                }
-            }
-        }
-        .onChange(of: selectedChannelForVariants) { oldValue, newValue in
-            if newValue == nil, let id = lastFocusedChannelId {
-                focusedMenuChannelId = id
             }
         }
         .onAppear {

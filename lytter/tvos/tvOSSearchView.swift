@@ -57,7 +57,7 @@ struct tvOSSearchView: View {
                     } else {
                         LazyVGrid(columns: columns, spacing: 48) {
                             ForEach(results) { group in
-                                tvOSShelfCard(
+                                tvOSStationCard(
                                     group: group,
                                     serviceManager: serviceManager,
                                     onSelect: play
