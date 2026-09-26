@@ -25,7 +25,10 @@ struct DistrictSelectionSheet: View {
         NavigationStack {
             List {
                 Section {
-                    ForEach(groupedChannel.channels) { channel in
+                    // Their region first: the list opens every time the station is chosen,
+                    // and the usual choice should be the first row, not a search.
+                    ForEach(groupedChannel.channels(
+                        regionFirst: serviceManager.userPreferences.preferredDistrict)) { channel in
                         Button {
                             select(channel)
                         } label: {
@@ -43,7 +46,7 @@ struct DistrictSelectionSheet: View {
                     // the list, and at the medium detent it sat on top of the last row.
                     // This scrolls with the content, which is also where a listener looks
                     // for an explanation of what the list just did.
-                    Text("Your region is remembered for other regional stations.")
+                    Text("Your region is listed first, here and on other regional stations.")
                 }
             }
             .listStyle(.insetGrouped)

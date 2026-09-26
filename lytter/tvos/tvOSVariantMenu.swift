@@ -14,10 +14,19 @@ import SwiftUI
 /// Presented as a `fullScreenCover` rather than laid out in a `ZStack` beside the trigger.
 /// Beside the trigger it centred on *the trigger*, so a control in the top-left corner put
 /// its panel in the top-left corner, and focus could still wander into the content behind.
-struct tvOSVariantMenu<Label: View, Item: Identifiable & Hashable>: View {
+struct tvOSVariantMenu<Label: View, Item: Identifiable & Hashable, ItemMenu: View>: View {
     let items: [Item]
     let label: () -> Label
     let itemTitle: (Item) -> String
+
+    /// Symbols after an item's title, for what the list knows about it — the listener's
+    /// region, a favourite, what is playing. The same marks the phone's sheet shows.
+    var itemSymbols: (Item) -> [String] = { _ in [] }
+
+    /// Hold-select on an item. The picker is where a district is named, so it is where one
+    /// is pinned: the card it opened from stands for all of them.
+    @ViewBuilder let itemMenu: (Item) -> ItemMenu
+
     let onSelect: (Item) -> Void
 
     /// Heading on the panel. Defaulted because this was written before it had any caller
@@ -64,12 +73,19 @@ struct tvOSVariantMenu<Label: View, Item: Identifiable & Hashable>: View {
                                 onSelect(item)
                                 isPresented = false
                             } label: {
-                                Text(itemTitle(item))
-                                    .font(.title3)
-                                    .lineLimit(1)
-                                    .minimumScaleFactor(0.7)
-                                    .frame(maxWidth: .infinity)
-                                    .padding(.vertical, 12)
+                                HStack(spacing: 12) {
+                                    Text(itemTitle(item))
+                                        .lineLimit(1)
+                                        .minimumScaleFactor(0.7)
+
+                                    ForEach(itemSymbols(item), id: \.self) { symbol in
+                                        Image(systemName: symbol)
+                                            .accessibilityHidden(true)
+                                    }
+                                }
+                                .font(.title3)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 12)
                             }
                             // Capsules, not cards. A row inside a rounded panel is a
                             // narrower rounded shape sharing its centre — a square-cornered
@@ -81,6 +97,8 @@ struct tvOSVariantMenu<Label: View, Item: Identifiable & Hashable>: View {
                             // on focus, and forcing white would make the focused row
                             // white-on-white.
                             .focused($focusedItemId, equals: item.id)
+                            // On the button, the focusable view, or hold-select does nothing.
+                            .contextMenu { itemMenu(item) }
                         }
                     }
                     // Focus scales a button up by about a tenth, and at the panel's edge

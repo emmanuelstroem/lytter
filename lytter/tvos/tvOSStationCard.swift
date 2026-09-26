@@ -26,6 +26,22 @@ struct tvOSStationCard: View {
     @ObservedObject var serviceManager: DRServiceManager
     let onSelect: (DRChannel) -> Void
 
+    /// Observed directly: a nested ObservableObject does not republish through its owner,
+    /// so pinning a district in the picker would update the store and leave its star
+    /// undrawn.
+    @ObservedObject private var preferences: UserPreferencesService
+
+    init(group: GroupedChannel,
+         style: StationCardStyle = .standard,
+         serviceManager: DRServiceManager,
+         onSelect: @escaping (DRChannel) -> Void) {
+        self.group = group
+        self.style = style
+        self._serviceManager = ObservedObject(wrappedValue: serviceManager)
+        self._preferences = ObservedObject(wrappedValue: serviceManager.userPreferences)
+        self.onSelect = onSelect
+    }
+
     private var metrics: StationCardMetrics { .tvOS(style) }
 
     // MARK: - What the card stands for
@@ -33,18 +49,25 @@ struct tvOSStationCard: View {
     /// The listener's region, when this station broadcasts one and they have chosen it.
     private var preferredChannel: DRChannel? {
         guard group.hasMultipleDistricts,
-              let preferred = serviceManager.userPreferences.preferredDistrict else { return nil }
+              let preferred = preferences.preferredDistrict else { return nil }
         return group.channel(in: preferred)
     }
 
+    /// The channel whose artwork and programme the card shows: their region where there is
+    /// one, otherwise the first variant.
     private var channel: DRChannel { preferredChannel ?? group.channels.first! }
 
-    /// Whether choosing this card has a question to ask before it can play anything.
-    private var opensPicker: Bool { group.hasMultipleDistricts && preferredChannel == nil }
+    /// Whether choosing this card asks which district before it plays.
+    ///
+    /// Always, for a station with districts — the same rule as the phone. Playing a
+    /// remembered region straight away left no way to hear any other district, and on the
+    /// television not even a hidden one. The picker lists their region first, so the usual
+    /// choice is still one click, and a favourite is one district already and plays
+    /// directly.
+    private var opensPicker: Bool { group.hasMultipleDistricts }
 
-    /// A card standing for one channel names its district; one standing for the whole
-    /// station does not.
-    private var title: String { preferredChannel?.qualifiedName ?? group.displayTitle }
+    /// "P4" for the station, "P4 - København" for a card that stands for one district.
+    private var title: String { group.displayTitle }
 
     /// What is on now, as the phone words it — including "Live" when the schedule has
     /// nothing, rather than a blank line under the card.
@@ -75,14 +98,16 @@ struct tvOSStationCard: View {
     private var card: some View {
         if opensPicker {
             tvOSVariantMenu(
-                items: group.channels,
+                items: group.channels(regionFirst: preferences.preferredDistrict),
                 label: { face },
                 itemTitle: { $0.district ?? $0.name },
+                itemSymbols: symbols(for:),
+                itemMenu: { favouriteButton(for: $0) },
                 onSelect: { picked in
                     // Choosing here says where the listener is, so the next regional station
-                    // does not have to ask.
+                    // lists it first.
                     if let district = picked.district {
-                        serviceManager.userPreferences.rememberDistrict(District(name: district))
+                        preferences.rememberDistrict(District(name: district))
                     }
                     onSelect(picked)
                 },
@@ -97,16 +122,32 @@ struct tvOSStationCard: View {
             .buttonStyle(.card)
             // On the button, which is the focusable view. Attached to anything else, tvOS
             // has nothing to hang it on and hold-select does nothing.
-            .contextMenu {
-                let isFavourite = serviceManager.userPreferences.isFavourite(channel.id)
-                Button {
-                    serviceManager.userPreferences.toggleFavourite(channel.id)
-                } label: {
-                    Label(isFavourite ? "Remove from Favourites" : "Add to Favourites",
-                          systemImage: isFavourite ? "star.slash" : "star")
-                }
-            }
+            .contextMenu { favouriteButton(for: channel) }
         }
+    }
+
+    /// Pins one channel. On the card for a station without districts, and on each district
+    /// in the picker — never on a card that stands for ten, which would not say which.
+    private func favouriteButton(for channel: DRChannel) -> some View {
+        let isFavourite = preferences.isFavourite(channel.id)
+        return Button {
+            preferences.toggleFavourite(channel.id)
+        } label: {
+            Label(isFavourite ? "Remove from Favourites" : "Add to Favourites",
+                  systemImage: isFavourite ? "star.slash" : "star")
+        }
+    }
+
+    /// The marks the phone's district sheet shows: their region, a favourite, what is
+    /// playing.
+    private func symbols(for channel: DRChannel) -> [String] {
+        var symbols: [String] = []
+        if let region = preferences.preferredDistrict, channel.districtID == region.id {
+            symbols.append("location.fill")
+        }
+        if preferences.isFavourite(channel.id) { symbols.append("star.fill") }
+        if serviceManager.playingChannel?.id == channel.id { symbols.append("speaker.wave.2.fill") }
+        return symbols
     }
 
     /// The button's label: artwork, and the caption over it.

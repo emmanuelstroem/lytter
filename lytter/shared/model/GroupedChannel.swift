@@ -56,6 +56,16 @@ struct GroupedChannel: Identifiable {
         channels.first { $0.districtID == district.id }
     }
 
+    /// Every variant, with the listener's region first and the rest in the usual order.
+    ///
+    /// What the district picker lists. Choosing a station always asks which district, so
+    /// that a listener away from home can pick another one; putting their own first keeps
+    /// the usual choice a single tap.
+    func channels(regionFirst region: District?) -> [DRChannel] {
+        guard let region, let mine = channel(in: region) else { return channels }
+        return [mine] + channels.filter { $0.id != mine.id }
+    }
+
     /// The single channel this station stands for, where it stands for only one.
     var soleChannel: DRChannel? {
         hasMultipleDistricts ? nil : channels.first
