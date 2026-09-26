@@ -71,7 +71,7 @@ struct tvOSRadioView: View {
                                         // look or behave differently depending on which
                                         // screen it is listed on.
                                         let variants = serviceManager.availableChannels
-                                            .filter { $0.name == channel.name }
+                                            .filter { $0.stationKey == channel.stationKey }
 
                                         tvOSStationCard(
                                             group: GroupedChannel(channels: variants),

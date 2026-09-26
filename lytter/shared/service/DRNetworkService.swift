@@ -100,6 +100,31 @@ class DRNetworkService {
         throw lastError
     }
 
+    // MARK: - Channel directory
+
+    /// Which channels are districts, and of which station.
+    ///
+    /// No retry loop: the caller treats a failure as "use what is already known", so a
+    /// slow or missing answer here must not hold up the schedule it is fetched beside.
+    func fetchChannelDirectory() async throws -> ChannelDirectory {
+        guard let url = URL(string: DRAPIConfig.channelDirectory) else {
+            throw NetworkError.invalidURL
+        }
+        let (data, response) = try await session.data(for: makeRequest(for: url))
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw NetworkError.invalidResponse
+        }
+        guard (200...299).contains(httpResponse.statusCode) else {
+            throw NetworkError.httpError(httpResponse.statusCode)
+        }
+        do {
+            return ChannelDirectory(stations: try decoder.decode([ChannelDirectory.Station].self, from: data))
+        } catch {
+            Log.network.error("decode failed for channels")
+            throw NetworkError.decodingError
+        }
+    }
+
     // MARK: - Fetch Schedule Snapshot for Channel
     func fetchScheduleSnapshot(for channelSlug: String) async throws -> DRScheduleResponse {
         let url = try endpoint(DRAPIConfig.scheduleSnapshot, channelSlug)
