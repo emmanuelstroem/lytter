@@ -101,22 +101,6 @@ struct ChannelShelfCard: View {
     /// do — "P4 - København" rather than a bare "P4" that plays something unstated.
     private var title: String { preferredChannel?.qualifiedName ?? group.displayTitle }
 
-    /// The cue that this card asks rather than plays.
-    ///
-    /// Without it the sheet arrives unannounced: nothing else distinguishes a station that
-    /// opens a picker from one that starts playing. VoiceOver already had the hint.
-    ///
-    /// Added by the caller rather than self-hiding, together with the spacer that pushes
-    /// it over: an always-present `Spacer(minLength:)` costs the name ten points of width
-    /// even when no chevron follows it, which was enough to truncate "P4 - København" on
-    /// the small card that had fitted it before.
-    private var chevron: some View {
-        Image(systemName: "chevron.right")
-            .font(.footnote.weight(.bold))
-            .foregroundStyle(.secondary)
-            .accessibilityHidden(true)
-    }
-
     private var currentProgramme: DREpisode? {
         serviceManager.getCurrentProgram(for: channel)
     }
@@ -144,17 +128,17 @@ struct ChannelShelfCard: View {
         .clipped()
     }
 
-    /// The large card's caption: the station and what is on it, over the artwork.
+    /// The station, and on a featured card what is on it, over the artwork.
     ///
-    /// The backdrop is not decoration. Artwork is arbitrary photography, so text laid
-    /// straight onto it is unreadable often enough to matter.
-    /// The caption is shared with tvOS; the chevron is not, because a remote has no
-    /// equivalent of a tap that might open a sheet.
+    /// The chevron says the card asks rather than plays; without it the sheet arrives
+    /// unannounced. Added here rather than self-hiding, together with the spacer that pushes
+    /// it over: an always-present `Spacer(minLength:)` costs the name width even when no
+    /// chevron follows it.
     private var caption: some View {
         StationCard.Caption(title: title, subtitle: subtitle, metrics: style.metrics) {
             if opensPicker {
                 Spacer(minLength: 4)
-                chevron
+                StationCard.PickerCue(metrics: style.metrics)
             }
         }
     }

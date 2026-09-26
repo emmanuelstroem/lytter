@@ -15,7 +15,7 @@ import SwiftUI
 struct tvOSChannelShelf: View {
     let title: String
     let groups: [GroupedChannel]
-    var size: tvOSStationCard.Size = .regular
+    var style: StationCardStyle = .standard
     @ObservedObject var serviceManager: DRServiceManager
     let onSelect: (DRChannel) -> Void
 
@@ -32,7 +32,7 @@ struct tvOSChannelShelf: View {
                         ForEach(groups) { group in
                             tvOSStationCard(
                                 group: group,
-                                size: size,
+                                style: style,
                                 serviceManager: serviceManager,
                                 onSelect: onSelect
                             )
