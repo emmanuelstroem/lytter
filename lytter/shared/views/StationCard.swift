@@ -12,14 +12,20 @@ import SwiftUI
 /// are smaller and caption beneath. Two sizes is the whole hierarchy — a third would stop
 /// reading as "this one matters more".
 enum StationCardStyle {
-    /// Large card. Station and programme both laid over the artwork, behind glass that fades
-    /// in rather than starting at an edge.
+    /// Large card. Station and programme both laid over the artwork.
     case featured
-    /// Smaller card. Station on a band across the foot of the artwork, programme beneath the
-    /// card on the page.
+    /// Smaller card. Station over the artwork, programme beneath the card on the page.
     case standard
 
-    var fades: Bool { self == .featured }
+    /// Both, always.
+    ///
+    /// The small card used to meet the artwork at a straight edge, on the reasoning that a
+    /// band one line deep reads as a label rather than a seam. On a bright picture it did
+    /// not: the band came out brighter than the image above it and the straight edge read as
+    /// a lit strip across the bottom of the card. The gradient has no edge to catch the
+    /// light, which is why the large card never had the problem.
+    var fades: Bool { true }
+
     /// Whether the programme is part of the caption or printed under the card.
     var captionsProgramme: Bool { self == .featured }
 }
@@ -127,8 +133,7 @@ enum StationCard {
             // spans the card rather than the caption.
             .background(alignment: .bottom) {
                 CaptionBackdrop(fades: metrics.style.fades)
-                    .frame(height: metrics.style.fades ? metrics.fadeHeight
-                                                       : metrics.captionHeight)
+                    .frame(height: metrics.fadeHeight)
             }
             .captionOnArtwork()
         }

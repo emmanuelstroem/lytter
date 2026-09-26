@@ -45,13 +45,16 @@ struct iOSRadioView: View {
                         EmptyStateView()
                     } else {
                         ScrollView {
-                            LazyVStack(spacing: 12) {
+                            // The same card as Home, in a grid. Radio was a list of rows
+                            // with a thumbnail — a second way of drawing a station, in the
+                            // one place you go to look at all of them.
+                            LazyVGrid(columns: [GridItem(.adaptive(minimum: 148), spacing: 16)],
+                                      spacing: 20) {
                                 ForEach(filteredGroupedChannels) { groupedChannel in
-                                    iOSGroupedRadioChannelCard(
-                                        groupedChannel: groupedChannel,
+                                    ChannelShelfCard(
+                                        group: groupedChannel,
                                         serviceManager: serviceManager,
                                         onTap: { channel in
-                                            // Start streaming the channel
                                             serviceManager.playChannel(channel)
                                             selectionState.selectChannel(channel, showSheet: false)
                                         }
@@ -78,210 +81,6 @@ struct iOSRadioView: View {
 
 
 
-// MARK: - Grouped Radio Channel Card
-struct iOSGroupedRadioChannelCard: View {
-    let groupedChannel: GroupedChannel
-    let serviceManager: DRServiceManager
-    let onTap: (DRChannel) -> Void
-    
-    @State private var isPressed = false
-    @State private var showingDistrictSheet = false
-    
-    private var primaryChannel: DRChannel {
-        return groupedChannel.channels.first!
-    }
-
-    /// What VoiceOver announces for the card.
-    ///
-    /// The card's own text is a station name over artwork, sometimes with a district
-    /// count — read out piecemeal that says very little. This states the station, what is
-    /// on it now, and whether choosing it opens a district picker.
-    private var accessibilitySummary: String {
-        var parts = [groupedChannel.name]
-        if let programme = serviceManager.getCurrentProgram(for: primaryChannel)?.cleanTitle(),
-           !programme.isEmpty {
-            parts.append(programme)
-        }
-        if groupedChannel.hasMultipleDistricts {
-            // String(localized:) rather than plain interpolation: this string is assembled
-            // into a Swift String, so unlike a Text it is not localised for us. The
-            // catalog carries plural variants for it.
-            parts.append(String(localized: "\(groupedChannel.channels.count) districts"))
-        }
-        return parts.joined(separator: ", ")
-    }
-    
-    private var channelColor: Color {
-        // Generate a consistent color based on channel ID
-        let hash = abs(primaryChannel.id.hashValue)
-        let hue = Double(hash % 360) / 360.0
-        let saturation = 0.6 + Double(hash % 20) / 100.0
-        let brightness = 0.7 + Double(hash % 20) / 100.0
-        return Color(hue: hue, saturation: saturation, brightness: brightness)
-    }
-    
-    var body: some View {
-        Button(role: .none, action: {
-            if groupedChannel.hasMultipleDistricts {
-                showingDistrictSheet = true
-            } else {
-                onTap(primaryChannel)
-            }
-        }) {
-            HStack(spacing: 16) {
-                // Channel artwork with real image or fallback
-                CachedAsyncImage(url: getChannelImageURL(),
-                                 maxPixelSize: ImageCacheService.thumbnailMaxPixelSize) { image in
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .frame(width: 60, height: 60)
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                        .shadow(color: channelColor.opacity(0.3), radius: 4, x: 0, y: 2)
-                } placeholder: {
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(
-                            LinearGradient(
-                                colors: [
-                                    channelColor.opacity(0.9),
-                                    channelColor.opacity(0.7),
-                                    channelColor.opacity(0.5)
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                        .frame(width: 60, height: 60)
-                        .shadow(color: channelColor.opacity(0.3), radius: 4, x: 0, y: 2)
-                        .overlay {
-                            // Channel title in square view with KnockoutTextView
-                            KnockoutTextView(
-                                text: groupedChannel.name,
-                                backgroundColor: channelColor
-                            )
-                            .frame(width: 40, height: 40)
-                            .cornerRadius(8)
-                        }
-                }
-                
-                // Channel info
-                VStack(alignment: .leading, spacing: 4) {
-                    HStack {
-                        Text(groupedChannel.name)
-                            .font(.headline)
-                            .foregroundStyle(Color.primary)
-                            .lineLimit(1)
-                        
-                        if groupedChannel.hasMultipleDistricts {
-                            HStack(spacing: 4) {
-                                Text(verbatim: "(\(groupedChannel.districts.count))")
-                                    .font(.caption)
-                                    .foregroundColor(channelColor)
-                                
-                                Image(systemName: "chevron.down")
-                                    .font(.system(size: 10, weight: .bold))
-                                    .foregroundColor(channelColor)
-                            }
-                        }
-                    }
-                    
-                    // Show current program or track info
-                    if let program = getCurrentProgram() {
-                        Text(program.cleanTitle())
-                            .font(.caption)
-                            .foregroundStyle(Color.secondary)
-                            .lineLimit(1)
-                    } else if let track = getCurrentTrack() {
-                        Text(track.displayText)
-                            .font(.caption)
-                            .foregroundStyle(Color.secondary)
-                            .lineLimit(1)
-                    } else {
-                        Text(primaryChannel.type.capitalized)
-                            .font(.caption)
-                            .foregroundStyle(Color.secondary)
-                            .lineLimit(1)
-                    }
-                }
-                
-                Spacer()
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
-            .background(
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(Color(.tertiarySystemFill))
-            )
-            .scaleEffect(isPressed ? 0.95 : 1.0)
-            .animation(.easeInOut(duration: 0.1), value: isPressed)
-        }
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(accessibilitySummary)
-        .accessibilityHint(groupedChannel.hasMultipleDistricts
-                           ? "Choose a district"
-                           : "Plays this channel")
-        .contextMenu {
-            // Only for a station that is one channel. Favouriting "P4" would be ambiguous —
-            // it is ten district channels — so those are pinned from the district picker,
-            // where you have said which one you mean.
-            if !groupedChannel.hasMultipleDistricts {
-                let channel = primaryChannel
-                let isFavourite = serviceManager.userPreferences.isFavourite(channel.id)
-                Button {
-                    serviceManager.userPreferences.toggleFavourite(channel.id)
-                } label: {
-                    Label(isFavourite ? "Remove from Favourites" : "Add to Favourites",
-                          systemImage: isFavourite ? "star.slash" : "star")
-                }
-            }
-        }
-        .buttonStyle(PlainButtonStyle())
-        .onLongPressGesture(minimumDuration: 0, maximumDistance: .infinity, pressing: { pressing in
-            isPressed = pressing
-        }, perform: {})
-        .sheet(isPresented: $showingDistrictSheet) {
-            DistrictSelectionSheet(
-                groupedChannel: groupedChannel,
-                serviceManager: serviceManager,
-                onChannelSelect: onTap
-            )
-        }
-    }
-    
-    // MARK: - Helper Methods
-    
-    private func getChannelImageURL() -> URL? {
-        // Try to get image from current program first
-        if let program = getCurrentProgram(),
-           let imageURLString = program.primaryImageURL {
-            return URL(string: imageURLString)
-        }
-        
-        // Try to get image from any cached program for this channel
-        let channelPrograms = serviceManager.getCachedPrograms(for: primaryChannel)
-        if let programWithImage = channelPrograms.first(where: { $0.primaryImageURL != nil }),
-           let imageURLString = programWithImage.primaryImageURL {
-            return URL(string: imageURLString)
-        }
-        
-        return nil
-    }
-    
-    private func getCurrentProgram() -> DREpisode? {
-        return serviceManager.getCurrentProgram(for: primaryChannel)
-    }
-    
-    private func getCurrentTrack() -> DRTrack? {
-        return serviceManager.currentTrack
-    }
-}
-
-#Preview {
-    iOSRadioView(
-        serviceManager: DRServiceManager(),
-        selectionState: SelectionState()
-    )
-}
 #endif
 
 
