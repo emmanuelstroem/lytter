@@ -41,10 +41,11 @@ struct SearchView: View {
                     ContentUnavailableView.search(text: query)
                 } else {
                     ScrollView {
-                        LazyVStack(spacing: 12) {
+                        LazyVGrid(columns: [GridItem(.adaptive(minimum: 148), spacing: 16)],
+                                  spacing: 20) {
                             ForEach(results) { groupedChannel in
-                                iOSGroupedRadioChannelCard(
-                                    groupedChannel: groupedChannel,
+                                ChannelShelfCard(
+                                    group: groupedChannel,
                                     serviceManager: serviceManager,
                                     onTap: { channel in
                                         serviceManager.playChannel(channel)
