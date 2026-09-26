@@ -77,29 +77,28 @@ struct ChannelShelfCard: View {
 
     /// The listener's own region, when this station broadcasts one for it.
     ///
-    /// Nil for a station with no districts, and nil when they have not chosen a region yet
-    /// — in both cases there is no region to apply.
+    /// Nil for a station with no districts, and nil when they have not chosen a region yet.
     private var preferredChannel: DRChannel? {
         guard group.hasMultipleDistricts,
               let preferred = serviceManager.userPreferences.preferredDistrict else { return nil }
         return group.channel(in: preferred)
     }
 
-    /// The channel this card stands for: their region where there is one, otherwise the
-    /// first variant, which is also the one whose artwork is shown.
+    /// The channel whose artwork and programme the card shows: their region where there is
+    /// one, otherwise the first variant.
     private var channel: DRChannel { preferredChannel ?? group.channels.first! }
 
-    /// Whether tapping has a question to ask before it can play anything.
+    /// Whether tapping asks which district before it plays.
     ///
-    /// A station with districts and no chosen region opens the picker; once a region is
-    /// remembered the card plays it directly, and says so by naming it.
-    private var opensPicker: Bool { group.hasMultipleDistricts && preferredChannel == nil }
+    /// Always, for a station with districts. It used to play a remembered region straight
+    /// away, which left no visible way to hear any other district: someone visiting Fyn
+    /// could not get P4 Fyn from the P4 card. The picker lists their region first, so the
+    /// usual choice is still one tap. A favourite or a recently played channel is one
+    /// district already, and plays directly.
+    private var opensPicker: Bool { group.hasMultipleDistricts }
 
-    /// What to call this card.
-    ///
-    /// A station playing the listener's region names it, so that the card says what it will
-    /// do — "P4 - København" rather than a bare "P4" that plays something unstated.
-    private var title: String { preferredChannel?.qualifiedName ?? group.displayTitle }
+    /// "P4" for the station, "P4 - København" for a card that stands for one district.
+    private var title: String { group.displayTitle }
 
     private var currentProgramme: DREpisode? {
         serviceManager.getCurrentProgram(for: channel)
@@ -107,12 +106,13 @@ struct ChannelShelfCard: View {
 
     private var artworkURL: URL? { serviceManager.artworkURL(for: channel) }
 
-    /// What is on now — for a group, whatever the first district is playing.
+    /// What is on now — for a group, whatever the listener's region, or failing that the
+    /// first district, is playing.
     ///
     /// Grouped stations used to caption themselves "10 districts", which named the card's
     /// behaviour rather than its content: every other card says what is on, and P4 said how
-    /// many of it there were. The first district is the one whose artwork is already shown,
-    /// so the card at least agrees with itself.
+    /// many of it there were. It is the same district whose artwork is shown, so the card
+    /// agrees with itself.
     private var subtitle: String {
         currentProgramme?.programmeName ?? String(localized: "Live")
     }
@@ -188,9 +188,8 @@ struct ChannelShelfCard: View {
         .accessibilityLabel(Text(verbatim: "\(title), \(subtitle)"))
         .accessibilityHint(opensPicker ? "Choose a district" : "Plays this channel")
         .contextMenu {
-            // Favouriting needs to know which channel is meant, which is true of a station
-            // with no districts and of one playing the listener's region — but not of a
-            // card that still stands for ten.
+            // Favouriting needs to know which channel is meant, so a station with districts
+            // is pinned from the picker, where the listener has said which one.
             if !opensPicker {
                 let isFavourite = serviceManager.userPreferences.isFavourite(channel.id)
                 Button {
@@ -198,15 +197,6 @@ struct ChannelShelfCard: View {
                 } label: {
                     Label(isFavourite ? "Remove from Favourites" : "Add to Favourites",
                           systemImage: isFavourite ? "star.slash" : "star")
-                }
-            }
-
-            // The only way back to the picker once a region is remembered.
-            if group.hasMultipleDistricts {
-                Button {
-                    showingDistrictSheet = true
-                } label: {
-                    Label("Choose district", systemImage: "list.bullet")
                 }
             }
         }
