@@ -12,10 +12,12 @@ import SwiftUI
 /// way to ask at all. "What else is on" is the obvious second question after "what is on",
 /// and `/schedules/snapshot/{slug}` already answers it for the whole day.
 ///
-/// A `List` rather than a stack in a `ScrollView`: on tvOS a scroll view only scrolls if it
-/// contains something focusable, and a read-only schedule has no buttons. List rows are
-/// focusable by construction, and they come with the system's own highlight rather than one
-/// drawn here.
+/// Every row can take focus, and that is what makes the schedule scroll. On tvOS a list
+/// moves only to bring focus into view, and a read-only schedule has no buttons. This was a
+/// `List` on the belief that its rows are focusable by construction; they are not, unless
+/// they hold a control, so the schedule sat still however the remote was used. Each row is
+/// `.focusable()` now, with a highlight drawn for the focused one, and `TVScrollingUITests`
+/// drives it with remote presses so it cannot quietly stop scrolling again.
 struct tvOSChannelScheduleSheet: View {
     let channel: DRChannel
     @ObservedObject var serviceManager: DRServiceManager
@@ -23,6 +25,12 @@ struct tvOSChannelScheduleSheet: View {
 
     @State private var items: [DREpisode] = []
     @State private var isLoading = true
+    @FocusState private var focusedRow: String?
+
+    /// Where focus starts: what is on now, so the schedule opens where the listener is.
+    private var onAirRow: String? {
+        (items.first(where: \.isCurrentlyPlaying) ?? items.first)?.broadcastID
+    }
 
     var body: some View {
         ZStack {
@@ -44,15 +52,40 @@ struct tvOSChannelScheduleSheet: View {
                 } else {
                     // Keyed by broadcast, not by episode: the same episode is aired several
                     // times a day and those repeats share one id.
-                    List(items, id: \.broadcastID) { episode in
-                        row(for: episode)
+                    ScrollView(.vertical) {
+                        // Not lazy: a lazy stack builds only the rows on screen, and focus
+                        // cannot be put on a row that does not exist yet — the schedule
+                        // opened on the first programme of the day instead of the one on air.
+                        // A day is a few dozen rows.
+                        VStack(alignment: .leading, spacing: 4) {
+                            ForEach(items, id: \.broadcastID) { episode in
+                                row(for: episode)
+                                    .padding(.horizontal, 20)
+                                    .background(
+                                        // Inset on every side, so it shares no corner with
+                                        // the panel and is not bound to its radius.
+                                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                            .fill(.white.opacity(
+                                                focusedRow == episode.broadcastID ? 0.16 : 0))
+                                    )
+                                    .focusable()
+                                    .focused($focusedRow, equals: episode.broadcastID)
+                                    // One element per row, read as a whole — time, title,
+                                    // whether it is on air — rather than piece by piece.
+                                    .accessibilityElement(children: .combine)
+                                    .accessibilityIdentifier("schedule.row")
+                                    .animation(.easeOut(duration: 0.15), value: focusedRow)
+                            }
+                        }
+                        // Room for the focused row's highlight at the top and bottom.
+                        .padding(.vertical, 8)
                     }
-                    .listStyle(.plain)
+
                 }
             }
             .padding(48)
-            // Fixed, not a maximum. A List has no intrinsic height, so under maxHeight it
-            // claimed none and the whole panel collapsed to the size of its title.
+            // Fixed, not a maximum. A scrolling list has no intrinsic height, so under
+            // maxHeight it claimed none and the whole panel collapsed to its title.
             .frame(width: 1180, height: 820)
             .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 28))
         }
@@ -60,6 +93,10 @@ struct tvOSChannelScheduleSheet: View {
         .task {
             items = await serviceManager.loadSchedule(for: channel)
             isLoading = false
+            // Set once the rows exist. `defaultFocus` is read when the sheet appears, before
+            // the schedule has loaded, and focus fell to the first programme of the day.
+            try? await Task.sleep(for: .milliseconds(150))
+            focusedRow = onAirRow
         }
     }
 

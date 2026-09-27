@@ -46,6 +46,17 @@ from the circular default at larger radii.
 `Button` renders blue, not the label colour. Use concrete `Color.primary` outside materials;
 hierarchical styles are correct *on* a material, where they give vibrancy.
 
+**On tvOS, a list scrolls only if something in it can take focus.** A `ScrollView` or `List`
+of plain text looks right and sits still under the remote; the schedule sheet and the info
+sheet's description both shipped that way. Every scrolling surface on tvOS has a UI test in
+`lytterUITests/TVScrollingUITests.swift` that drives it with remote presses, on fixture data
+(`UITestFixtures`), and `TVScrollingCoverageTests` fails if a tvOS file gains a scrolling
+container that is not listed against one. Add the test when you add the scroll view. Run them:
+
+```
+xcodebuild test -scheme lytter -destination 'platform=tvOS Simulator,name=Apple TV 4K (3rd generation) (at 1080p)' -only-testing:lytterUITests/TVScrollingUITests -parallel-testing-enabled NO
+```
+
 **A nested `ObservableObject` does not republish through its owner.** Observe
 `UserPreferencesService` directly rather than reaching it through `DRServiceManager`, or the
 view will not redraw when it changes.

@@ -533,6 +533,7 @@ struct tvOSNowPlayingInfoSheet: View {
                 // Description
                 if let desc = program?.description, !desc.isEmpty {
                     tvOSScrollingText(text: desc)
+                        .accessibilityIdentifier("info.description")
                         .padding(.top, 24)
                 }
             }

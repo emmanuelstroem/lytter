@@ -657,6 +657,10 @@ class DRServiceManager: ObservableObject {
     /// Synchronously loads the last persisted schedules so the UI is populated
     /// immediately on launch without waiting for the network.
     private func loadDiskCache() {
+        #if DEBUG
+        // UI tests start from their fixtures alone, not from whatever the simulator cached.
+        if UITestFixtures.isActive { return }
+        #endif
         let schedules = DRLocalCache.shared.load()
         guard !schedules.isEmpty else { return }
         cachedSchedules = schedules
@@ -724,8 +728,13 @@ class DRServiceManager: ObservableObject {
                     self.restoreLastPlayedChannel()
                 }
 
-                // Persist to disk only after a confirmed successful response
+                // Persist to disk only after a confirmed successful response — and never
+                // fixtures, which would otherwise greet the next ordinary launch.
+                #if DEBUG
+                if !UITestFixtures.isActive { DRLocalCache.shared.save(schedules) }
+                #else
                 DRLocalCache.shared.save(schedules)
+                #endif
 
                 await self.preloadChannelImages(from: schedules)
             } catch {
