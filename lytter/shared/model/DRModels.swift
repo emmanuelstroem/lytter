@@ -749,6 +749,20 @@ class DRServiceManager: ObservableObject {
         }
     }
     
+    /// Whether `channel` can be heard right now.
+    ///
+    /// Not the same as being `playingChannel`, which names whatever is loaded in the player:
+    /// a paused channel, and the last-played channel restored at launch without being
+    /// started. Marking that one with a speaker left the mark on a card long after the
+    /// sound had stopped.
+    func isAudible(_ channel: DRChannel) -> Bool {
+        Self.isAudible(channel, loaded: playingChannel, isPlaying: isPlaying)
+    }
+
+    static func isAudible(_ channel: DRChannel, loaded: DRChannel?, isPlaying: Bool) -> Bool {
+        isPlaying && loaded?.id == channel.id
+    }
+
     func togglePlayback(for channel: DRChannel) {
         if playingChannel?.id == channel.id {
             if isPlaying {

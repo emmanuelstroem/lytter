@@ -125,7 +125,7 @@ struct DistrictSelectionSheet: View {
     }
 
     private func isPlaying(_ channel: DRChannel) -> Bool {
-        serviceManager.playingChannel?.id == channel.id
+        serviceManager.isAudible(channel)
     }
 
     private func isPreferredRegion(_ channel: DRChannel) -> Bool {

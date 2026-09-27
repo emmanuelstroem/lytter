@@ -75,7 +75,7 @@ struct tvOSStationCard: View {
         serviceManager.getCurrentProgram(for: channel)?.programmeName ?? String(localized: "Live")
     }
 
-    private var isPlaying: Bool { serviceManager.playingChannel?.id == channel.id }
+    private var isPlaying: Bool { serviceManager.isAudible(channel) }
 
     // MARK: - Body
 
@@ -146,7 +146,7 @@ struct tvOSStationCard: View {
             symbols.append("location.fill")
         }
         if preferences.isFavourite(channel.id) { symbols.append("star.fill") }
-        if serviceManager.playingChannel?.id == channel.id { symbols.append("speaker.wave.2.fill") }
+        if serviceManager.isAudible(channel) { symbols.append("speaker.wave.2.fill") }
         return symbols
     }
 
