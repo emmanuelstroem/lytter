@@ -355,6 +355,13 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
 - [ ] **F37. tvOS: Settings at the bottom of the sidebar.** A Settings destination holding
       the choices the app currently makes silently or hides elsewhere: the remembered
       region (and a way to clear it), resetting favourites, clearing recently played.
+- [ ] **F38. An animated playing mark.** Replace the static speaker symbol beside a playing
+      station's name — on tvOS cards, and in the district pickers on both platforms — with a
+      small mark made of concentric circles, like a speaker cone, that pulse in and out while
+      the station plays and stop when it does not. The mark itself only appears while sound is
+      actually playing: it used to stay on a paused channel and on the last-played channel
+      restored at launch, fixed alongside this entry by `DRServiceManager.isAudible`.
+      Respect Reduce Motion: a still mark then, not a pulsing one.
 - [ ] **F14. Add a README.** Nineteen commits and no entry point for a reader.
 
 ### P2 — expansion

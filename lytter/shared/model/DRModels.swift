@@ -657,6 +657,10 @@ class DRServiceManager: ObservableObject {
     /// Synchronously loads the last persisted schedules so the UI is populated
     /// immediately on launch without waiting for the network.
     private func loadDiskCache() {
+        #if DEBUG
+        // UI tests start from their fixtures alone, not from whatever the simulator cached.
+        if UITestFixtures.isActive { return }
+        #endif
         let schedules = DRLocalCache.shared.load()
         guard !schedules.isEmpty else { return }
         cachedSchedules = schedules
@@ -724,8 +728,13 @@ class DRServiceManager: ObservableObject {
                     self.restoreLastPlayedChannel()
                 }
 
-                // Persist to disk only after a confirmed successful response
+                // Persist to disk only after a confirmed successful response — and never
+                // fixtures, which would otherwise greet the next ordinary launch.
+                #if DEBUG
+                if !UITestFixtures.isActive { DRLocalCache.shared.save(schedules) }
+                #else
                 DRLocalCache.shared.save(schedules)
+                #endif
 
                 await self.preloadChannelImages(from: schedules)
             } catch {
@@ -740,6 +749,20 @@ class DRServiceManager: ObservableObject {
         }
     }
     
+    /// Whether `channel` can be heard right now.
+    ///
+    /// Not the same as being `playingChannel`, which names whatever is loaded in the player:
+    /// a paused channel, and the last-played channel restored at launch without being
+    /// started. Marking that one with a speaker left the mark on a card long after the
+    /// sound had stopped.
+    func isAudible(_ channel: DRChannel) -> Bool {
+        Self.isAudible(channel, loaded: playingChannel, isPlaying: isPlaying)
+    }
+
+    static func isAudible(_ channel: DRChannel, loaded: DRChannel?, isPlaying: Bool) -> Bool {
+        isPlaying && loaded?.id == channel.id
+    }
+
     func togglePlayback(for channel: DRChannel) {
         if playingChannel?.id == channel.id {
             if isPlaying {
