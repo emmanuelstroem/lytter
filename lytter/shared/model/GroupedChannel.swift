@@ -85,7 +85,10 @@ extension GroupedChannel {
     ///
     /// Home, Radio and Search each had their own copy of this; they now share one.
     static func grouped(from channels: [DRChannel]) -> [GroupedChannel] {
-        Dictionary(grouping: channels) { $0.name }
+        // By station identity, not by name: DR's own station slug once the directory is
+        // known, so a two-word national channel is a station of its own rather than a
+        // district of whichever station shares its first word.
+        Dictionary(grouping: channels) { $0.stationKey }
             .values
             .map { GroupedChannel(channels: $0) }
             .sorted { $0.name < $1.name }

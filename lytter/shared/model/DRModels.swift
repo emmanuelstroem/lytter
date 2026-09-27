@@ -49,6 +49,9 @@ struct DRAPIConfig {
     nonisolated static let schedulesAllNow = "\(baseURL)/schedules/all/now"
     nonisolated static let scheduleSnapshot = "\(baseURL)/schedules/snapshot"
     nonisolated static let indexpointsLive = "\(baseURL)/indexpoints/live"
+    /// Every station, with its districts listed under it. The only endpoint that says
+    /// which channels are districts, and of what.
+    nonisolated static let channelDirectory = "\(baseURL)/channels"
     
     // Polling Configuration
     nonisolated static let trackPollingInterval: TimeInterval = 15 // 30 seconds for finished tracks
@@ -66,18 +69,54 @@ struct DRChannel: Identifiable, Codable, Equatable, Hashable {
     let slug: String
     let type: String
     let presentationUrl: String?
-    
+
+    // What DR's channel directory says this channel is. The schedule endpoint the app
+    // lists channels from sends none of it, so these stay nil until a `ChannelDirectory`
+    // has been applied, and are then carried through the disk cache with the channel.
+
+    /// The station this channel belongs to: "p4" for P4 København, the channel's own slug
+    /// for a national channel such as P1.
+    var stationSlug: String? = nil
+
+    /// The station's own title: "P4" for P4 København.
+    var stationTitle: String? = nil
+
+    /// DR's name for the district, for a channel that is one.
+    var districtName: String? = nil
+
     var displayName: String { title }
-    
-    // Computed properties for name and district
+
+    /// The station's name: "P4" for P4 København, "P1" for P1.
+    ///
+    /// Taken from DR's directory where it has been applied. Otherwise read from the title,
+    /// which is the fallback and nothing more: it splits on the first space, so a national
+    /// channel with a two-word title — DR's directory has one, "P7 MIX" — would be read as
+    /// station "P7" with a district called "MIX".
     var name: String {
-        let components = title.split(separator: " ", maxSplits: 1, omittingEmptySubsequences: false)
-        return components.first.map(String.init) ?? title
+        stationTitle ?? titleParts.station
     }
-    
+
+    /// The district, for a channel that is one.
+    ///
+    /// Once the directory has been applied, only what DR calls a district is one. Before
+    /// that, whatever follows the first space in the title.
     var district: String? {
+        stationSlug != nil ? districtName : titleParts.district
+    }
+
+    /// What identifies the station when channels are grouped into stations.
+    ///
+    /// DR's own station slug where the directory has been applied. Otherwise the name read
+    /// from the title, lowercased so that a channel the directory does not list still
+    /// lands beside its siblings rather than in a group of its own.
+    var stationKey: String {
+        stationSlug ?? name.lowercased()
+    }
+
+    private var titleParts: (station: String, district: String?) {
         let components = title.split(separator: " ", maxSplits: 1, omittingEmptySubsequences: false)
-        return components.count > 1 ? String(components[1]) : nil
+        let station = components.first.map(String.init) ?? title
+        return (station, components.count > 1 ? String(components[1]) : nil)
     }
 
     /// The name including the district, where there is one: "P4 - København".
@@ -208,7 +247,8 @@ struct DREpisode: Identifiable, Codable, Equatable {
     let previousId: String?
     let nextId: String?
     let series: DRSeries?
-    let channel: DRChannel
+    /// A `var` so the channel directory can be applied to it after decoding.
+    var channel: DRChannel
     let audioAssets: [DRAudioAsset]? // Made optional to handle missing audio assets
     let isAvailableOnDemand: Bool
     let hasVideo: Bool?
@@ -545,40 +585,6 @@ struct DRIndexPointsResponse: Codable, Equatable {
     let id: String
 }
 
-// MARK: - App State
-class AppState: ObservableObject {
-    @Published var availableChannels: [DRChannel] = []
-    @Published var channelGroups: [ChannelGroup] = []
-    @Published var isLoading = false
-    @Published var error: String?
-}
-
-// MARK: - Channel Organization
-struct ChannelGroup: Identifiable, Codable, Equatable {
-    let id: String
-    let name: String
-    let description: String
-    let channels: [DRChannel]
-    let color: String?
-    
-    var isRegional: Bool {
-        return channels.count > 1
-    }
-    
-    var swiftUIColor: Color {
-        if let colorString = color {
-            return Color(hex: colorString) ?? .blue
-        }
-        return .blue
-    }
-}
-
-struct ChannelRegion: Identifiable, Codable, Equatable {
-    let id: String
-    let name: String
-    let channel: DRChannel
-}
-
 // MARK: - Local Disk Cache
 final class DRLocalCache {
     static let shared = DRLocalCache()
@@ -616,7 +622,6 @@ final class DRLocalCache {
 class DRServiceManager: ObservableObject {
     // Direct observable properties
     @Published var availableChannels: [DRChannel] = []
-    @Published var channelGroups: [ChannelGroup] = []
     @Published var isLoading = false
     @Published var error: String?
     
@@ -634,6 +639,8 @@ class DRServiceManager: ObservableObject {
     
     // Caching properties
     private var cachedSchedules: [DREpisode] = []
+    /// What DR last said about stations and districts. See `ChannelDirectory`.
+    private var channelDirectory = ChannelDirectory()
     private var lastSchedulesUpdate: Date?
     private let cacheValidityDuration: TimeInterval = 10 * 60 // 10 minutes
     
@@ -655,6 +662,9 @@ class DRServiceManager: ObservableObject {
         cachedSchedules = schedules
         availableChannels = Array(Set(schedules.map { $0.channel }))
             .sorted { $0.title < $1.title }
+        // The cached channels carry what the directory said last time, so the next
+        // refresh has that to fall back on if `/channels` cannot be reached.
+        channelDirectory = ChannelDirectory(learningFrom: availableChannels)
         restoreLastPlayedChannel()
     }
     
@@ -691,10 +701,22 @@ class DRServiceManager: ObservableObject {
 
         Task {
             do {
-                let schedules = try await networkService.fetchAllSchedules()
+                // Fetched side by side. The directory is a refinement, not a requirement:
+                // if it fails, the last one known is used, and failing that channels read
+                // their titles as they always did.
+                async let fetchedDirectory = try? networkService.fetchChannelDirectory()
+                let fetchedSchedules = try await networkService.fetchAllSchedules()
+                let directory = await fetchedDirectory ?? self.channelDirectory
+
+                let schedules = fetchedSchedules.map { episode in
+                    var episode = episode
+                    episode.channel = directory.apply(to: episode.channel)
+                    return episode
+                }
                 let channels = Array(Set(schedules.map { $0.channel })).sorted { $0.title < $1.title }
 
                 await MainActor.run {
+                    self.channelDirectory = directory
                     self.cachedSchedules = schedules
                     self.lastSchedulesUpdate = Date()
                     self.availableChannels = channels
@@ -1136,7 +1158,6 @@ extension DREpisode {
 // MARK: - Selection State
 class SelectionState: ObservableObject {
     @Published var selectedChannel: DRChannel?
-    @Published var selectedRegion: ChannelRegion?
 
     /// Whether the full player is presented.
     ///
@@ -1151,64 +1172,5 @@ class SelectionState: ObservableObject {
     
     func selectChannel(_ channel: DRChannel, showSheet: Bool = false) {
         selectedChannel = channel
-        selectedRegion = nil
-    }
-    
-    func openNestedNavigation(for channel: DRChannel, in region: ChannelRegion) {
-        selectedChannel = channel
-        selectedRegion = region
     }
 }
-
-// MARK: - Navigation State
-class ChannelNavigationState: ObservableObject {
-    @Published var navigationPath: [String] = []
-    
-    func navigateToChannel(_ channelId: String) {
-        navigationPath.append(channelId)
-    }
-    
-    func navigateBack() {
-        _ = navigationPath.popLast()
-    }
-}
-
-// MARK: - Channel Organizer
-struct ChannelOrganizer {
-    static func getRegionsForGroup(_ channels: [DRChannel], groupPrefix: String) -> [ChannelRegion] {
-        return channels.map { channel in
-            let regionName = channel.displayName.replacingOccurrences(of: groupPrefix, with: "").trimmingCharacters(in: .whitespaces)
-            return ChannelRegion(id: channel.id, name: regionName, channel: channel)
-        }
-    }
-}
-
-
-
-// MARK: - Color Extension
-extension Color {
-    init?(hex: String) {
-        let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
-        var int: UInt64 = 0
-        Scanner(string: hex).scanHexInt64(&int)
-        let a, r, g, b: UInt64
-        switch hex.count {
-            case 3: // RGB (12-bit)
-                (a, r, g, b) = (255, (int >> 8) * 17, (int >> 4 & 0xF) * 17, (int & 0xF) * 17)
-            case 6: // RGB (24-bit)
-                (a, r, g, b) = (255, int >> 16, int >> 8 & 0xFF, int & 0xFF)
-            case 8: // ARGB (32-bit)
-                (a, r, g, b) = (int >> 24, int >> 16 & 0xFF, int >> 8 & 0xFF, int & 0xFF)
-            default:
-                return nil
-        }
-        
-        self.init(
-            .sRGB,
-            red: Double(r) / 255,
-            green: Double(g) / 255,
-            blue:  Double(b) / 255,
-            opacity: Double(a) / 255
-        )
-    }
-} 

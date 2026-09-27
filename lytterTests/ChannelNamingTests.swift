@@ -52,12 +52,11 @@ struct ChannelNamingTests {
         #expect(channel("P4 Midt & Vest").qualifiedName == "P4 - Midt & Vest")
     }
 
-    /// What the parsing actually keys on is the first space, not a list of stations that
-    /// have districts. DR ships nothing that breaks this today — every title with a space
-    /// is a genuine P4 or P5 district. Recorded so that the day a "P6 Beat" or a second
-    /// broadcaster's "Radio 4 Nyheder" appears, the failure is a known one rather than a
-    /// mystery about why it joined a station it has nothing to do with.
-    @Test func aTwoWordStationNameWouldBeReadAsADistrict() {
+    /// The title split is only the fallback now, used for a channel DR's directory has
+    /// not described — see `ChannelDirectoryTests` for what happens once it has. Without
+    /// the directory, what the parsing keys on is still the first space, so this is the
+    /// fallback's known limit rather than the app's behaviour.
+    @Test func withoutTheDirectoryATwoWordStationNameIsReadAsADistrict() {
         let beat = channel("P6 Beat")
 
         #expect(beat.name == "P6")
