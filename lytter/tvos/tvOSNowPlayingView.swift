@@ -500,56 +500,53 @@ struct tvOSNowPlayingInfoSheet: View {
                 .frame(width: 1)
                 .padding(.vertical, 44)
 
-            // Right: Info
-            ScrollView(.vertical, showsIndicators: false) {
-                VStack(alignment: .leading, spacing: 0) {
+            // Right: Info. The title and the track stay put; only the description
+            // scrolls, and it scrolls with the remote — see `tvOSScrollingText`. This was a
+            // ScrollView with nothing focusable in it, which tvOS never scrolls.
+            VStack(alignment: .leading, spacing: 0) {
 
-                    // Program title — hero text
-                    if let title = program?.cleanTitle(), !title.isEmpty {
-                        Text(title)
-                            .font(.system(size: 38, weight: .bold))
-                            .foregroundStyle(.white)
-                            .lineLimit(3)
-                            .padding(.top, 10)
-                    }
-
-                    // Now playing track pill
-                    if let t = track {
-                        HStack(spacing: 7) {
-                            Image(systemName: "music.note")
-                                .font(.system(size: 12, weight: .bold))
-                            Text(t.displayText)
-                                .font(.system(size: 14, weight: .medium))
-                                .lineLimit(1)
-                        }
+                // Program title — hero text
+                if let title = program?.cleanTitle(), !title.isEmpty {
+                    Text(title)
+                        .font(.system(size: 38, weight: .bold))
                         .foregroundStyle(.white)
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 8)
-                        .background(.white.opacity(0.15), in: Capsule())
-                        .padding(.top, 18)
-                    }
-
-                    // Description
-                    if let desc = program?.description, !desc.isEmpty {
-                        Text(desc)
-                            .font(.system(size: 22, weight: .regular))
-                            .foregroundStyle(.white.opacity(0.7))
-                            .multilineTextAlignment(.leading)
-                            .lineSpacing(5)
-                            .fixedSize(horizontal: false, vertical: true)
-                            .padding(.top, 24)
-                    }
-
-                    Spacer(minLength: 44)
+                        .lineLimit(3)
+                        .padding(.top, 10)
                 }
-                .padding(.top, 44)
-                .padding(.leading, 32)
-                .padding(.trailing, 44)
-                .padding(.bottom, 44)
+
+                // Now playing track pill
+                if let t = track {
+                    HStack(spacing: 7) {
+                        Image(systemName: "music.note")
+                            .font(.system(size: 12, weight: .bold))
+                        Text(t.displayText)
+                            .font(.system(size: 14, weight: .medium))
+                            .lineLimit(1)
+                    }
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 8)
+                    .background(.white.opacity(0.15), in: Capsule())
+                    .padding(.top, 18)
+                }
+
+                // Description
+                if let desc = program?.description, !desc.isEmpty {
+                    tvOSScrollingText(text: desc)
+                        .padding(.top, 24)
+                }
             }
+            .padding(.top, 44)
+            .padding(.leading, 32)
+            .padding(.trailing, 44)
+            .padding(.bottom, 44)
+            .frame(maxWidth: .infinity, alignment: .topLeading)
         }
         .frame(maxWidth: 1260)
         .frame(minHeight: 340 + 88)
+        // A ceiling, so a long description scrolls inside the sheet instead of growing it
+        // past the screen.
+        .frame(maxHeight: 760)
         .background(.clear)
         .clipShape(RoundedRectangle(cornerRadius: 36, style: .continuous))
         .shadow(color: .black.opacity(0.6), radius: 80, x: 0, y: 40)

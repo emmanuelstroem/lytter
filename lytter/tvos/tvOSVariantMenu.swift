@@ -64,19 +64,26 @@ struct tvOSVariantMenu<Label: View, Item: Identifiable & Hashable, ItemMenu: Vie
                     .foregroundStyle(.white)
 
                 ScrollView(.vertical) {
-                    // Two columns keep focus movement predictable — a single tall column of
-                    // ten districts is a long way to travel on a remote.
-                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())],
-                              spacing: 24) {
+                    // One column, the way tvOS presents any choice between text options —
+                    // Settings, audio and subtitle choices, the menus `Menu` and `Picker`
+                    // produce. Grids are for browsing artwork. It was two columns to shorten
+                    // the trip on the remote, which mattered less once the listener's own
+                    // region was listed first and focused on open; and a column means up and
+                    // down are the only directions there are.
+                    LazyVStack(spacing: 16) {
                         ForEach(items) { item in
                             Button {
                                 onSelect(item)
                                 isPresented = false
                             } label: {
+                                // Leading-aligned, with the marks trailing, like a Settings
+                                // row and like the phone's district sheet.
                                 HStack(spacing: 12) {
                                     Text(itemTitle(item))
                                         .lineLimit(1)
                                         .minimumScaleFactor(0.7)
+
+                                    Spacer(minLength: 16)
 
                                     ForEach(itemSymbols(item), id: \.self) { symbol in
                                         Image(systemName: symbol)
@@ -84,7 +91,7 @@ struct tvOSVariantMenu<Label: View, Item: Identifiable & Hashable, ItemMenu: Vie
                                     }
                                 }
                                 .font(.title3)
-                                .frame(maxWidth: .infinity)
+                                .padding(.horizontal, 12)
                                 .padding(.vertical, 12)
                             }
                             // Capsules, not cards. A row inside a rounded panel is a
@@ -102,14 +109,16 @@ struct tvOSVariantMenu<Label: View, Item: Identifiable & Hashable, ItemMenu: Vie
                         }
                     }
                     // Focus scales a button up by about a tenth, and at the panel's edge
-                    // that growth had nowhere to go — the leftmost and rightmost pills were
-                    // clipped. This is the room it needs.
+                    // that growth had nowhere to go — the pills were clipped. This is the
+                    // room it needs.
                     .padding(.horizontal, 28)
                     .padding(.vertical, 12)
                 }
             }
             .padding(48)
-            .frame(maxWidth: 1100, maxHeight: 760)
+            // Narrower now it is one column: wide enough for "Midt & Vest" and its marks,
+            // not so wide that the eye travels across empty pill to reach them.
+            .frame(maxWidth: 820, maxHeight: 860)
             // A material, so the panel reads as a surface rather than as text floating on
             // the dimmed screen behind it.
             .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 28))
