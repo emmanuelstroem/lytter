@@ -112,7 +112,11 @@ extension SiriShortcutsService {
         activity.title = "Play \(channel.title)"
         activity.suggestedInvocationPhrase = "Play \(channel.title)"
         activity.isEligibleForSearch = true
+        // Prediction is an iOS/watchOS Siri Suggestions concept; NSUserActivity does
+        // not expose it on macOS at all.
+        #if os(iOS) || os(tvOS)
         activity.isEligibleForPrediction = true
+        #endif
         activity.isEligibleForHandoff = true
         
         // Add channel information to user info

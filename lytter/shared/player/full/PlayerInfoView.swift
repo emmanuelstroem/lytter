@@ -13,7 +13,7 @@ struct PlayerInfoView: View {
     let channel: DRChannel?
     let serviceManager: DRServiceManager?
     
-    @State private var shareImage: UIImage?
+    @State private var shareImage: PlatformImage?
     
     init(
         title: String,
@@ -101,7 +101,7 @@ struct PlayerInfoView: View {
                         item: shareText,
                         preview: SharePreview(
                             title,
-                            image: shareImage != nil ? Image(uiImage: shareImage!) : Image(systemName: "music.note")
+                            image: shareImage != nil ? Image(platformImage: shareImage!) : Image(systemName: "music.note")
                         )
                     ) {
                         Image(systemName: "square.and.arrow.up.circle.fill")

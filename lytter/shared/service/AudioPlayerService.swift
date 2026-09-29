@@ -8,7 +8,11 @@
 import Foundation
 import AVFoundation
 import Combine
+#if os(iOS) || os(tvOS)
 import UIKit
+#elseif os(macOS)
+import AppKit
+#endif
 import MediaPlayer
 import AVKit
 import os
@@ -33,8 +37,14 @@ class AudioPlayerService: NSObject, ObservableObject {
     @Published var preventScreenSleep = false
     
         // AirPlay properties
+    // AVAudioSession has no macOS counterpart at all -- audio routing there is a
+    // different system entirely (Core Audio device selection), not a per-app session with
+    // interruptions and routes. Guarded rather than shimmed: there is no macOS screen yet
+    // to show an AirPlay indicator on, so there is nothing this needs to stand in for.
+    #if os(iOS) || os(tvOS)
     @Published var isAirPlayActive = false
     @Published var currentAirPlayRoute: AVAudioSessionRouteDescription?
+    #endif
     
         // Command Center properties
     private var commandCenter: MPRemoteCommandCenter?
@@ -47,7 +57,9 @@ class AudioPlayerService: NSObject, ObservableObject {
     override init() {
         super.init()
         setupCommandCenter()
+        #if os(iOS) || os(tvOS)
         setupAudioInterruptionHandling()
+        #endif
             // Allow screen sleep by default on app launch
         setPreventScreenSleep(false)
             // Audio session will be setup when first needed
@@ -68,7 +80,8 @@ class AudioPlayerService: NSObject, ObservableObject {
     private var interruption = InterruptionState()
     
     // MARK: - Audio Interruption Handling
-    
+
+    #if os(iOS) || os(tvOS)
     private func setupAudioInterruptionHandling() {
         // Observe audio session interruptions
         NotificationCenter.default.addObserver(
@@ -175,15 +188,22 @@ class AudioPlayerService: NSObject, ObservableObject {
         // Update Command Center playback state
         updateCommandCenterPlaybackState()
     }
-    
+    #endif
+
         // MARK: - Screen Sleep Control
     
     private func updateIdleTimer() {
+        #if os(iOS) || os(tvOS)
         UIApplication.shared.isIdleTimerDisabled = preventScreenSleep
+        #endif
+        // No macOS branch: preventing App Nap / display sleep there is a different
+        // mechanism (an IOPMAssertion), not an idle-timer flag, and this app has no
+        // macOS screen to keep awake yet.
     }
     
         // MARK: - AirPlay Support
-    
+
+    #if os(iOS) || os(tvOS)
     private func setupAirPlayMonitoring() {
             // Monitor route changes
         NotificationCenter.default.addObserver(
@@ -225,9 +245,10 @@ class AudioPlayerService: NSObject, ObservableObject {
             self?.currentAirPlayRoute = isExternalAudio ? currentRoute : nil
         }
     }
-    
-    
-    
+    #endif
+
+
+
         // MARK: - Command Center Setup
     
     private func setupCommandCenter() {
@@ -352,7 +373,7 @@ class AudioPlayerService: NSObject, ObservableObject {
     /// check, so the handler trapped — `dispatch_assert_queue` → SIGTRAP — the moment the
     /// lock screen asked for artwork. The image is captured and returned unchanged, so
     /// there is nothing here that needs isolating.
-    private nonisolated static func artwork(for image: UIImage) -> MPMediaItemArtwork {
+    private nonisolated static func artwork(for image: PlatformImage) -> MPMediaItemArtwork {
         MPMediaItemArtwork(boundsSize: image.size) { _ in image }
     }
 
@@ -410,7 +431,7 @@ class AudioPlayerService: NSObject, ObservableObject {
         nowPlayingInfoCenter?.nowPlayingInfo = nowPlayingInfo
     }
     
-    private func loadImageForCommandCenter(from url: URL, completion: @escaping (UIImage?) -> Void) {
+    private func loadImageForCommandCenter(from url: URL, completion: @escaping (PlatformImage?) -> Void) {
         // Through the cache: this runs on every now-playing metadata update — each track
         // change, each programme change — and it is almost always the same artwork the
         // player screen is already showing.
@@ -419,38 +440,53 @@ class AudioPlayerService: NSObject, ObservableObject {
     
     private func setDefaultCommandCenterArtwork(nowPlayingInfo: [String: Any]) {
         var updatedInfo = nowPlayingInfo
-        
-            // Create a simple default artwork with radio icon
+        updatedInfo[MPMediaItemPropertyArtwork] = Self.artwork(for: defaultArtworkImage())
+        nowPlayingInfoCenter?.nowPlayingInfo = updatedInfo
+    }
+
+    #if os(iOS) || os(tvOS)
+    /// A gradient with the radio glyph over it, drawn once as a fallback for artwork DR
+    /// did not send.
+    private func defaultArtworkImage() -> PlatformImage {
         let size = CGSize(width: 300, height: 300)
         let renderer = UIGraphicsImageRenderer(size: size)
-        
-        let defaultImage = renderer.image { context in
-                // Background gradient
+
+        return renderer.image { context in
             let gradient = CGGradient(colorsSpace: CGColorSpaceCreateDeviceRGB(),
                                       colors: [UIColor.systemBlue.cgColor, UIColor.systemPurple.cgColor] as CFArray,
                                       locations: [0.0, 1.0])!
-            
+
             context.cgContext.drawLinearGradient(gradient,
                                                  start: CGPoint(x: 0, y: 0),
                                                  end: CGPoint(x: size.width, y: size.height),
                                                  options: [])
-            
-                // Radio icon
+
             let iconSize: CGFloat = 120
             let iconRect = CGRect(x: (size.width - iconSize) / 2,
                                   y: (size.height - iconSize) / 2,
                                   width: iconSize,
                                   height: iconSize)
-            
+
             let iconConfig = UIImage.SymbolConfiguration(pointSize: iconSize, weight: .medium)
             let radioIcon = UIImage(systemName: "antenna.radiowaves.left.and.right", withConfiguration: iconConfig)
             radioIcon?.withTintColor(.white, renderingMode: .alwaysOriginal)
                 .draw(in: iconRect)
         }
-        
-        updatedInfo[MPMediaItemPropertyArtwork] = Self.artwork(for: defaultImage)
-        nowPlayingInfoCenter?.nowPlayingInfo = updatedInfo
     }
+    #elseif os(macOS)
+    /// A plain gradient square. Matching the iOS glyph-and-gradient exactly needs AppKit's
+    /// differently-shaped symbol-tinting API, and there is no macOS screen yet to see this
+    /// on — a solid, correct placeholder now, refined when the macOS player is built rather
+    /// than guessed at ahead of it.
+    private func defaultArtworkImage() -> PlatformImage {
+        let size = NSSize(width: 300, height: 300)
+        return NSImage(size: size, flipped: false) { rect in
+            let gradient = NSGradient(starting: .systemBlue, ending: .systemPurple)
+            gradient?.draw(in: rect, angle: -45)
+            return true
+        }
+    }
+    #endif
     
     func updateCommandCenterPlaybackState() {
         var nowPlayingInfo = nowPlayingInfoCenter?.nowPlayingInfo ?? [:]
@@ -479,6 +515,7 @@ class AudioPlayerService: NSObject, ObservableObject {
         interruption.playbackSettledDeliberately()
         
             // Setup and activate audio session when starting playback
+        #if os(iOS) || os(tvOS)
         do {
             let audioSession = AVAudioSession.sharedInstance()
             
@@ -496,6 +533,7 @@ class AudioPlayerService: NSObject, ObservableObject {
         } catch {
                 // Silent error handling
         }
+        #endif
         
             // Create new player item
         let playerItem = AVPlayerItem(url: url)
@@ -612,8 +650,9 @@ class AudioPlayerService: NSObject, ObservableObject {
     func resume() {
         player?.play()
         isPlaying = true
-        
+
             // Reactivate audio session when resuming
+        #if os(iOS) || os(tvOS)
         do {
             let audioSession = AVAudioSession.sharedInstance()
             
@@ -623,6 +662,7 @@ class AudioPlayerService: NSObject, ObservableObject {
         } catch {
                 // Silent error handling
         }
+        #endif
         
             // Update Command Center playback state
         updateCommandCenterPlaybackState()
@@ -639,12 +679,14 @@ class AudioPlayerService: NSObject, ObservableObject {
         clearCommandCenterInfo()
         
             // Deactivate audio session when stopping playback
+        #if os(iOS) || os(tvOS)
         do {
             let audioSession = AVAudioSession.sharedInstance()
             try audioSession.setActive(false, options: .notifyOthersOnDeactivation)
         } catch {
                 // Silent error handling
         }
+        #endif
     }
     
     func seek(to time: TimeInterval) {

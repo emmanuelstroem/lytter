@@ -227,7 +227,7 @@ struct MiniPlayer: View {
     @EnvironmentObject var selectionState: SelectionState
     
     var body: some View {
-        if #available(iOS 26.0, tvOS 26.0, *) {
+        if #available(iOS 26.0, tvOS 26.0, macOS 26.0, *) {
             LiquidGlassMiniPlayer()
                 .environmentObject(serviceManager)
                 .environmentObject(selectionState)
@@ -260,8 +260,8 @@ struct MiniPlayer: View {
     }
 }
 
-// MARK: - LiquidGlass Mini Player (iOS 26+)
-@available(iOS 26.0, tvOS 26.0, *)
+// MARK: - LiquidGlass Mini Player (iOS/tvOS/macOS 26+)
+@available(iOS 26.0, tvOS 26.0, macOS 26.0, *)
 struct LiquidGlassMiniPlayer: View {
     @EnvironmentObject var serviceManager: DRServiceManager
     @EnvironmentObject var selectionState: SelectionState

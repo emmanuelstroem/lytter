@@ -5,7 +5,9 @@
 
 import SwiftUI
 import os
+#if os(iOS) || os(tvOS)
 import UIKit
+#endif
 import CoreImage
 #if canImport(GroupActivities)
 import GroupActivities

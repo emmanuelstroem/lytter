@@ -7,7 +7,11 @@
 
 import CryptoKit
 import Foundation
+#if os(iOS) || os(tvOS)
 import UIKit
+#elseif os(macOS)
+import AppKit
+#endif
 import SwiftUI
 
     // MARK: - Image Cache Service
@@ -32,7 +36,7 @@ final class ImageCacheService {
     /// Lists and thumbnails never need more than this.
     nonisolated static let thumbnailMaxPixelSize: CGFloat = 512
 
-    private let memory = NSCache<NSString, UIImage>()
+    private let memory = NSCache<NSString, PlatformImage>()
     private let fileManager = FileManager.default
     private let cacheDirectory: URL
     private let session: URLSession
@@ -44,7 +48,7 @@ final class ImageCacheService {
     /// One task per cache key, so N views asking for the same artwork share one download
     /// instead of starting N. `updateUIView` on tvOS could previously fire a fresh request
     /// on every layout pass.
-    private let inFlight = InFlightTasks<UIImage?>()
+    private let inFlight = InFlightTasks<PlatformImage?>()
 
     private var preloadTask: Task<Void, Never>?
 
@@ -63,9 +67,14 @@ final class ImageCacheService {
         config.requestCachePolicy = .returnCacheDataElseLoad
         session = URLSession(configuration: config)
 
+        // No macOS equivalent: the system does not send a memory-warning notification to
+        // background-agent-less Mac apps the way it does on iOS/tvOS. The memory cache is
+        // still bounded by totalCostLimit there, just never proactively cleared early.
+        #if os(iOS) || os(tvOS)
         NotificationCenter.default.addObserver(
             self, selector: #selector(clearMemoryCache),
             name: UIApplication.didReceiveMemoryWarningNotification, object: nil)
+        #endif
 
         Task(priority: .background) { [weak self] in
             await self?.trimDiskCache()
@@ -76,12 +85,12 @@ final class ImageCacheService {
 
     /// Returns the artwork, downsampled to `maxPixelSize` on its longest edge.
     func image(for urlString: String,
-               maxPixelSize: CGFloat = defaultMaxPixelSize) async -> UIImage? {
+               maxPixelSize: CGFloat = defaultMaxPixelSize) async -> PlatformImage? {
         let key = cacheKey(for: urlString, maxPixelSize: maxPixelSize)
         if let hit = memory.object(forKey: key as NSString) { return hit }
 
         let task = inFlight.claim(key) { [weak self] in
-            Task<UIImage?, Never> {
+            Task<PlatformImage?, Never> {
                 guard let self else { return nil }
                 return await self.fetch(urlString, key: key, maxPixelSize: maxPixelSize)
             }
@@ -99,7 +108,7 @@ final class ImageCacheService {
     /// Completion-handler form, for UIKit call sites.
     func loadImage(from urlString: String,
                    maxPixelSize: CGFloat = defaultMaxPixelSize,
-                   completion: @escaping (UIImage?) -> Void) {
+                   completion: @escaping (PlatformImage?) -> Void) {
         // Serve straight from memory without a hop, so a synchronous layout pass that
         // already has the image does not flicker.
         let key = cacheKey(for: urlString, maxPixelSize: maxPixelSize)
@@ -114,7 +123,7 @@ final class ImageCacheService {
     }
 
     private func fetch(_ urlString: String, key: String,
-                       maxPixelSize: CGFloat) async -> UIImage? {
+                       maxPixelSize: CGFloat) async -> PlatformImage? {
         // A different size of the same artwork may already be on disk; decoding it again
         // at the size we need avoids a second download.
         if let onDisk = dataFromDisk(for: urlString),
@@ -138,7 +147,7 @@ final class ImageCacheService {
 
     /// Decodes straight to the size actually needed. `CGImageSourceCreateThumbnail…`
     /// never materialises the full-size bitmap, so peak memory stays low too.
-    private func downsample(_ data: Data, maxPixelSize: CGFloat) -> UIImage? {
+    private func downsample(_ data: Data, maxPixelSize: CGFloat) -> PlatformImage? {
         let sourceOptions = [kCGImageSourceShouldCache: false] as CFDictionary
         guard let source = CGImageSourceCreateWithData(data as CFData, sourceOptions)
         else { return nil }
@@ -152,12 +161,12 @@ final class ImageCacheService {
 
         guard let cgImage = CGImageSourceCreateThumbnailAtIndex(source, 0, options)
         else { return nil }
-        return UIImage(cgImage: cgImage)
+        return PlatformImage(cgImage: cgImage)
     }
 
     /// Cost is the decoded byte size. Without it `totalCostLimit` does nothing, which is
     /// how a 50-image cache of 1920×1080 artwork could reach several hundred megabytes.
-    private func store(_ image: UIImage, for key: String) {
+    private func store(_ image: PlatformImage, for key: String) {
         let cost = image.cgImage.map { $0.bytesPerRow * $0.height } ?? 0
         memory.setObject(image, forKey: key as NSString, cost: cost)
     }
@@ -299,7 +308,7 @@ struct CachedAsyncImage<Content: View, Placeholder: View>: View {
     let content: (Image) -> Content
     let placeholder: () -> Placeholder
 
-    @State private var image: UIImage?
+    @State private var image: PlatformImage?
 
     init(url: URL?,
          maxPixelSize: CGFloat = ImageCacheService.defaultMaxPixelSize,
@@ -314,7 +323,7 @@ struct CachedAsyncImage<Content: View, Placeholder: View>: View {
     var body: some View {
         Group {
             if let image {
-                content(Image(uiImage: image))
+                content(Image(platformImage: image))
             } else {
                 placeholder()
             }

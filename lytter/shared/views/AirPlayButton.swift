@@ -9,13 +9,17 @@ import SwiftUI
 import AVKit
 // MARK: - SwiftUI Native AirPlay Button
 
+#if os(iOS) || os(tvOS)
+// AVRoutePickerView, the system's own AirPlay control, is a UIKit view with no AppKit
+// counterpart -- macOS routes audio output a different way entirely. This wrapper only
+// exists to bridge it into SwiftUI, so it only exists where the thing it bridges does.
 struct AirPlayButton: UIViewRepresentable {
     let size: CGFloat
     /// Semantic by default, so the glyph follows the system appearance. Callers that
     /// sit in a row of de-emphasised controls pass `.secondaryLabel` to match them.
-    let tint: UIColor
+    let tint: PlatformColor
     
-    init(size: CGFloat, tint: UIColor = .label) {
+    init(size: CGFloat, tint: PlatformColor = .label) {
         self.size = size
         self.tint = tint
     }
@@ -76,24 +80,33 @@ struct AirPlayButton: UIViewRepresentable {
         }
     }
 }
+#endif
 
 // MARK: - AirPlay Button with Frame
 
 struct AirPlayButtonView: View {
     let size: CGFloat
-    let tint: UIColor
-    
-    init(size: CGFloat, tint: UIColor = .label) {
+    let tint: PlatformColor
+
+    init(size: CGFloat, tint: PlatformColor = .label) {
         self.size = size
         self.tint = tint
     }
-    
+
     var body: some View {
+        #if os(iOS) || os(tvOS)
         AirPlayButton(size: size, tint: tint)
             .frame(width: size, height: size, alignment: .center)
             .clipped() // Ensure the content stays within bounds
             .contentShape(Rectangle()) // Ensure the entire frame is tappable
             .accessibilityLabel("AirPlay")
+        #else
+        // No AirPlay picker on macOS yet -- output routing there is a menu-bar affair,
+        // not a view. Reserves the space rather than disappearing, so a row of controls
+        // around it does not visibly shift once a macOS equivalent exists to fill it.
+        Color.clear
+            .frame(width: size, height: size, alignment: .center)
+        #endif
     }
 }
 

@@ -9,7 +9,9 @@ import SwiftUI
 #if os(tvOS)
 import TVUIKit
 #endif
+#if os(iOS) || os(tvOS)
 import UIKit
+#endif
 
 #if os(tvOS)
 struct TVPosterViewRepresentable: UIViewRepresentable {

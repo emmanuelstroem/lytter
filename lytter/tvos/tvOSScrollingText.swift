@@ -4,7 +4,9 @@
 //
 
 import SwiftUI
+#if os(iOS) || os(tvOS)
 import UIKit
+#endif
 
 #if os(tvOS)
 /// Long text the remote can scroll.
