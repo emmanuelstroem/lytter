@@ -63,6 +63,9 @@ class DRNetworkService {
 
     // MARK: - Fetch All Schedules (with retry)
     func fetchAllSchedules(retries: Int = 3) async throws -> [DREpisode] {
+        #if DEBUG
+        if UITestFixtures.isActive { return UITestFixtures.schedules() }
+        #endif
         guard let url = URL(string: DRAPIConfig.schedulesAllNow) else {
             throw NetworkError.invalidURL
         }
@@ -100,8 +103,45 @@ class DRNetworkService {
         throw lastError
     }
 
+    // MARK: - Channel directory
+
+    /// Which channels are districts, and of which station.
+    ///
+    /// No retry loop: the caller treats a failure as "use what is already known", so a
+    /// slow or missing answer here must not hold up the schedule it is fetched beside.
+    func fetchChannelDirectory() async throws -> ChannelDirectory {
+        #if DEBUG
+        // Fixture channels are not in DR's directory; they read their titles.
+        if UITestFixtures.isActive { return ChannelDirectory() }
+        #endif
+        guard let url = URL(string: DRAPIConfig.channelDirectory) else {
+            throw NetworkError.invalidURL
+        }
+        let (data, response) = try await session.data(for: makeRequest(for: url))
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw NetworkError.invalidResponse
+        }
+        guard (200...299).contains(httpResponse.statusCode) else {
+            throw NetworkError.httpError(httpResponse.statusCode)
+        }
+        do {
+            return ChannelDirectory(stations: try decoder.decode([ChannelDirectory.Station].self, from: data))
+        } catch {
+            Log.network.error("decode failed for channels")
+            throw NetworkError.decodingError
+        }
+    }
+
     // MARK: - Fetch Schedule Snapshot for Channel
     func fetchScheduleSnapshot(for channelSlug: String) async throws -> DRScheduleResponse {
+        #if DEBUG
+        if UITestFixtures.isActive {
+            guard let fixture = UITestFixtures.schedule(for: channelSlug) else {
+                throw NetworkError.invalidResponse
+            }
+            return fixture
+        }
+        #endif
         let url = try endpoint(DRAPIConfig.scheduleSnapshot, channelSlug)
         let (data, response) = try await session.data(for: makeRequest(for: url))
 
@@ -121,6 +161,10 @@ class DRNetworkService {
 
     // MARK: - Fetch Index Points (Currently Playing Tracks)
     func fetchIndexPoints(for channelSlug: String) async throws -> DRIndexPointsResponse {
+        #if DEBUG
+        // No live tracks for fixture channels, and no network during UI tests.
+        if UITestFixtures.isActive { throw NetworkError.invalidResponse }
+        #endif
         let url = try endpoint(DRAPIConfig.indexpointsLive, channelSlug)
         let (data, response) = try await session.data(for: makeRequest(for: url))
 

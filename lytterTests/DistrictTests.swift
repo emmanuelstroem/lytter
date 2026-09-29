@@ -81,6 +81,33 @@ struct DistrictTests {
         #expect(p5.channel(in: District(name: "Midt & Vest"))?.title == "P5 Midt & Vest")
     }
 
+    // MARK: - The picker's order
+
+    /// The picker always opens, so a listener can choose somewhere other than home. Their
+    /// own region at the top is what keeps that from costing them a search every time.
+    @Test func thePickerListsTheRegionFirst() {
+        let listed = p4.channels(regionFirst: District(name: "Midt & Vest")).map(\.title)
+
+        #expect(listed == ["P4 Midt & Vest", "P4 Fyn", "P4 København"])
+    }
+
+    @Test func thePickerListsEveryDistrictOnce() {
+        let listed = p4.channels(regionFirst: District(name: "København"))
+
+        #expect(Set(listed.map(\.id)) == Set(p4.channels.map(\.id)))
+        #expect(listed.count == p4.channels.count,
+                "moving the region up must not leave a second copy of it further down")
+    }
+
+    @Test func withNoRegionThePickerKeepsItsUsualOrder() {
+        #expect(p4.channels(regionFirst: nil).map(\.title) == p4.channels.map(\.title))
+    }
+
+    @Test func aRegionTheStationDoesNotBroadcastLeavesTheOrderAlone() {
+        #expect(p4.channels(regionFirst: District(name: "Bornholm")).map(\.title)
+                == p4.channels.map(\.title))
+    }
+
     // MARK: - Channel identifiers
 
     @Test func aChannelWithNoDistrictHasNoRegion() {

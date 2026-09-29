@@ -56,6 +56,16 @@ struct GroupedChannel: Identifiable {
         channels.first { $0.districtID == district.id }
     }
 
+    /// Every variant, with the listener's region first and the rest in the usual order.
+    ///
+    /// What the district picker lists. Choosing a station always asks which district, so
+    /// that a listener away from home can pick another one; putting their own first keeps
+    /// the usual choice a single tap.
+    func channels(regionFirst region: District?) -> [DRChannel] {
+        guard let region, let mine = channel(in: region) else { return channels }
+        return [mine] + channels.filter { $0.id != mine.id }
+    }
+
     /// The single channel this station stands for, where it stands for only one.
     var soleChannel: DRChannel? {
         hasMultipleDistricts ? nil : channels.first
@@ -75,7 +85,10 @@ extension GroupedChannel {
     ///
     /// Home, Radio and Search each had their own copy of this; they now share one.
     static func grouped(from channels: [DRChannel]) -> [GroupedChannel] {
-        Dictionary(grouping: channels) { $0.name }
+        // By station identity, not by name: DR's own station slug once the directory is
+        // known, so a two-word national channel is a station of its own rather than a
+        // district of whichever station shares its first word.
+        Dictionary(grouping: channels) { $0.stationKey }
             .values
             .map { GroupedChannel(channels: $0) }
             .sorted { $0.name < $1.name }

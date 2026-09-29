@@ -170,15 +170,19 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
       same file is used by the Radio tab, and the project carried a platform filter for the
       path — so removing the file broke the build twice over. `SearchBar` now has its own
       file.
-- [ ] **F6b. Stop deriving channel identity from the display title.** `DRChannel.name` /
-      `.district` split the title on the first space. Checked against the live v5 payload
-      (25 channels, 2026-09-23): every channel parses correctly today — `P6` and `P8` have
-      single-word titles despite the slugs `p6beat` / `p8jazz`. So this is **latent, not
-      currently broken**, and is lower priority than first recorded. It stays on the list
-      because the day DR renames a national channel to two words, tvOS grouping, the
-      variant overlay, the iOS grouped cards, Top Shelf consolidation and the now-playing
-      badge all mis-file it as a regional variant. Key off `slug`.
-
+- [x] ~~**F6b. Stop deriving channel identity from the display title.**~~ Done, and not by
+      keying off the slug as first planned. DR's `/channels` endpoint, which the app had
+      never called, lists every station with its districts, and each district names its
+      parent (`parentChannelSlug`) and itself (`districtName`). It is fetched beside
+      `schedules/all/now` and applied to each channel as a `ChannelDirectory`, so station
+      and district are DR's statement rather than a guess. The directory also showed the
+      case this entry predicted is real: DR lists a national channel called "P7 MIX",
+      which the title split would have filed as station P7, district "MIX". Grouping now
+      keys on the station slug. The title split remains only as the fallback for a channel
+      the directory does not describe, and the last directory seen survives in the disk
+      cache, so an unreachable `/channels` does not mean going back to guessing.
+      **Not done: Top Shelf** still splits titles, since the extension has its own copy of
+      the model (see P14).
 ### P1 — quality of the core experience
 
 - [x] ~~**F29. The full player's schedule repeated the same programme.**~~ Done in #18.
@@ -340,6 +344,25 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
 - [ ] **F33. Favourite shows, not just channels.** Store series ids and surface a
       favourited programme with when it is next on. Needs the per-channel schedule snapshot
       that #14 wired up. Deliberately deferred: favourites are channels for now.
+- [ ] **F34. tvOS: the sidebar opens expanded on every launch.** The Home entry in the
+      sidebar starts expanded each time the app opens. It should start collapsed, as the
+      TV and Music apps do, so the first thing on screen is the content.
+- [ ] **F35. tvOS: Back and the TV button should leave the app.** Pressing Back (or the TV
+      button) repeatedly gets stuck on the app's own Home instead of returning to the Apple
+      TV home screen. Once Home is showing with nothing to go back from, the next press
+      should exit the app, as every system app does.
+- [ ] **F36. tvOS: Search at the top of the sidebar.** Move Search above the other
+      destinations.
+- [ ] **F37. tvOS: Settings at the bottom of the sidebar.** A Settings destination holding
+      the choices the app currently makes silently or hides elsewhere: the remembered
+      region (and a way to clear it), resetting favourites, clearing recently played.
+- [ ] **F38. An animated playing mark.** Replace the static speaker symbol beside a playing
+      station's name — on tvOS cards, and in the district pickers on both platforms — with a
+      small mark made of concentric circles, like a speaker cone, that pulse in and out while
+      the station plays and stop when it does not. The mark itself only appears while sound is
+      actually playing: it used to stay on a paused channel and on the last-played channel
+      restored at launch, fixed alongside this entry by `DRServiceManager.isAudible`.
+      Respect Reduce Motion: a still mark then, not a pulsing one.
 - [ ] **F14. Add a README.** Nineteen commits and no entry point for a reader.
 
 ### P2 — expansion

@@ -268,17 +268,6 @@
         }
       }
     },
-    "Choose district": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Vælg distrikt"
-          }
-        }
-      }
-    },
     "Clear search": {
       "extractionState": "manual",
       "localizations": {
@@ -1153,13 +1142,13 @@
         }
       }
     },
-    "Your region is remembered for other regional stations.": {
+    "Your region is listed first, here and on other regional stations.": {
       "extractionState": "manual",
       "localizations": {
         "da": {
           "stringUnit": {
             "state": "translated",
-            "value": "Dit distrikt huskes til andre regionale stationer."
+            "value": "Dit distrikt står øverst, her og på andre regionale stationer."
           }
         }
       }

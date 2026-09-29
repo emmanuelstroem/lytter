@@ -17,32 +17,41 @@ import SwiftUI
 /// on, and two copies of a gradient drift apart the first time one of them is tuned.
 struct CaptionBackdrop: View {
 
-    /// Whether the glass fades in over the artwork or meets it at a straight edge.
+    /// How far above its solid part the glass starts to come in.
     ///
-    /// A large card fades: its caption sits well inside the image, and a hard line across the
-    /// middle would cut the artwork in two. A small card does not — the band is one line of
-    /// text deep and sits on the very edge, where a straight edge reads as a label laid on
-    /// the artwork rather than as a seam through it.
-    let fades: Bool
+    /// The fade is a fixed length at the top, with full strength below it, rather than
+    /// stretched over the whole backdrop. Stretched, the gradient was still at a third of
+    /// its strength where the top of the name sat — and at a sixth behind the name on a
+    /// featured card, which stacks the programme under it — so the artwork's own lettering
+    /// showed through the station's name. Solid under the words, the backdrop is equally
+    /// dark behind every line of the caption however many there are.
+    let fadeLength: CGFloat
 
     var body: some View {
-        Group {
-            if fades { glass.mask(fade) } else { glass }
-        }
-        .allowsHitTesting(false)
+        glass
+            .mask {
+                GeometryReader { proxy in
+                    fade(endingAt: fadeLength / max(proxy.size.height, 1))
+                }
+            }
+            .allowsHitTesting(false)
     }
 
-    /// Slow to start, then decisive. The frost stays out of the way over the upper part of
-    /// the card and only reaches full strength where the text actually sits, so the artwork
-    /// reads as itself rather than as something behind fog.
-    private var fade: LinearGradient {
-        LinearGradient(
+    /// Slow to start, then decisive, so the glass has no edge for the light to catch — a
+    /// straight top edge on bright artwork read as a lit strip across the card.
+    ///
+    /// One gradient over the whole backdrop, holding full strength from `end` down, rather
+    /// than a gradient stacked on a solid rectangle. Stacked, the two met at a hairline
+    /// seam whenever the card was scaled — as tvOS does to the focused one — and the seam
+    /// showed as a line across the glass.
+    private func fade(endingAt end: CGFloat) -> LinearGradient {
+        let end = min(end, 1)
+        return LinearGradient(
             stops: [
                 .init(color: .clear, location: 0),
-                .init(color: .black.opacity(0.18), location: 0.34),
-                .init(color: .black.opacity(0.55), location: 0.62),
-                .init(color: .black.opacity(0.92), location: 0.84),
-                .init(color: .black, location: 1)
+                .init(color: .black.opacity(0.2), location: 0.35 * end),
+                .init(color: .black.opacity(0.65), location: 0.7 * end),
+                .init(color: .black, location: end)
             ],
             startPoint: .top,
             endPoint: .bottom
@@ -63,7 +72,10 @@ struct CaptionBackdrop: View {
     /// name can be read. Clear glass alone does almost nothing over bright artwork — a
     /// yellow-and-white album cover left a white name barely visible — and the tint is what
     /// puts a floor under the contrast regardless of what is behind it.
-    private static let tint = 0.6
+    ///
+    /// At 0.6 the artwork's own lettering still read through the glass — "P2 KONCERTEN"
+    /// printed across the artwork sat legibly behind the name "P2".
+    private static let tint = 0.75
 
     @ViewBuilder
     private var glass: some View {

@@ -100,7 +100,7 @@ struct tvOSHomeView: View {
                     title: String(localized: "Favourites"),
                     groups: singles(serviceManager.userPreferences.favourites
                         .resolve(in: serviceManager.availableChannels)),
-                    size: .large,
+                    style: .featured,
                     serviceManager: serviceManager,
                     onSelect: play
                 )
