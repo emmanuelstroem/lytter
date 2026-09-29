@@ -183,6 +183,40 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
       cache, so an unreachable `/channels` does not mean going back to guessing.
       **Not done: Top Shelf** still splits titles, since the extension has its own copy of
       the model (see P14).
+- [ ] **F39. Remote play/pause does not resume, and there is no scrub.** Reported from use:
+      pausing from the lock screen / Siri Remote works, but pressing play again does not
+      bring audio back. Not yet reproduced or fixed — diagnosed from the code, which gives
+      two plausible causes rather than one confirmed root:
+      1. `AudioPlayerService.resume()` calls `player?.play()` and reactivates
+         `AVAudioSession`, but the `try? audioSession.setActive(true)` failure is caught and
+         silently discarded (`// Silent error handling`). A remote pause typically happens
+         while backgrounded, which is exactly when session reactivation is likeliest to
+         fail — e.g. another app has taken audio focus. In-app pause/resume goes through the
+         same `resume()`, so if the bug is here it should reproduce in-app too when
+         backgrounded and resumed from the lock screen; that is the first thing to confirm.
+      2. Live-stream staleness: pausing an `AVPlayerItem` for more than a few seconds can
+         leave `timeControlStatus` stuck once the buffered/live window has passed, where
+         `play()` alone does not restart audio and the item needs to be reloaded
+         (`play(url:)` again) rather than resumed.
+      Start by reproducing with `commandCenter?.pauseCommand`/`playCommand` logging and
+      inspecting `player?.error` and `timeControlStatus` after a real-world pause (tens of
+      seconds, backgrounded) rather than an immediate one — a fast pause/resume in the
+      simulator is unlikely to show either failure mode.
+      **Scrubbing** — 15-second skip forward/back, and a way to jump forward to live — was
+      deliberately *disabled* rather than built: `skipForwardCommand` /
+      `skipBackwardCommand` / `changePlaybackPositionCommand` are all `isEnabled = false`,
+      with a comment recording that the old handlers seeked a stream with no seekable range
+      and silently did nothing. That reasoning holds for the ICY fallback, but
+      `DRChannel.streamURL` prefers HLS when DR's v5 API offers it
+      (`audioAssets.first(where: { $0.isStreamLive == true })`), and a live HLS stream
+      commonly carries a sliding DVR window with a real `currentItem.seekableTimeRanges` —
+      unlike ICY, which has none. So the premise needs re-checking before deciding this is
+      infeasible: log `currentItem?.seekableTimeRanges` on a channel actually playing over
+      HLS. If it reports a non-empty range, `skipForwardCommand`/`skipBackwardCommand` at a
+      15s `preferredIntervals` are the natural fit, and "back to live" is a seek to the
+      end of that range rather than a new capability. If DR's HLS has no DVR window (a pure
+      live playlist with no sliding buffer), the commands stay disabled and this is a
+      DR-imposed limit, not an app one.
 ### P1 — quality of the core experience
 
 - [x] ~~**F29. The full player's schedule repeated the same programme.**~~ Done in #18.
