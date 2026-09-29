@@ -413,22 +413,20 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
       and nothing had ever called. It decodes into the existing models unchanged.
 - [ ] **F18. Widgets + Live Activity** for the currently playing channel.
 - [ ] **F19. iPhone Duo support.** See [IPHONE-DUO.md](IPHONE-DUO.md).
-- [ ] **F20. macOS is unimplemented, not broken.** *Re-measured 2026-09-24 — still the only
-      target that does not compile, and the only item on this list that is broken rather
-      than merely missing.* The build stops at `AudioPlayerService.swift:11: Unable to
-      resolve module dependency: 'UIKit'`, and that one error hides the rest — the compiler
-      gets no further. Behind it, in `shared/`, two files import UIKit unguarded
-      (`AudioPlayerService`, `ImageCacheService`) and the layer uses `UIImage` ×15,
-      `UIColor` ×9, `UIApplication` ×2 and one `UIViewRepresentable` (the AirPlay button).
-      `ContentView` does carry `#if os(iOS) || os(macOS)` in places — for the Siri
-      shortcuts environment object and such — but its **`body` does not**: that is
-      `#if os(iOS)` / `#elseif os(tvOS)` / `#endif`, so macOS falls through to no UI at all,
-      and every screen it would need is itself `#if os(iOS)`. macOS is in
-      `SUPPORTED_PLATFORMS` and has never been built.
-      **Two jobs, worth separating — the first is mechanical, the second is design:**
-      1. *Make the shared layer compile for macOS.* Platform guards plus
-         `PlatformImage`/`PlatformColor` typealiases. Bounded, no design decisions, and
-         worth doing on its own: it stops the target being permanently red, and makes every
+- [ ] **F20. macOS is unimplemented, not broken.** **Step 1 done** — the shared layer
+      compiles for macOS (`CODE_SIGNING_ALLOWED=NO`; a separate, unrelated expired signing
+      certificate on this machine blocks a *signed* build). `PlatformImage`/`PlatformColor`
+      typealiases in `PlatformTypes.swift` cover `UIImage`/`UIColor`; every
+      `AVAudioSession`, `AVRoutePickerView` (AirPlay) and iOS/tvOS-only SDK symbol is now
+      behind `#if os(iOS) || os(tvOS)` rather than assumed to exist everywhere; three tvOS
+      files had `import UIKit` sitting outside their own `#if os(tvOS)` guard, invisible
+      until macOS tried to compile them too. iOS, tvOS and macOS all build clean; 112 tests
+      pass.
+      **`ContentView`'s `body` still has no macOS case** — `#if os(iOS)` /
+      `#elseif os(tvOS)` / `#endif`, so the app opens an empty window there. That is step 2,
+      deliberately not attempted alongside step 1:
+      1. ~~*Make the shared layer compile for macOS.*~~ Done. Mechanical, no design
+         decisions — the point was to stop the target being permanently red and make every
          later change to shared code verifiable on macOS instead of silently iOS-only.
       2. *Build a macOS UI.* From nothing — no view is shared with it. This should follow
          the sectioned home (F32) rather than precede it, or it gets built twice.
