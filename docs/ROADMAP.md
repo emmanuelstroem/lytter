@@ -323,20 +323,21 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
       `BroadcasterChannelsSection` takes its name from the model.
       Adding a source is now a `Broadcaster`, a network service returning its channels, and
       an entry in `registered` — no layout changes.
-- [ ] **F32. Apple Music-style home, all four platforms.** *iOS and iPadOS done in #28* —
-      Favourites, Recently Played and one shelf per broadcaster, each a horizontally
-      scrolling row of square artwork cards. Every row is the same `ChannelShelf`, which
-      takes `GroupedChannel` so a station and a single channel need one card: a group of one
-      has no districts and plays on tap, a group of ten opens the picker. Sections draw
-      nothing when empty, so a first launch shows only the catalogue rather than two empty
-      headings. The grid and its three views (`FavouritesSection`,
-      `BroadcasterChannelsSection`, `GroupedChannelCard`) are gone.
-      *tvOS done too* — and it went further than adding two rows. The top tab bar is gone;
-      navigation is the system sidebar the TV and Music apps use, which sits at the left
-      edge and slides out over dimmed content when focus reaches it. That is
-      `.tabViewStyle(.sidebarAdaptable)`, tvOS 18 and up, with the old tab bar kept below
-      it. The shelves are the shared `GroupedChannel`, and the district rule from #30
-      carries over, so picking a region on Apple TV is the same bargain as on the phone.
+- [x] ~~**F32. Apple Music-style home, all four platforms (iOS, iPadOS, tvOS).**~~ *iOS and
+      iPadOS done in #28.* Favourites, Recently Played and one shelf per broadcaster, each a
+      horizontally scrolling row of square artwork cards. Every row is the same
+      `ChannelShelf`, which takes `GroupedChannel` so a station and a single channel need one
+      card. Radio and Search were converted onto the same card in #39, and every card fades
+      into its caption now — a hard-edged band read as a lit strip on bright artwork, which a
+      gradient has no edge to catch.
+      *tvOS done in #32–#33.* The top tab bar is gone; navigation is the system sidebar
+      (`.tabViewStyle(.sidebarAdaptable)`, tvOS 18+, with the old tab bar kept below it) the
+      TV and Music apps use. The card was rewritten from nothing in #33 to match the Music
+      app exactly — clean artwork, plain text underneath, the system's own focus lift rather
+      than a hand-rolled glow — after the first pass (#32) turned out to be the phone's card
+      carried across rather than a native tvOS design. Hold-select favourites; the player has
+      a schedule sheet, matching iOS.
+      **Only macOS remains (F20).**
       **Remaining: macOS**, which has no UI at all (F20).
       Still true, and worth repeating: other broadcasters do not exist. The shelves are
       broadcaster-shaped but DR is the only source, and a second one is a data change.
