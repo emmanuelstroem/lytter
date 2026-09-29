@@ -17,5 +17,22 @@
 	         extension actually shares the cached schedule — see docs/ROADMAP.md. -->
 	<key>com.apple.developer.siri</key>
 	<true/>
+
+	<!-- macOS only, harmless elsewhere: App Sandbox is opt-in on macOS, unlike iOS/tvOS
+	     where the OS sandboxes every app regardless. Without it the process ran with no
+	     sandbox profile of its own, which is what the Console line
+	     "sandbox profile ... preventing communication with network content filters,
+	     com.apple.nesessionmanager.content-filter" was reporting — macOS's optional
+	     network-content-filtering hook (Screen Time, a parental-control or VPN-style
+	     filter) trying and failing to attach to a process it does not recognise as
+	     sandboxed. It does not block this app's own networking; DR's streams still
+	     played. app-sandbox is also required for eventual Mac App Store distribution,
+	     and network.client is what a sandboxed app needs to open outbound connections
+	     at all — AVPlayer's HLS/ICY streams and every URLSession fetch in DRNetworkService
+	     and ImageCacheService. -->
+	<key>com.apple.security.app-sandbox</key>
+	<true/>
+	<key>com.apple.security.network.client</key>
+	<true/>
 </dict>
 </plist>

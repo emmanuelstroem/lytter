@@ -129,6 +129,19 @@ struct ContentView: View {
             deepLinkHandler.handleDeepLink(url)
         }
 
+    #elseif os(macOS)
+        macOSContentView(
+            serviceManager: serviceManager,
+            selectionState: selectionState,
+            deepLinkHandler: deepLinkHandler
+        )
+        .environmentObject(serviceManager)
+        .environmentObject(selectionState)
+        .environmentObject(siriShortcutsService)
+        .onContinueUserActivity("PlayChannelActivity") { userActivity in
+            siriShortcutsService.handleUserActivity(userActivity)
+        }
+
     #endif
     }
 

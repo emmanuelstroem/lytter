@@ -5,7 +5,7 @@
 
 import SwiftUI
 
-#if os(iOS) || os(tvOS)
+#if os(iOS) || os(tvOS) || os(macOS)
 /// Backdrop for a caption sitting on artwork.
 ///
 /// Liquid Glass where the OS has it, an `.ultraThinMaterial` below that — the same shape
@@ -79,7 +79,7 @@ struct CaptionBackdrop: View {
 
     @ViewBuilder
     private var glass: some View {
-        if #available(iOS 26.0, tvOS 26.0, *) {
+        if #available(iOS 26.0, tvOS 26.0, macOS 26.0, *) {
             Rectangle().fill(.clear)
                 .glassEffect(.clear.tint(.black.opacity(Self.tint)), in: .rect)
         } else {

@@ -5,7 +5,7 @@
 
 import SwiftUI
 
-#if os(iOS) || os(tvOS)
+#if os(iOS) || os(tvOS) || os(macOS)
 /// How prominent a card is.
 ///
 /// Apple Music does this too: the top row is larger and captions its artwork, the rows below
@@ -78,6 +78,18 @@ struct StationCardMetrics {
             return .init(width: 420, height: 490, cornerRadius: 22, style: style)
         case .standard:
             return .init(width: 300, height: 300, cornerRadius: 16, style: style)
+        }
+    }
+
+    /// Between the phone and the television: a mouse is more precise than a finger but the
+    /// window is smaller than a TV, so the cards land close to the iPad-sized end of the
+    /// phone's own proportions rather than needing a third design.
+    static func macOS(_ style: StationCardStyle) -> StationCardMetrics {
+        switch style {
+        case .featured:
+            return .init(width: 220, height: 260, cornerRadius: 10, style: style)
+        case .standard:
+            return .init(width: 160, height: 160, cornerRadius: 8, style: style)
         }
     }
 }
