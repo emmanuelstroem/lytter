@@ -45,8 +45,14 @@ struct Palette {
         antenna:       srgb(0.894, 0.200, 0.043),
         controlTop:    srgb(1.000, 0.957, 0.933),
         controlBottom: srgb(0.972, 0.816, 0.769),
-        fieldTop:      srgb(0.102, 0.075, 0.071),
-        fieldBottom:   srgb(0.020, 0.016, 0.018),
+        // Raised from (0.102, 0.075, 0.071) / (0.020, 0.016, 0.018). That field read as
+        // moody at 1024px and as a black square everywhere it is actually seen: the Dock,
+        // the Home Screen, Spotlight. tvOS never showed the problem because its parallax
+        // stack is viewed large, on a TV, with the system's own depth between layers — a
+        // different perceptual situation from a 60-point Dock icon, not a different field.
+        // Still clearly darker than the body, so the glyph is still what draws the eye.
+        fieldTop:      srgb(0.301, 0.098, 0.071),
+        fieldBottom:   srgb(0.129, 0.035, 0.027),
         glow:          srgb(1.000, 0.231, 0.078))
 
     /// Greyscale, matched to the brand palette's luminance so the tinted icon keeps
@@ -339,40 +345,6 @@ func renderSquareIcon(side: CGFloat, pal: Palette, glowAlpha: Double, to path: S
     writePNG(ctx, to: path, opaque: true)
 }
 
-/// macOS icon: the artwork sits on a rounded plate inset in the canvas, with
-/// transparency outside it — the platform convention, unlike iOS.
-func renderMacIcon(side: CGFloat, to path: String) {
-    let size = CGSize(width: side, height: side)
-    let ctx = makeContext(size)
-    let pal = Palette.brand
-    let inset = side * 0.0977                       // Apple's 824/1024 icon grid
-    let plate = CGRect(x: inset, y: inset, width: side - 2 * inset,
-                       height: side - 2 * inset)
-    let platePath = CGPath(roundedRect: plate, cornerWidth: plate.width * 0.2237,
-                           cornerHeight: plate.width * 0.2237, transform: nil)
-    ctx.saveGState()
-    ctx.setShadow(offset: CGSize(width: 0, height: side * 0.012),
-                  blur: side * 0.022, color: black(0.35))
-    ctx.addPath(platePath); ctx.setFillColor(pal.fieldBottom); ctx.fillPath()
-    ctx.restoreGState()
-
-    clipped(ctx, to: platePath) {
-        grad(ctx, [pal.fieldTop, pal.fieldBottom], [0, 1],
-             from: CGPoint(x: plate.midX, y: plate.minY),
-             to: CGPoint(x: plate.midX, y: plate.maxY))
-        let p = Placement(side: plate.width, x: plate.minX, y: plate.minY)
-        let g = pal.glow.components!
-        radial(ctx, [srgb(g[0], g[1], g[2], 0.30), srgb(g[0], g[1], g[2], 0)], [0, 1],
-               centre: CGPoint(x: p.bodyRect.midX, y: p.bodyRect.midY),
-               radius: plate.width * 0.62)
-        drawAntenna(ctx, p, pal, shadows: true)
-        drawBody(ctx, p, pal, shadows: true)
-        drawControls(ctx, p, pal, shadows: true)
-    }
-    rimLight(ctx, path: platePath, bounds: plate, width: side * 0.0022, alpha: 0.28)
-    writePNG(ctx, to: path, opaque: false)
-}
-
 /// One layer of the tvOS parallax stack. No baked inter-element shadows: the layers
 /// move independently and tvOS draws the shadows between them.
 func renderTVLayer(_ layer: String, size: CGSize, to path: String) {
@@ -467,12 +439,19 @@ print("watchOS app icon")
 renderSquareIcon(side: 1024, pal: .brand, glowAlpha: 0.34,
                  to: "\(watchIcon)/watch.png")
 
-print("macOS app icon — inset plate, transparent margin")
+// Full-bleed and opaque, the same as iOS. The transparent-margin "icon on a plate"
+// convention this replaced predates Big Sur; the system has drawn its own rounded-square
+// shape and shadow around a submitted icon rather than applying one for several OS
+// releases now, so a plate with a transparent margin around it stayed exactly as
+// transparent as authored — which, against a Dock that is itself dark or translucent,
+// read as more black square than red radio.
+print("macOS app icon — opaque, full bleed")
 for (px, name) in [(16, "all_16x16"), (32, "all_32x32"), (32, "all_32x32 1"),
                    (64, "all_64x64"), (128, "all_128x128"), (256, "all_256x256 1"),
                    (256, "all_256x256"), (512, "all_512x512 1"), (512, "all_512x512"),
                    (1024, "store")] {
-    renderMacIcon(side: CGFloat(px), to: "\(appIcon)/\(name).png")
+    renderSquareIcon(side: CGFloat(px), pal: .brand, glowAlpha: 0.34,
+                     to: "\(appIcon)/\(name).png")
 }
 
 print("tvOS app icon — parallax stack")
