@@ -40,7 +40,7 @@ cards. It is a design principle for this app, not a one-off fix.
 Prefer `style: .continuous` — it is the curve the system uses, and it is visibly different
 from the circular default at larger radii.
 
-## Two things that have bitten this project
+## Things that have bitten this project
 
 **Hierarchical shape styles resolve against the tint.** `.foregroundStyle(.primary)` inside a
 `Button` renders blue, not the label colour. Use concrete `Color.primary` outside materials;
@@ -56,6 +56,13 @@ container that is not listed against one. Add the test when you add the scroll v
 ```
 xcodebuild test -scheme lytter -destination 'platform=tvOS Simulator,name=Apple TV 4K (3rd generation) (at 1080p)' -only-testing:lytterUITests/TVScrollingUITests -parallel-testing-enabled NO
 ```
+
+**An Icon Composer layer needs a filled shape.** `AppIcon.icon/Assets/*.svg` must use
+`fill="black"`, not `fill="none" stroke=…`: the layer's `fill` in `icon.json` colours the
+shape's filled area, and with none the radio renders as hairline outlines. Two icon systems
+ship — on iOS/macOS 26 the `.icon` wins and the `appiconset` PNGs are only the fallback — so
+fixing one does not fix the other. A build passing proves nothing here; render the `.icon`
+with `ictool` (command in `docs/ROADMAP.md` F40) and look at it, in Default and Dark.
 
 **A nested `ObservableObject` does not republish through its owner.** Observe
 `UserPreferencesService` directly rather than reaching it through `DRServiceManager`, or the

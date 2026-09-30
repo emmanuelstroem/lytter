@@ -217,6 +217,30 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
       end of that range rather than a new capability. If DR's HLS has no DVR window (a pure
       live playlist with no sliding buffer), the commands stay disabled and this is a
       DR-imposed limit, not an app one.
+- [x] ~~**F40. The app icon rendered near-black on iOS and macOS.**~~ Done in #40. Three
+      stacked causes, found one at a time because each hid the next:
+      1. **The field was too dark.** A near-black background is most of the pixels at Dock /
+         Home Screen / Spotlight sizes, so the icon read as a black square. `db36afc` only
+         lightened it to a dark maroon. The field is now warm cream (`Palette.light` in
+         `Tools/RenderBrandAssets.swift`); `Palette.brand` is untouched because tvOS and Top
+         Shelf still use it.
+      2. **The fix went to the wrong asset.** On iOS 26 / macOS 26 the system shows
+         `AppIcon.icon`; the `AppIcon.appiconset` PNGs are only the fallback, and that
+         fallback is all `db36afc` changed. The `.icon` fill was near-black. It now has a
+         light default fill and an explicit `dark` `fill-specializations` entry, so dark mode
+         does not depend on the system darkening the cream.
+      3. **The `.icon` layers had no area to paint.** The four SVGs in `AppIcon.icon/Assets/`
+         were `fill="none" stroke="black"`. Icon Composer paints a layer's fill colour into
+         the shape's *filled* area, so the radio rendered as hairline outlines, in dark mode
+         too; the dark field had been hiding it. Paths are now `fill="black"` with no stroke
+         (the layer's `fill` in `icon.json` supplies the real colour).
+      **Check an `.icon` with `ictool`, not the Simulator.** Simulators older than iOS 26
+      show the PNG fallback and will not show this class of bug. Icon Composer's renderer
+      does, without a device:
+      `"/Applications/Xcode-beta.app/Contents/Applications/Icon Composer.app/Contents/Executables/ictool" AppIcon.icon --export-image --output-file out.png --platform iOS --rendition Default --width 512 --height 512 --scale 1`
+      (`--rendition Dark` for dark). A green build proves only that the JSON parses; the
+      PNGs are drawn by a separate tool and say nothing about the `.icon`.
+
 ### P1 — quality of the core experience
 
 - [x] ~~**F29. The full player's schedule repeated the same programme.**~~ Done in #18.
