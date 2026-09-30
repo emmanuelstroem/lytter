@@ -55,6 +55,20 @@ struct Palette {
         fieldBottom:   srgb(0.129, 0.035, 0.027),
         glow:          srgb(1.000, 0.231, 0.078))
 
+    /// The mark on a warm cream field. The dark field read as a black square at every size
+    /// an icon is actually seen (Dock, Home Screen, Spotlight); a light one cannot, and the
+    /// red body and antenna contrast with it more than they ever did with maroon. Shares the
+    /// brand's body, antenna and controls, so only the field differs.
+    static let light = Palette(
+        bodyTop:       brand.bodyTop,
+        bodyBottom:    brand.bodyBottom,
+        antenna:       brand.antenna,
+        controlTop:    brand.controlTop,
+        controlBottom: brand.controlBottom,
+        fieldTop:      srgb(1.000, 0.965, 0.941),
+        fieldBottom:   srgb(0.961, 0.878, 0.827),
+        glow:          brand.glow)
+
     /// Greyscale, matched to the brand palette's luminance so the tinted icon keeps
     /// the same internal contrast.
     static let tinted = Palette(
@@ -431,7 +445,7 @@ let appIcon = "\(assets)/AppIcon.appiconset"
 let watchIcon = "\(assets)/AppIcon Watch.appiconset"
 
 print("iOS app icon — opaque, full bleed")
-renderSquareIcon(side: 1024, pal: .brand, glowAlpha: 0.34, to: "\(appIcon)/all.png")
+renderSquareIcon(side: 1024, pal: .light, glowAlpha: 0.10, to: "\(appIcon)/all.png")
 renderSquareIcon(side: 1024, pal: .brand, glowAlpha: 0.22, to: "\(appIcon)/dark.png")
 renderSquareIcon(side: 1024, pal: .tinted, glowAlpha: 0.18, to: "\(appIcon)/tinted.png")
 
@@ -439,7 +453,7 @@ print("watchOS app icon")
 renderSquareIcon(side: 1024, pal: .brand, glowAlpha: 0.34,
                  to: "\(watchIcon)/watch.png")
 
-// Full-bleed and opaque, the same as iOS. The transparent-margin "icon on a plate"
+// Light field, full-bleed and opaque, the same as iOS. The transparent-margin "icon on a plate"
 // convention this replaced predates Big Sur; the system has drawn its own rounded-square
 // shape and shadow around a submitted icon rather than applying one for several OS
 // releases now, so a plate with a transparent margin around it stayed exactly as
@@ -450,7 +464,7 @@ for (px, name) in [(16, "all_16x16"), (32, "all_32x32"), (32, "all_32x32 1"),
                    (64, "all_64x64"), (128, "all_128x128"), (256, "all_256x256 1"),
                    (256, "all_256x256"), (512, "all_512x512 1"), (512, "all_512x512"),
                    (1024, "store")] {
-    renderSquareIcon(side: CGFloat(px), pal: .brand, glowAlpha: 0.34,
+    renderSquareIcon(side: CGFloat(px), pal: .light, glowAlpha: 0.10,
                      to: "\(appIcon)/\(name).png")
 }
 
