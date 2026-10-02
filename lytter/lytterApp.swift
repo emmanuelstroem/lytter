@@ -28,6 +28,17 @@ struct lytterApp: App {
                 #if os(iOS) || os(macOS)
                 .environmentObject(siriShortcutsService)
                 #endif
+                #if os(tvOS)
+                // With the app in front, the Siri Remote's Play/Pause button arrives as a
+                // press event in the focus hierarchy, not as an MPRemoteCommand, so the
+                // command-centre handlers never see it. Unhandled, it fell through to the
+                // system, which paused the player but could not bring it back.
+                .onPlayPauseCommand {
+                    if let channel = serviceManager.playingChannel {
+                        serviceManager.togglePlayback(for: channel)
+                    }
+                }
+                #endif
                 .onOpenURL { url in
                     deepLinkHandler.handleDeepLink(url)
                 }

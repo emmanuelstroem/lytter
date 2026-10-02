@@ -270,8 +270,17 @@ class AudioPlayerService: NSObject, ObservableObject {
         commandCenter?.seekBackwardCommand.removeTarget(nil)
         commandCenter?.changePlaybackPositionCommand.removeTarget(nil)
 
+        // Enable explicitly. A command center taken from an MPNowPlayingSession on tvOS
+        // does not necessarily start with these enabled, and a disabled command is never
+        // delivered to its handler — pause could work while play never arrived.
+        commandCenter?.playCommand.isEnabled = true
+        commandCenter?.pauseCommand.isEnabled = true
+        commandCenter?.stopCommand.isEnabled = true
+        commandCenter?.togglePlayPauseCommand.isEnabled = true
+
         // Configure play command
         commandCenter?.playCommand.addTarget { [weak self] _ in
+            Log.playback.info("remote play command")
             guard let self else { return .commandFailed }
             if self.hasLoadedItem {
                 self.resume()
@@ -289,18 +298,21 @@ class AudioPlayerService: NSObject, ObservableObject {
 
         // Configure pause command
         commandCenter?.pauseCommand.addTarget { [weak self] _ in
+            Log.playback.info("remote pause command")
             self?.pause()
             return .success
         }
 
         // Configure stop command (acts like pause for live radio)
         commandCenter?.stopCommand.addTarget { [weak self] _ in
+            Log.playback.info("remote stop command")
             self?.pause()
             return .success
         }
 
         // Configure toggle play/pause command
         commandCenter?.togglePlayPauseCommand.addTarget { [weak self] _ in
+            Log.playback.info("remote togglePlayPause command")
             guard let self else { return .commandFailed }
             if self.isPlaying {
                 self.pause()
@@ -509,6 +521,7 @@ class AudioPlayerService: NSObject, ObservableObject {
     
     
     func play(url: URL) {
+        pausedAt = nil
         isLoading = true
         error = nil
         // Starting a channel is deliberate, so any pending resume intent is void.
@@ -616,6 +629,7 @@ class AudioPlayerService: NSObject, ObservableObject {
     func pause(resumable: Bool = false) {
         player?.pause()
         isPlaying = false
+        pausedAt = Date()
 
         if !resumable {
             interruption.playbackSettledDeliberately()
@@ -647,25 +661,68 @@ class AudioPlayerService: NSObject, ObservableObject {
     /// can start playback when no item is loaded (e.g. restored from cache).
     var onRequestPlay: (() -> Void)?
 
-    func resume() {
-        player?.play()
-        isPlaying = true
+    /// When the current pause began, so resume() can tell a momentary pause from one long
+    /// enough that a live stream's buffered window has gone stale.
+    private var pausedAt: Date?
 
-            // Reactivate audio session when resuming
-        #if os(iOS) || os(tvOS)
-        do {
-            let audioSession = AVAudioSession.sharedInstance()
-            
-                // Ensure category is set correctly
-            try audioSession.setCategory(.playback, mode: .default)
-            try audioSession.setActive(true)
-        } catch {
-                // Silent error handling
+    /// Past this, a paused live item is reloaded instead of resumed. `play()` on an
+    /// `AVPlayerItem` whose live window has moved on can leave it stalled with no error.
+    private static let staleAfter: TimeInterval = 10
+
+    func resume() {
+        Log.playback.info("resume() requested")
+        let url = (player?.currentItem?.asset as? AVURLAsset)?.url
+        if let pausedAt, Date().timeIntervalSince(pausedAt) > Self.staleAfter, let url {
+            Log.playback.info("resuming after a long pause; reloading the live stream")
+            play(url: url)
+            return
         }
+        pausedAt = nil
+
+            // Session activation is off the main thread: setActive(true) can block, and
+            // AVAudioSession warns when it is called there. play() waits for it, since
+            // starting against an inactive session is what failed silently before.
+        activateSessionThenOnMain { [weak self] in
+            guard let self, let player = self.player else { return }
+            player.play()
+            self.isPlaying = true
+            self.updateCommandCenterPlaybackState()
+            self.verifyResumed(player, reloadingWith: url)
+        }
+    }
+
+    /// Activates the playback session on a background queue, then runs `then` on main.
+    /// A failure is logged and `then` still runs: a session that is already active
+    /// reports no error, and trying to play is better than staying silent.
+    private func activateSessionThenOnMain(_ then: @escaping () -> Void) {
+        #if os(iOS) || os(tvOS)
+        DispatchQueue.global(qos: .userInitiated).async {
+            do {
+                let audioSession = AVAudioSession.sharedInstance()
+                try audioSession.setCategory(.playback, mode: .default)
+                try audioSession.setActive(true)
+            } catch {
+                Log.playback.error(
+                    "could not activate the audio session on resume: \(error.localizedDescription, privacy: .public)")
+            }
+            DispatchQueue.main.async(execute: then)
+        }
+        #else
+        then()
         #endif
-        
-            // Update Command Center playback state
-        updateCommandCenterPlaybackState()
+    }
+
+    /// `play()` on a paused item can leave it stalled with no error — either back at
+    /// `.paused`, or forever in `.waitingToPlayAtSpecifiedRate` on a live window that has
+    /// moved on. If it is not actually playing a few seconds later, reload the stream.
+    private func verifyResumed(_ player: AVPlayer, reloadingWith url: URL?) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 4) { [weak self] in
+            guard let self, self.player === player, self.isPlaying,
+                  player.timeControlStatus != .playing, let url else { return }
+            Log.playback.error(
+                "resume did not start audio (status \(player.timeControlStatus.rawValue), waiting: \(player.reasonForWaitingToPlay?.rawValue ?? "none", privacy: .public), error: \(player.currentItem?.error?.localizedDescription ?? "none", privacy: .public)); reloading the stream")
+            self.play(url: url)
+        }
     }
     
     func stop() {
