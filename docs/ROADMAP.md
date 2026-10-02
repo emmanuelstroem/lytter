@@ -230,17 +230,15 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
       `"/Applications/Xcode-beta.app/Contents/Applications/Icon Composer.app/Contents/Executables/ictool" AppIcon.icon --export-image --output-file out.png --platform iOS --rendition Default --width 512 --height 512 --scale 1`
       (`--rendition Dark` for dark). A green build proves only that the JSON parses; the
       PNGs are drawn by a separate tool and say nothing about the `.icon`.
-- [ ] **F41. Selecting the station that is already playing restarts it.** Reported from
-      use: choosing the channel that is on — from a shelf card, search, Favourites — tears
-      the stream down and starts it again, an audible gap for nothing. It should be a no-op
-      when the selection is the same channel *and* the same district variant, and restart
-      only when either differs. Likely cause: the selection paths call
-      `DRServiceManager.playChannel(_:)` directly (16 call sites), and `playChannel` always
-      reaches `audioPlayer.play(url:)` without comparing against `playingChannel`.
-      `togglePlayback(for:)` already does that comparison, but by `id` only — check whether
-      a district variant has its own `DRChannel.id` before reusing it, or "same channel,
-      different district" will wrongly be treated as a no-op. A paused channel that is
-      selected again should probably resume rather than restart; decide that explicitly.
+- [x] ~~**F41. Selecting the station that is already playing restarts it.**~~ Done.
+      Choosing the channel that was on — from a shelf card, search, Favourites — tore the
+      stream down and started it again. The check now sits at the top of
+      `DRServiceManager.playChannel`, so all its call sites get it, as
+      `selectionAction(for:loaded:hasLoadedItem:isPlaying:)`: the same channel already
+      playing is left alone, the same channel paused resumes, and anything else restarts —
+      another channel, another district of the same station, or a channel with no usable
+      item (restored at launch, or failed). Each district is its own `DRChannel` with its
+      own `id`, so comparing ids is enough. Covered by `ChannelSelectionTests`.
 
 ### P1 — quality of the core experience
 
