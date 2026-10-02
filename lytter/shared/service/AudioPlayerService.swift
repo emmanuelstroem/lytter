@@ -27,10 +27,18 @@ class AudioPlayerService: NSObject, ObservableObject {
     /// the item and subscribe to the player, so leaving them in place retains both, and
     /// a discarded player still writing `isPlaying` would fight the live one.
     private var playerObservations = Set<AnyCancellable>()
+    /// Keeps canSeek/isBehindLive current. Belongs to one AVPlayer, so it is removed
+    /// before that player is replaced.
+    private var timeObserver: (player: AVPlayer, token: Any)?
     
     @Published var isPlaying = false
     @Published var duration: TimeInterval = 0
     @Published var isLoading = false
+    /// True when the stream carries a DVR window to seek within. DR's HLS streams do
+    /// (about 34 minutes, sliding); the ICY fallback has none.
+    @Published private(set) var canSeek = false
+    /// True when playback sits far enough back from the live edge to offer "Live".
+    @Published private(set) var isBehindLive = false
     @Published var error: String?
     
         // Control for screen sleep behavior
@@ -329,13 +337,28 @@ class AudioPlayerService: NSObject, ObservableObject {
             return .success
         }
 
-        // Skip and seek are disabled rather than wired up. These are live ICY streams
-        // with no seekable range, so the old handlers — seek(to: .zero) and
-        // seek(to: .positiveInfinity) — did nothing at all, while the commands were
-        // advertised as enabled. The lock screen and Control Centre showed skip buttons
-        // that silently ignored every press. Better to not offer them.
-        commandCenter?.skipBackwardCommand.isEnabled = false
-        commandCenter?.skipForwardCommand.isEnabled = false
+        // Skip works within the HLS stream's DVR window. It is enabled only while there
+        // is one (updateSkipCommandsEnabled): the ICY fallback has no seekable range, and
+        // advertising skip there put buttons on the lock screen that did nothing.
+        let interval = NSNumber(value: Self.skipInterval)
+        commandCenter?.skipBackwardCommand.preferredIntervals = [interval]
+        commandCenter?.skipForwardCommand.preferredIntervals = [interval]
+        commandCenter?.skipBackwardCommand.addTarget { [weak self] event in
+            guard let self, self.canSeek else { return .commandFailed }
+            let seconds = (event as? MPSkipIntervalCommandEvent)?.interval ?? Self.skipInterval
+            self.skip(by: -seconds)
+            return .success
+        }
+        commandCenter?.skipForwardCommand.addTarget { [weak self] event in
+            guard let self, self.canSeek else { return .commandFailed }
+            let seconds = (event as? MPSkipIntervalCommandEvent)?.interval ?? Self.skipInterval
+            self.skip(by: seconds)
+            return .success
+        }
+        updateSkipCommandsEnabled()
+
+        // Continuous seek and scrubbing to a position stay off: the lock screen has no
+        // meaningful position on a live stream to scrub along.
         commandCenter?.seekForwardCommand.isEnabled = false
         commandCenter?.seekBackwardCommand.isEnabled = false
         commandCenter?.changePlaybackPositionCommand.isEnabled = false
@@ -500,6 +523,11 @@ class AudioPlayerService: NSObject, ObservableObject {
     }
     #endif
     
+    private func updateSkipCommandsEnabled() {
+        commandCenter?.skipBackwardCommand.isEnabled = canSeek
+        commandCenter?.skipForwardCommand.isEnabled = canSeek
+    }
+
     func updateCommandCenterPlaybackState() {
         var nowPlayingInfo = nowPlayingInfoCenter?.nowPlayingInfo ?? [:]
         nowPlayingInfo[MPNowPlayingInfoPropertyPlaybackRate] = isPlaying ? 1.0 : 0.0
@@ -558,9 +586,11 @@ class AudioPlayerService: NSObject, ObservableObject {
             // service. A discarded player reaching .paused would then flip the UI to
             // "paused" while the channel the user just chose was playing.
         playerObservations.removeAll()
+        removeTimeObserver()
 
         // Create new player
         player = AVPlayer(playerItem: playerItem)
+        addTimeObserver()
 
         #if os(tvOS)
         if let player = player {
@@ -568,9 +598,9 @@ class AudioPlayerService: NSObject, ObservableObject {
         }
         #endif
         
-            // No periodic time observer. It fired every 5 seconds to write `currentTime`,
-            // which no view reads — live radio has no meaningful elapsed position, and
-            // the two players that show a progress bar drive it from their own @State.
+            // The one periodic observer (addTimeObserver, above) only tracks where playback
+            // sits in the DVR window. There is still no `currentTime` to publish: the two
+            // players that show a progress bar drive it from their own @State.
         
             // Observe player item status
         playerItem.publisher(for: \.status)
@@ -672,7 +702,11 @@ class AudioPlayerService: NSObject, ObservableObject {
     func resume() {
         Log.playback.info("resume() requested")
         let url = (player?.currentItem?.asset as? AVURLAsset)?.url
-        if let pausedAt, Date().timeIntervalSince(pausedAt) > Self.staleAfter, let url {
+        // Inside the DVR window, a pause is a time-shift: carry on from where it stopped,
+        // and "Live" is there to jump forward. Past the window — or on a stream without
+        // one — the position is gone, so reload at live.
+        if let pausedAt, Date().timeIntervalSince(pausedAt) > Self.staleAfter,
+           !positionIsInsideWindow, let url {
             Log.playback.info("resuming after a long pause; reloading the live stream")
             play(url: url)
             return
@@ -728,7 +762,9 @@ class AudioPlayerService: NSObject, ObservableObject {
     func stop() {
         player?.pause()
         playerObservations.removeAll()
+        removeTimeObserver()
         player = nil
+        refreshSeekState()
         isPlaying = false
         interruption.playbackSettledDeliberately()
         duration = 0
@@ -746,9 +782,112 @@ class AudioPlayerService: NSObject, ObservableObject {
         #endif
     }
     
-    func seek(to time: TimeInterval) {
-        let cmTime = CMTime(seconds: time, preferredTimescale: CMTimeScale(NSEC_PER_SEC))
-        player?.seek(to: cmTime)
+    // MARK: - Seeking within the DVR window
+
+    /// How far one press of skip moves, on screen and on the lock screen alike.
+    static let skipInterval: TimeInterval = 15
+
+    /// Closer to the live edge than this counts as live. Playback starts a few seconds
+    /// short of the edge by design, so zero would never be reached.
+    private static let liveTolerance: TimeInterval = 10
+
+    /// The window AVPlayer can seek within, or nil when there is none worth offering.
+    private var seekableRange: CMTimeRange? {
+        guard let range = player?.currentItem?.seekableTimeRanges.last?.timeRangeValue,
+              range.isValid, range.duration.seconds > Self.skipInterval * 2 else { return nil }
+        return range
+    }
+
+    /// Moves playback by `seconds`, kept inside the window. Forward stops at live.
+    func skip(by seconds: TimeInterval) {
+        guard let range = seekableRange, let player else { return }
+        let target = min(max(player.currentTime().seconds + seconds, range.start.seconds),
+                         range.end.seconds)
+        seek(to: target)
+    }
+
+    /// Jumps to the live edge.
+    func seekToLive() {
+        guard let range = seekableRange else { return }
+        seek(to: range.end.seconds)
+    }
+
+    private func seek(to seconds: TimeInterval) {
+        let time = CMTime(seconds: seconds, preferredTimescale: 600)
+        let tolerance = CMTime(seconds: 1, preferredTimescale: 600)
+        player?.seek(to: time, toleranceBefore: tolerance, toleranceAfter: tolerance) { [weak self] _ in
+            DispatchQueue.main.async { self?.refreshSeekState() }
+        }
+    }
+
+    /// True when the current position is still inside the window, so a paused stream can
+    /// carry on from where it stopped rather than being reloaded at live.
+    private var positionIsInsideWindow: Bool {
+        guard let range = seekableRange, let time = player?.currentTime(), time.isValid else {
+            return false
+        }
+        return range.containsTime(time)
+    }
+
+    /// The window's end as last seen, and when. See `estimatedLiveEdge(for:)`.
+    private var liveEdgeSample: (end: TimeInterval, at: Date)?
+
+    /// Where live is now, between playlist refreshes.
+    ///
+    /// The window's end does not move smoothly: it jumps forward a segment at a time when
+    /// the playlist reloads (about every 7 s on DR), while the playhead moves continuously.
+    /// Measured against the raw end, "behind live" was a sawtooth with that amplitude, and
+    /// 15 s back — one skip — straddled the threshold, so Live and skip-forward flickered
+    /// on and off with every refresh. Projecting the last end forward at 1 s/s keeps the
+    /// distance steady while playing; a fresh end that overtakes the projection replaces it.
+    private func estimatedLiveEdge(for range: CMTimeRange) -> TimeInterval {
+        let now = Date()
+        let end = range.end.seconds
+        if let sample = liveEdgeSample {
+            let projected = sample.end + now.timeIntervalSince(sample.at)
+            // A window that is far behind the projection is a new stream, not a late
+            // refresh: start again from it.
+            if end <= projected, projected - end < Self.skipInterval * 2 {
+                return projected
+            }
+        }
+        liveEdgeSample = (end, now)
+        return end
+    }
+
+    private func refreshSeekState() {
+        let range = seekableRange
+        let behind: Bool
+        if let range, let time = player?.currentTime(), time.isValid {
+            behind = estimatedLiveEdge(for: range) - time.seconds > Self.liveTolerance
+        } else {
+            behind = false
+        }
+        // Assign only on change: this runs every second, and each write to a published
+        // property redraws every view observing it.
+        if canSeek != (range != nil) {
+            canSeek = range != nil
+            updateSkipCommandsEnabled()
+        }
+        if isBehindLive != behind { isBehindLive = behind }
+    }
+
+    private func addTimeObserver() {
+        guard let player else { return }
+        let token = player.addPeriodicTimeObserver(
+            forInterval: CMTime(seconds: 1, preferredTimescale: 600), queue: .main
+        ) { [weak self] _ in
+            self?.refreshSeekState()
+        }
+        timeObserver = (player, token)
+    }
+
+    private func removeTimeObserver() {
+        if let (owner, token) = timeObserver {
+            owner.removeTimeObserver(token)
+        }
+        timeObserver = nil
+        liveEdgeSample = nil
     }
     
     func setVolume(_ volume: Float) {
