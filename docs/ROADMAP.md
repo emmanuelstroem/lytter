@@ -183,25 +183,18 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
       cache, so an unreachable `/channels` does not mean going back to guessing.
       **Not done: Top Shelf** still splits titles, since the extension has its own copy of
       the model (see P14).
-- [ ] **F39. Remote play/pause does not resume, and there is no scrub.** Reported from use:
-      pausing from the lock screen / Siri Remote works, but pressing play again does not
-      bring audio back. Not yet reproduced or fixed — diagnosed from the code, which gives
-      two plausible causes rather than one confirmed root:
-      1. `AudioPlayerService.resume()` calls `player?.play()` and reactivates
-         `AVAudioSession`, but the `try? audioSession.setActive(true)` failure is caught and
-         silently discarded (`// Silent error handling`). A remote pause typically happens
-         while backgrounded, which is exactly when session reactivation is likeliest to
-         fail — e.g. another app has taken audio focus. In-app pause/resume goes through the
-         same `resume()`, so if the bug is here it should reproduce in-app too when
-         backgrounded and resumed from the lock screen; that is the first thing to confirm.
-      2. Live-stream staleness: pausing an `AVPlayerItem` for more than a few seconds can
-         leave `timeControlStatus` stuck once the buffered/live window has passed, where
-         `play()` alone does not restart audio and the item needs to be reloaded
-         (`play(url:)` again) rather than resumed.
-      Start by reproducing with `commandCenter?.pauseCommand`/`playCommand` logging and
-      inspecting `player?.error` and `timeControlStatus` after a real-world pause (tens of
-      seconds, backgrounded) rather than an immediate one — a fast pause/resume in the
-      simulator is unlikely to show either failure mode.
+- [ ] **F39. Remote play/pause does not resume, and there is no scrub.** Resume is done;
+      scrubbing is still open.
+      ~~**Resume.**~~ Done. The root cause was neither of the two guessed from the code. On
+      tvOS, with the app in front, the Siri Remote's Play/Pause button arrives as a press
+      event in the focus hierarchy, not as an `MPRemoteCommand`, so the command-centre
+      handlers never ran; nothing in the app handled the press. Found by driving
+      `XCUIRemote.shared.press(.playPause)` in the simulator with `timeControlStatus`
+      logged: neither press changed the player. The fix is an `.onPlayPauseCommand` on the
+      root view in `lytterApp.swift`, routed through `togglePlayback`. Two hardening
+      changes went in alongside: `resume()` reloads the live stream after a pause longer
+      than 10 s (and as a fallback if it is not playing 4 s after resuming), and session
+      activation moved off the main thread, which `AVAudioSession` warned about.
       **Scrubbing** — 15-second skip forward/back, and a way to jump forward to live — was
       deliberately *disabled* rather than built: `skipForwardCommand` /
       `skipBackwardCommand` / `changePlaybackPositionCommand` are all `isEnabled = false`,
