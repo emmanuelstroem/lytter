@@ -816,7 +816,44 @@ class DRServiceManager: ObservableObject {
         objectWillChange.send()
     }
     
+    /// What selecting a channel should do, given what the player already has.
+    enum SelectionAction: Equatable {
+        /// Start the stream from scratch: another channel or district, or nothing usable
+        /// is loaded (never started this session, or the item failed).
+        case restart
+        /// The selected channel is loaded and paused: carry on rather than reload.
+        case resume
+        /// The selected channel is already playing: leave it alone.
+        case nothing
+    }
+
+    /// Selecting the station that is already on used to tear the stream down and start it
+    /// again — an audible gap for nothing. Each district is its own `DRChannel` with its
+    /// own `id`, so comparing ids is enough to tell "same channel and district" apart from
+    /// "different channel" and "same station, different district".
+    static func selectionAction(for channel: DRChannel, loaded: DRChannel?,
+                                hasLoadedItem: Bool, isPlaying: Bool) -> SelectionAction {
+        guard loaded?.id == channel.id, hasLoadedItem else { return .restart }
+        return isPlaying ? .nothing : .resume
+    }
+
     func playChannel(_ channel: DRChannel) {
+        switch Self.selectionAction(for: channel, loaded: playingChannel,
+                                    hasLoadedItem: audioPlayer.hasLoadedItem,
+                                    isPlaying: isPlaying) {
+        case .nothing:
+            Log.playback.debug("selected the channel already playing; leaving it")
+            return
+        case .resume:
+            Log.playback.debug("selected the paused channel; resuming")
+            audioPlayer.resume()
+            startPolling(for: channel)
+            audioPlayer.updateCommandCenterPlaybackState()
+            return
+        case .restart:
+            break
+        }
+
         // Switching channels: drop the previous channel's polling before starting the
         // new one, so two loops never run at once.
         stopPolling()
