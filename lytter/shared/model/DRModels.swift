@@ -182,6 +182,21 @@ struct DRImageAsset: Codable, Equatable {
 }
 
 // MARK: - Role Models (for tracks)
+/// DR's timestamps, such as "2026-10-02T20:49:10+00:00".
+///
+/// One formatter for the app. `startDate`, `endDate` and `playedDate` each built a new one
+/// on every access, and they are read inside filters over whole arrays: picking the track
+/// being heard runs every second while paused behind live, across the full track list.
+enum DRDate {
+    /// `ISO8601DateFormatter` is documented as thread-safe, so one instance can be shared
+    /// across isolation domains; Swift cannot see that, hence `nonisolated(unsafe)`.
+    nonisolated(unsafe) private static let formatter = ISO8601DateFormatter()
+
+    nonisolated static func parse(_ string: String) -> Date? {
+        formatter.date(from: string)
+    }
+}
+
 struct DRTrackRole: Codable, Equatable {
     let artistUrn: String
     let role: String
@@ -203,10 +218,7 @@ struct DRTrack: Identifiable, Codable, Equatable {
     
     var id: String { trackUrn }
     
-    var playedDate: Date? {
-        let formatter = ISO8601DateFormatter()
-        return formatter.date(from: playedTime)
-    }
+    var playedDate: Date? { DRDate.parse(playedTime) }
     
     var duration: TimeInterval {
         return TimeInterval(durationMilliseconds / 1000)
@@ -303,15 +315,9 @@ struct DREpisode: Identifiable, Codable, Equatable {
         return max(Int(end.timeIntervalSince(date) / 60), 0)
     }
 
-    var startDate: Date? {
-        let formatter = ISO8601DateFormatter()
-        return formatter.date(from: startTime)
-    }
+    var startDate: Date? { DRDate.parse(startTime) }
     
-    var endDate: Date? {
-        let formatter = ISO8601DateFormatter()
-        return formatter.date(from: endTime)
-    }
+    var endDate: Date? { DRDate.parse(endTime) }
     
     var duration: TimeInterval {
         return TimeInterval(durationMilliseconds / 1000)

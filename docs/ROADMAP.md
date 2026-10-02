@@ -412,10 +412,17 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
 - [ ] **F34. tvOS: the sidebar opens expanded on every launch.** The Home entry in the
       sidebar starts expanded each time the app opens. It should start collapsed, as the
       TV and Music apps do, so the first thing on screen is the content.
-- [ ] **F35. tvOS: Back and the TV button should leave the app.** Pressing Back (or the TV
-      button) repeatedly gets stuck on the app's own Home instead of returning to the Apple
-      TV home screen. Once Home is showing with nothing to go back from, the next press
-      should exit the app, as every system app does.
+- [x] ~~**F35. tvOS: Back and the TV button should leave the app.**~~ Not reproducible
+      on tvOS 26.5. Reported as Back getting stuck on the app's own Home instead of
+      returning to the Apple TV home screen. Driven with `XCUIRemote` and a screenshot
+      after each press: from Home, Back moves focus into the sidebar and the next press
+      leaves the app; from Now Playing, Back goes Home, then the sidebar, then out — the TV
+      and Music apps' behaviour. Most likely fixed by the move to the system sidebar
+      (`.sidebarAdaptable`), which owns Back. Not checked: tvOS 17's top tab bar, the
+      sheets, and the TV button, whose action is a system setting the app cannot change.
+      Trap for whoever re-checks: just after the app leaves, XCUITest still reports it
+      `runningForeground` with nothing focused, which looks exactly like "stuck" — look
+      at the screen.
 - [ ] **F36. tvOS: Search at the top of the sidebar.** Move Search above the other
       destinations.
 - [ ] **F37. tvOS: Settings at the bottom of the sidebar.** A Settings destination holding
@@ -671,9 +678,13 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
       `cachedSchedules` array (~50–70 episodes) on every call, and it is called *from view
       bodies* — `tvOSChannelCard` for artwork, the now-playing views several times per
       render. Build `[String: [DREpisode]]` once per refresh.
-- [ ] **P7. Hoist the `ISO8601DateFormatter`s.** `startDate`, `endDate` and `playedDate`
-      each allocate a new formatter on every access, and `isCurrentlyPlaying` calls them
-      inside filters over the whole array. One `static let` fixes it.
+- [x] ~~**P7. Hoist the `ISO8601DateFormatter`s.**~~ Done. `startDate`, `endDate` and
+      `playedDate` each allocated a new formatter on every access, inside filters over
+      whole arrays — and picking the track being heard now runs every second while paused
+      behind live. All three go through `DRDate.parse`, one shared formatter
+      (`nonisolated(unsafe)`: `ISO8601DateFormatter` is documented thread-safe, which
+      Swift cannot see). About 3x faster per parse (20,000: 2.6 s → 0.93 s). Covered by
+      `DRDateTests`.
 - [x] ~~**P8. Make polling cancellable.**~~ Done in #12, and the bug was worse than
       recorded. `getCurrentTrack` scheduled the next poll, which called `getCurrentTrack`
       again — a self-perpetuating `asyncAfter` chain with no handle, guarded only by
