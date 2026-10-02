@@ -456,6 +456,17 @@
         }
       }
     },
+    "Jump to live": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gå til live"
+          }
+        }
+      }
+    },
     "LIVE": {
       "extractionState": "manual",
       "localizations": {
@@ -988,24 +999,24 @@
         }
       }
     },
-    "Skip back 30 seconds": {
+    "Skip back 15 seconds": {
       "extractionState": "manual",
       "localizations": {
         "da": {
           "stringUnit": {
             "state": "translated",
-            "value": "Spol 30 sekunder tilbage"
+            "value": "Spol 15 sekunder tilbage"
           }
         }
       }
     },
-    "Skip forward": {
+    "Skip forward 15 seconds": {
       "extractionState": "manual",
       "localizations": {
         "da": {
           "stringUnit": {
             "state": "translated",
-            "value": "Spol frem"
+            "value": "Spol 15 sekunder frem"
           }
         }
       }

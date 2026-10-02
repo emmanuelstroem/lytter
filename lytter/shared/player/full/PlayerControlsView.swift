@@ -15,6 +15,11 @@ struct PlayerControlsView: View {
     let onBackwardTap: (() -> Void)?
     let onPlayPauseTap: (() -> Void)?
     let onForwardTap: (() -> Void)?
+    /// False at the live edge, where there is nothing ahead to skip to.
+    let isForwardEnabled: Bool
+    /// Shown when set: a "Live" control that jumps to the live edge.
+    let onLiveTap: (() -> Void)?
+    let isBehindLive: Bool
     
     init(
         isPlaying: Bool,
@@ -23,7 +28,10 @@ struct PlayerControlsView: View {
         showForwardButton: Bool = true,
         onBackwardTap: (() -> Void)? = nil,
         onPlayPauseTap: (() -> Void)? = nil,
-        onForwardTap: (() -> Void)? = nil
+        onForwardTap: (() -> Void)? = nil,
+        isForwardEnabled: Bool = true,
+        onLiveTap: (() -> Void)? = nil,
+        isBehindLive: Bool = false
     ) {
         self.isPlaying = isPlaying
         self.showBackwardButton = showBackwardButton
@@ -32,6 +40,9 @@ struct PlayerControlsView: View {
         self.onBackwardTap = onBackwardTap
         self.onPlayPauseTap = onPlayPauseTap
         self.onForwardTap = onForwardTap
+        self.isForwardEnabled = isForwardEnabled
+        self.onLiveTap = onLiveTap
+        self.isBehindLive = isBehindLive
     }
     
     var body: some View {
@@ -42,11 +53,11 @@ struct PlayerControlsView: View {
                         Button(action: {
                             onBackwardTap?()
                         }) {
-                            Image(systemName: "gobackward.30")
+                            Image(systemName: "gobackward.15")
                                 .font(.system(size: min(geometry.size.width, geometry.size.height) * 0.3, weight: .medium))
                                 .foregroundStyle(Color.secondary)
                         }
-                        .accessibilityLabel("Skip back 30 seconds")
+                        .accessibilityLabel("Skip back 15 seconds")
                     }
                     
                     if showPlayPauseButton {
@@ -66,12 +77,34 @@ struct PlayerControlsView: View {
                         Button(action: {
                             onForwardTap?()
                         }) {
-                            Image(systemName: "goforward.plus")
+                            Image(systemName: "goforward.15")
                                 .font(.system(size: min(geometry.size.width, geometry.size.height) * 0.3, weight: .medium))
                                 .foregroundStyle(Color.secondary)
                         }
-                        .accessibilityLabel("Skip forward")
+                        .disabled(!isForwardEnabled)
+                        .opacity(isForwardEnabled ? 1 : 0.35)
+                        .accessibilityLabel("Skip forward 15 seconds")
                     }
+                }
+
+                if let onLiveTap {
+                    // Red while at the live edge; behind it, a tappable way back.
+                    Button(action: onLiveTap) {
+                        HStack(spacing: 6) {
+                            Circle()
+                                .fill(isBehindLive ? Color.secondary : Color.red)
+                                .frame(width: 8, height: 8)
+                            Text("Live")
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(isBehindLive ? Color.primary : Color.red)
+                        }
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(Capsule().fill(Color.secondary.opacity(isBehindLive ? 0.2 : 0)))
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(!isBehindLive)
+                    .accessibilityLabel(isBehindLive ? "Jump to live" : "Live")
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)

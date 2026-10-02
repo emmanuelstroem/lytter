@@ -629,6 +629,10 @@ class DRServiceManager: ObservableObject {
     @Published var currentLiveProgram: DREpisode?
     @Published var currentTrack: DRTrack?
     @Published var isPlaying = false
+    /// Mirrors AudioPlayerService: whether the stream can be skipped within, and whether
+    /// playback is behind live. Views observe this manager, not the player.
+    @Published private(set) var canSeek = false
+    @Published private(set) var isBehindLive = false
     @Published var playbackError: String? // Separate error for playback issues
     
     let audioPlayer = AudioPlayerService()
@@ -675,6 +679,13 @@ class DRServiceManager: ObservableObject {
     private func setupBindings() {
         audioPlayer.$isPlaying
             .assign(to: \.isPlaying, on: self)
+            .store(in: &cancellables)
+
+        audioPlayer.$canSeek
+            .assign(to: \.canSeek, on: self)
+            .store(in: &cancellables)
+        audioPlayer.$isBehindLive
+            .assign(to: \.isBehindLive, on: self)
             .store(in: &cancellables)
 
         // Route audio errors to playbackError, not the general error shown in the channel list
@@ -783,6 +794,14 @@ class DRServiceManager: ObservableObject {
         }
     }
     
+    func skip(by seconds: TimeInterval) {
+        audioPlayer.skip(by: seconds)
+    }
+
+    func seekToLive() {
+        audioPlayer.seekToLive()
+    }
+
     func stopPlayback() {
         audioPlayer.stop()
         playingChannel = nil

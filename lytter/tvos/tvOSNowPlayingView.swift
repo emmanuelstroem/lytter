@@ -316,7 +316,7 @@ struct tvOSNowPlayingControls: View {
     let channel: DRChannel
     @FocusState private var focused: ControlButton?
 
-    enum ControlButton: Hashable { case info, play, shareplay, schedule }
+    enum ControlButton: Hashable { case info, back, play, forward, shareplay, schedule, live }
 
     var body: some View {
         HStack(spacing: 32) {
@@ -328,6 +328,18 @@ struct tvOSNowPlayingControls: View {
             .buttonStyle(tvOSMusicCardButtonStyle())
             .focused($focused, equals: .info)
 
+            // Skip appears only when the stream has a DVR window to move in.
+            if serviceManager.canSeek {
+                Button {
+                    serviceManager.skip(by: -AudioPlayerService.skipInterval)
+                } label: {
+                    IconCircleLabel(systemImage: "gobackward.15", size: 64, iconSize: 28)
+                }
+                .buttonStyle(tvOSMusicCardButtonStyle())
+                .focused($focused, equals: .back)
+                .accessibilityLabel("Skip back 15 seconds")
+            }
+
             // Play / Pause (centre, larger)
             Button {
                 serviceManager.togglePlayback(for: channel)
@@ -336,6 +348,20 @@ struct tvOSNowPlayingControls: View {
             }
             .buttonStyle(tvOSMusicCardButtonStyle())
             .focused($focused, equals: .play)
+
+            if serviceManager.canSeek {
+                // Disabled at the live edge, where there is nothing ahead.
+                Button {
+                    serviceManager.skip(by: AudioPlayerService.skipInterval)
+                } label: {
+                    IconCircleLabel(systemImage: "goforward.15", size: 64, iconSize: 28)
+                        .opacity(serviceManager.isBehindLive ? 1 : 0.35)
+                }
+                .buttonStyle(tvOSMusicCardButtonStyle())
+                .disabled(!serviceManager.isBehindLive)
+                .focused($focused, equals: .forward)
+                .accessibilityLabel("Skip forward 15 seconds")
+            }
 
             Button {
                 if let ch = serviceManager.playingChannel { startSharePlay(for: ch) }
@@ -355,6 +381,19 @@ struct tvOSNowPlayingControls: View {
             .buttonStyle(tvOSMusicCardButtonStyle())
             .focused($focused, equals: .schedule)
             .accessibilityLabel("Schedule")
+
+            if serviceManager.isBehindLive {
+                Button {
+                    serviceManager.seekToLive()
+                    // The button goes once playback is live; hand focus somewhere that stays.
+                    focused = .play
+                } label: {
+                    LiveLabel()
+                }
+                .buttonStyle(tvOSMusicCardButtonStyle())
+                .focused($focused, equals: .live)
+                .accessibilityLabel("Jump to live")
+            }
         }
     }
 
@@ -374,6 +413,24 @@ struct tvOSNowPlayingControls: View {
                 .background(.ultraThinMaterial, in: Circle())
                 .shadow(color: .gray.opacity(isFocused ? 0.25 : 0), radius: 12, x: 0, y: 0)
                 .animation(.spring(response: 0.28, dampingFraction: 0.72), value: isFocused)
+        }
+    }
+
+    // Inner view: the way back to live, shown only while behind it
+    private struct LiveLabel: View {
+        @Environment(\.isFocused) private var isFocused
+
+        var body: some View {
+            HStack(spacing: 10) {
+                Circle().fill(Color.red).frame(width: 12, height: 12)
+                Text("Live").font(.system(size: 26, weight: .semibold))
+            }
+            .foregroundStyle(isFocused ? Color.black : Color.white)
+            .padding(.horizontal, 24)
+            .frame(height: 64)
+            .background(isFocused ? Color.white : Color.clear, in: Capsule())
+            .background(.ultraThinMaterial, in: Capsule())
+            .animation(.spring(response: 0.28, dampingFraction: 0.72), value: isFocused)
         }
     }
 

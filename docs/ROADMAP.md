@@ -183,33 +183,30 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
       cache, so an unreachable `/channels` does not mean going back to guessing.
       **Not done: Top Shelf** still splits titles, since the extension has its own copy of
       the model (see P14).
-- [ ] **F39. Remote play/pause does not resume, and there is no scrub.** Resume is done;
-      scrubbing is still open.
-      ~~**Resume.**~~ Done. The root cause was neither of the two guessed from the code. On
+- [x] ~~**F39. Remote play/pause does not resume, and there is no scrub.**~~ Done.
+      **Resume** (#41). The root cause was neither of the two guessed from the code. On
       tvOS, with the app in front, the Siri Remote's Play/Pause button arrives as a press
       event in the focus hierarchy, not as an `MPRemoteCommand`, so the command-centre
       handlers never ran; nothing in the app handled the press. Found by driving
       `XCUIRemote.shared.press(.playPause)` in the simulator with `timeControlStatus`
       logged: neither press changed the player. The fix is an `.onPlayPauseCommand` on the
-      root view in `lytterApp.swift`, routed through `togglePlayback`. Two hardening
-      changes went in alongside: `resume()` reloads the live stream after a pause longer
-      than 10 s (and as a fallback if it is not playing 4 s after resuming), and session
-      activation moved off the main thread, which `AVAudioSession` warned about.
-      **Scrubbing** — 15-second skip forward/back, and a way to jump forward to live — was
-      deliberately *disabled* rather than built: `skipForwardCommand` /
-      `skipBackwardCommand` / `changePlaybackPositionCommand` are all `isEnabled = false`,
-      with a comment recording that the old handlers seeked a stream with no seekable range
-      and silently did nothing. That reasoning holds for the ICY fallback, but
-      `DRChannel.streamURL` prefers HLS when DR's v5 API offers it
-      (`audioAssets.first(where: { $0.isStreamLive == true })`), and a live HLS stream
-      commonly carries a sliding DVR window with a real `currentItem.seekableTimeRanges` —
-      unlike ICY, which has none. So the premise needs re-checking before deciding this is
-      infeasible: log `currentItem?.seekableTimeRanges` on a channel actually playing over
-      HLS. If it reports a non-empty range, `skipForwardCommand`/`skipBackwardCommand` at a
-      15s `preferredIntervals` are the natural fit, and "back to live" is a seek to the
-      end of that range rather than a new capability. If DR's HLS has no DVR window (a pure
-      live playlist with no sliding buffer), the commands stay disabled and this is a
-      DR-imposed limit, not an app one.
+      root view in `lytterApp.swift`, routed through `togglePlayback`. Session activation
+      on resume also moved off the main thread, which `AVAudioSession` warned about.
+      **Scrubbing.** The premise that there was nothing to seek in held only for the ICY
+      fallback. DR's HLS streams carry a sliding DVR window of about 34 minutes
+      (`seekableTimeRanges` measured at `0+2027 s`, start advancing with the broadcast).
+      `AudioPlayerService` now publishes `canSeek` and `isBehindLive` from a 1 s periodic
+      observer, and offers `skip(by:)` and `seekToLive()`, clamped to the window.
+      "Behind live" is measured against a projected live edge, not the window's raw end:
+      the end jumps a segment at a time on each playlist reload (~7 s), so measured raw,
+      one 15 s skip straddled the 10 s threshold and Live flickered on every refresh. On
+      screen: ±15 s buttons and a Live control on the iOS full player and the tvOS Now
+      Playing row, shown only when `canSeek`; forward is disabled at the live edge. On the
+      lock screen, `skipBackward`/`skipForward` at 15 s, enabled only while `canSeek`.
+      A pause is now a time-shift: resuming inside the window carries on from where it
+      stopped; past it, or on ICY, it reloads at live (and still reloads if not playing
+      4 s after resuming). **Known gap:** the now-playing track and programme are polled
+      for live, so while behind live they describe what is on air, not what is heard.
 - [x] ~~**F40. The app icon rendered near-black on iOS and macOS.**~~ Done in #40. Three
       stacked causes, found one at a time because each hid the next:
       1. **The field was too dark.** A near-black background is most of the pixels at Dock /
@@ -233,6 +230,17 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
       `"/Applications/Xcode-beta.app/Contents/Applications/Icon Composer.app/Contents/Executables/ictool" AppIcon.icon --export-image --output-file out.png --platform iOS --rendition Default --width 512 --height 512 --scale 1`
       (`--rendition Dark` for dark). A green build proves only that the JSON parses; the
       PNGs are drawn by a separate tool and say nothing about the `.icon`.
+- [ ] **F41. Selecting the station that is already playing restarts it.** Reported from
+      use: choosing the channel that is on — from a shelf card, search, Favourites — tears
+      the stream down and starts it again, an audible gap for nothing. It should be a no-op
+      when the selection is the same channel *and* the same district variant, and restart
+      only when either differs. Likely cause: the selection paths call
+      `DRServiceManager.playChannel(_:)` directly (16 call sites), and `playChannel` always
+      reaches `audioPlayer.play(url:)` without comparing against `playingChannel`.
+      `togglePlayback(for:)` already does that comparison, but by `id` only — check whether
+      a district variant has its own `DRChannel.id` before reusing it, or "same channel,
+      different district" will wrongly be treated as a no-op. A paused channel that is
+      selected again should probably resume rather than restart; decide that explicitly.
 
 ### P1 — quality of the core experience
 

@@ -124,19 +124,26 @@ struct iOSFullPlayerSheet: View {
                         
                         // Controls Component
                         //
-                        // No skip buttons: these are live ICY streams with no
-                        // seekable range, so back-30 and forward did nothing at all.
-                        // The same buttons were removed from the lock screen and
-                        // Control Centre for the same reason.
+                        // Skip and Live appear only when the stream has a DVR window
+                        // (DR's HLS streams); the ICY fallback has nothing to seek in.
                         PlayerControlsView(
                             isPlaying: serviceManager.isPlaying,
-                            showBackwardButton: false,
-                            showForwardButton: false,
+                            showBackwardButton: serviceManager.canSeek,
+                            showForwardButton: serviceManager.canSeek,
+                            onBackwardTap: {
+                                serviceManager.skip(by: -AudioPlayerService.skipInterval)
+                            },
                             onPlayPauseTap: {
                                 if let playingChannel = serviceManager.playingChannel {
                                     serviceManager.togglePlayback(for: playingChannel)
                                 }
-                            }
+                            },
+                            onForwardTap: {
+                                serviceManager.skip(by: AudioPlayerService.skipInterval)
+                            },
+                            isForwardEnabled: serviceManager.isBehindLive,
+                            onLiveTap: serviceManager.canSeek ? { serviceManager.seekToLive() } : nil,
+                            isBehindLive: serviceManager.isBehindLive
                         )
                         
                         Spacer()
