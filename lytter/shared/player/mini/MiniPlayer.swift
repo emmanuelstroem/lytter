@@ -91,7 +91,7 @@ struct MiniPlayerComponents: View {
                     VStack(alignment: .leading, spacing: 1) {
                         if let playingChannel = playingChannel {
                             if let track = serviceManager.currentTrack {
-                                if track.isCurrentlyPlaying {
+                                if serviceManager.isHeard(track) {
                                     let programTitle = serviceManager.getCurrentProgram(for: playingChannel)
                                     VStack(alignment: .leading, spacing: 1) {
                                         Text(verbatim: "\(playingChannel.title) - \(programTitle?.cleanTitle() ?? "")")

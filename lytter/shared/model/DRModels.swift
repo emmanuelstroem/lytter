@@ -217,11 +217,13 @@ struct DRTrack: Identifiable, Codable, Equatable {
         return playedDate.addingTimeInterval(duration)
     }
     
-    var isCurrentlyPlaying: Bool {
+    var isCurrentlyPlaying: Bool { isPlaying(at: Date()) }
+
+    /// Whether this track was on air at `date`. Behind live, what is heard is not what is
+    /// on air, so the player asks about the moment being listened to.
+    func isPlaying(at date: Date) -> Bool {
         guard let playedDate = playedDate else { return false }
-        let now = Date()
-        let endTime = playedDate.addingTimeInterval(duration)
-        return now >= playedDate && now <= endTime
+        return date >= playedDate && date <= playedDate.addingTimeInterval(duration)
     }
     
     var artistName: String {
@@ -319,10 +321,11 @@ struct DREpisode: Identifiable, Codable, Equatable {
         return type == "Live"
     }
     
-    var isCurrentlyPlaying: Bool {
+    var isCurrentlyPlaying: Bool { isPlaying(at: Date()) }
+
+    func isPlaying(at date: Date) -> Bool {
         guard let startDate = startDate, let endDate = endDate else { return false }
-        let now = Date()
-        return now >= startDate && now <= endDate
+        return date >= startDate && date <= endDate
     }
     
     /// Returns the program title with channel name removed to avoid duplication
@@ -633,6 +636,8 @@ class DRServiceManager: ObservableObject {
     /// playback is behind live. Views observe this manager, not the player.
     @Published private(set) var canSeek = false
     @Published private(set) var isBehindLive = false
+    /// How far behind live playback is, in whole seconds; 0 at live or on ICY.
+    @Published private(set) var secondsBehindLive: TimeInterval = 0
     @Published var playbackError: String? // Separate error for playback issues
     
     let audioPlayer = AudioPlayerService()
@@ -686,6 +691,15 @@ class DRServiceManager: ObservableObject {
             .store(in: &cancellables)
         audioPlayer.$isBehindLive
             .assign(to: \.isBehindLive, on: self)
+            .store(in: &cancellables)
+        // Skipping, pausing and jumping to live all move the moment being heard, so the
+        // track and programme are picked again — from what is already fetched, no network.
+        audioPlayer.$secondsBehindLive
+            .removeDuplicates()
+            .sink { [weak self] seconds in
+                self?.secondsBehindLive = seconds
+                self?.reselectHeard()
+            }
             .store(in: &cancellables)
 
         // Route audio errors to playbackError, not the general error shown in the channel list
@@ -854,12 +868,17 @@ class DRServiceManager: ObservableObject {
             break
         }
 
+        recentTracks = []
+        heardSnapshot = nil
+        heardSnapshotTask?.cancel()
+        heardSnapshotTask = nil
+
         // Switching channels: drop the previous channel's polling before starting the
         // new one, so two loops never run at once.
         stopPolling()
         
         // Get current program from cached schedules
-        let currentProgram = getCurrentProgram(for: channel)
+        let currentProgram = liveProgram(for: channel)
         
         // Update UI on main actor
         Task { @MainActor in
@@ -919,9 +938,110 @@ class DRServiceManager: ObservableObject {
         Broadcaster.sections(from: availableChannels)
     }
 
+    /// The programme the listener is hearing on `channel`.
+    ///
+    /// For the playing channel while behind live, that is the programme on air at the
+    /// moment being heard, which near a boundary is the previous one. Every other channel,
+    /// and the playing one at live, is what is on air now.
     func getCurrentProgram(for channel: DRChannel) -> DREpisode? {
+        guard channel.id == playingChannel?.id, secondsBehindLive > 0 else {
+            return liveProgram(for: channel)
+        }
+        let date = listeningDate
+        let candidates = cachedSchedules.filter { $0.channel.id == channel.id }
+            + (heardSnapshot.flatMap { $0.channelID == channel.id ? $0.episodes : nil } ?? [])
+        return Self.heardProgram(in: candidates, at: date) ?? liveProgram(for: channel)
+    }
+
+    static func heardProgram(in programmes: [DREpisode], at date: Date) -> DREpisode? {
+        programmes.first { $0.isPlaying(at: date) }
+    }
+
+    /// The programme on air now, whatever the listener is hearing. For wall-clock needs:
+    /// the stream to start, and when the programme ends for the sleep timer.
+    func liveProgram(for channel: DRChannel) -> DREpisode? {
         let channelPrograms = cachedSchedules.filter { $0.channel.id == channel.id }
         return channelPrograms.first { $0.isCurrentlyPlaying } ?? channelPrograms.first
+    }
+
+    // MARK: - What is being heard
+
+    /// The moment being listened to: now, less how far behind live playback is.
+    var listeningDate: Date { Date().addingTimeInterval(-secondsBehindLive) }
+
+    /// Whether `track` is what the listener hears now. Views use this rather than
+    /// `isCurrentlyPlaying`, which asks about the live edge.
+    func isHeard(_ track: DRTrack) -> Bool { track.isPlaying(at: listeningDate) }
+
+    /// The last track list fetched for the playing channel, newest first. DR returns about
+    /// the last hour, which covers the ~34 minute DVR window.
+    private var recentTracks: [DRTrack] = []
+
+    /// The playing channel's schedule snapshot, fetched only once the listener is behind
+    /// live and earlier than the programme `/schedules/all/now` carries. Despite the
+    /// endpoint's name it is not "today": it starts with the programme before the one on
+    /// air, which is exactly the one a rewind across a boundary lands in.
+    private var heardSnapshot: HeardSnapshot?
+    private var heardSnapshotTask: Task<Void, Never>?
+
+    struct HeardSnapshot {
+        let channelID: String
+        let episodes: [DREpisode]
+        let fetchedAt: Date
+    }
+
+    /// After a failed or empty fetch, wait this long before asking again. Without it a
+    /// failure was cached for the channel and never retried; with no wait at all, a paused
+    /// listener — whose offset moves every second — would ask every second.
+    static let heardSnapshotRetryInterval: TimeInterval = 60
+
+    /// Whether the snapshot is needed and not already in hand.
+    static func needsHeardSnapshot(listeningAt date: Date, liveProgrammeStart: Date?,
+                                   channelID: String, have snapshot: HeardSnapshot?,
+                                   now: Date) -> Bool {
+        guard let liveProgrammeStart, date < liveProgrammeStart else { return false }
+        guard let snapshot, snapshot.channelID == channelID else { return true }
+        return snapshot.episodes.isEmpty
+            && now.timeIntervalSince(snapshot.fetchedAt) >= heardSnapshotRetryInterval
+    }
+
+    static func heardTrack(in tracks: [DRTrack], at date: Date) -> DRTrack? {
+        tracks.first { $0.isPlaying(at: date) }
+    }
+
+    /// Picks the track and programme for the moment being heard and publishes them if they
+    /// changed.
+    private func reselectHeard() {
+        guard let channel = playingChannel else { return }
+        let date = listeningDate
+        let track = Self.heardTrack(in: recentTracks, at: date)
+        loadHeardSnapshotIfNeeded(for: channel, at: date)
+        let program = getCurrentProgram(for: channel)
+        guard track != currentTrack || program?.id != currentLiveProgram?.id else { return }
+        Log.playback.debug("heard: \(track?.title ?? "no track", privacy: .public) at \(Int(self.secondsBehindLive)) s behind live")
+        currentTrack = track
+        currentLiveProgram = program
+        audioPlayer.updateCommandCenterInfo(channel: channel, program: program, track: track)
+    }
+
+    private func loadHeardSnapshotIfNeeded(for channel: DRChannel, at date: Date) {
+        guard heardSnapshotTask == nil,
+              Self.needsHeardSnapshot(listeningAt: date,
+                                      liveProgrammeStart: liveProgram(for: channel)?.startDate,
+                                      channelID: channel.id, have: heardSnapshot, now: Date())
+        else { return }
+        Log.playback.debug("behind live past the programme start; fetching the schedule snapshot")
+        heardSnapshotTask = Task { [weak self] in
+            guard let self else { return }
+            let episodes = await self.loadSchedule(for: channel)
+            await MainActor.run {
+                self.heardSnapshotTask = nil
+                guard self.playingChannel?.id == channel.id else { return }
+                self.heardSnapshot = HeardSnapshot(channelID: channel.id, episodes: episodes,
+                                                   fetchedAt: Date())
+                self.reselectHeard()
+            }
+        }
     }
     
     /// Today's full schedule for a channel.
@@ -1012,17 +1132,17 @@ class DRServiceManager: ObservableObject {
     func getCurrentTrack(for channel: DRChannel) async -> DRTrack? {
         do {
             let indexPoints = try await networkService.fetchIndexPoints(for: channel.slug)
-            let currentTrack = indexPoints.items.first { $0.isCurrentlyPlaying }
-            
-            await MainActor.run {
+
+            return await MainActor.run {
+                self.recentTracks = indexPoints.items
+                let currentTrack = Self.heardTrack(in: indexPoints.items, at: self.listeningDate)
                 self.currentTrack = currentTrack
                 
                 // Update Command Center with new track information
                 let currentProgram = self.getCurrentProgram(for: channel)
                 self.audioPlayer.updateCommandCenterInfo(channel: channel, program: currentProgram, track: currentTrack)
+                return currentTrack
             }
-            
-            return currentTrack
         } catch {
             return nil
         }
@@ -1056,8 +1176,10 @@ class DRServiceManager: ObservableObject {
                 // Wake just after the current track ends, otherwise fall back to the
                 // fixed interval.
                 let delay: TimeInterval
-                if let track, track.isCurrentlyPlaying, let endTime = track.endTime {
-                    delay = max(endTime.timeIntervalSinceNow + DRAPIConfig.trackUpdateBuffer, 1)
+                let behind = await MainActor.run { self.secondsBehindLive }
+                if let track, let endTime = track.endTime,
+                   endTime.addingTimeInterval(behind) > Date() {
+                    delay = max(endTime.timeIntervalSinceNow + behind + DRAPIConfig.trackUpdateBuffer, 1)
                 } else {
                     delay = DRAPIConfig.trackPollingInterval
                 }
@@ -1108,7 +1230,7 @@ class DRServiceManager: ObservableObject {
     /// theoretical one.
     @discardableResult
     func startSleepTimer(_ mode: SleepTimerMode) -> Bool {
-        let programmeEnd = playingChannel.flatMap { getCurrentProgram(for: $0)?.endDate }
+        let programmeEnd = playingChannel.flatMap { liveProgram(for: $0)?.endDate }
         guard let timer = SleepTimer(mode: mode, from: Date(), programmeEnd: programmeEnd) else {
             Log.playback.warning("sleep timer rejected: no end time for the current programme")
             return false

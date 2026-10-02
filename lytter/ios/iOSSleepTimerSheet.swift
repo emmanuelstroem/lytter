@@ -19,7 +19,7 @@ struct iOSSleepTimerSheet: View {
 
     private var programmeEnd: Date? {
         guard let channel = serviceManager.playingChannel,
-              let end = serviceManager.getCurrentProgram(for: channel)?.endDate,
+              let end = serviceManager.liveProgram(for: channel)?.endDate,
               end > Date() else { return nil }
         return end
     }
