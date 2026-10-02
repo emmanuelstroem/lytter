@@ -39,6 +39,9 @@ class AudioPlayerService: NSObject, ObservableObject {
     @Published private(set) var canSeek = false
     /// True when playback sits far enough back from the live edge to offer "Live".
     @Published private(set) var isBehindLive = false
+    /// How far behind live, in whole seconds, while `isBehindLive`; otherwise 0. Whole
+    /// seconds so it publishes at most once a second, and only when it moves.
+    @Published private(set) var secondsBehindLive: TimeInterval = 0
     @Published var error: String?
     
         // Control for screen sleep behavior
@@ -416,7 +419,7 @@ class AudioPlayerService: NSObject, ObservableObject {
         var nowPlayingInfo: [String: Any] = [:]
         
             // Determine what to show as title and artist based on available information
-        if let track = track, track.isCurrentlyPlaying {
+        if let track = track, track.isPlaying(at: Date().addingTimeInterval(-secondsBehindLive)) {
                 // Show track info when track is currently playing
             nowPlayingInfo[MPMediaItemPropertyTitle] = "\(channel.title) - \(program?.cleanTitle() ?? "")"
             nowPlayingInfo[MPMediaItemPropertyArtist] = track.displayText
@@ -870,6 +873,13 @@ class AudioPlayerService: NSObject, ObservableObject {
             updateSkipCommandsEnabled()
         }
         if isBehindLive != behind { isBehindLive = behind }
+        let offset: TimeInterval
+        if behind, let range, let time = player?.currentTime() {
+            offset = (estimatedLiveEdge(for: range) - time.seconds).rounded()
+        } else {
+            offset = 0
+        }
+        if secondsBehindLive != offset { secondsBehindLive = offset }
     }
 
     private func addTimeObserver() {

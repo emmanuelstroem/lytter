@@ -205,8 +205,16 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
       lock screen, `skipBackward`/`skipForward` at 15 s, enabled only while `canSeek`.
       A pause is now a time-shift: resuming inside the window carries on from where it
       stopped; past it, or on ICY, it reloads at live (and still reloads if not playing
-      4 s after resuming). **Known gap:** the now-playing track and programme are polled
-      for live, so while behind live they describe what is on air, not what is heard.
+      4 s after resuming). **Track info behind live** — done afterwards: the
+      now-playing track and programme had been picked for the live edge, so while behind
+      live they described what was on air, not what was heard. `AudioPlayerService` now
+      publishes `secondsBehindLive`, and `DRServiceManager` picks both for `listeningDate`
+      (now less that offset): the track from the last fetched list (DR's runs back about an
+      hour, newest first), the programme from the schedule snapshot — which starts with
+      the programme before the one on air, so it covers a rewind across a boundary —
+      fetched only once the listener is earlier than the programme on air. A skip, pause or jump to live picks
+      again from what is cached, with no network. A failed snapshot fetch is retried after
+      60 s, not cached for good. Covered by `HeardTrackTests` and `HeardProgrammeTests`.
 - [x] ~~**F40. The app icon rendered near-black on iOS and macOS.**~~ Done in #40. Three
       stacked causes, found one at a time because each hid the next:
       1. **The field was too dark.** A near-black background is most of the pixels at Dock /

@@ -48,7 +48,7 @@ struct iOSFullPlayerSheet: View {
     private var infoTitle: String {
         guard let currentChannel = currentChannel else { return String(localized: "No Channel") }
         
-        if let track = serviceManager.currentTrack, track.isCurrentlyPlaying {
+        if let track = serviceManager.currentTrack, serviceManager.isHeard(track) {
             let programTitle = serviceManager.getCurrentProgram(for: currentChannel)?.cleanTitle() ?? String(localized: "Live")
             return "\(currentChannel.title) - \(programTitle)"
         } else {
@@ -59,7 +59,7 @@ struct iOSFullPlayerSheet: View {
     private var infoSubtitle: String {
         guard let currentChannel = currentChannel else { return String(localized: "No program information") }
         
-        if let track = serviceManager.currentTrack, track.isCurrentlyPlaying {
+        if let track = serviceManager.currentTrack, serviceManager.isHeard(track) {
             return track.displayText
         } else if let currentProgram = serviceManager.getCurrentProgram(for: currentChannel) {
             return currentProgram.cleanTitle()
