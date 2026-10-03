@@ -18,6 +18,9 @@ struct tvOSChannelShelf: View {
     var style: StationCardStyle = .standard
     @ObservedObject var serviceManager: DRServiceManager
     let onSelect: (DRChannel) -> Void
+    /// Lets the screen place focus on a card: each card is tagged `"<title>/<group id>"`,
+    /// since the same station can sit on more than one shelf.
+    var focus: FocusState<String?>.Binding? = nil
 
     var body: some View {
         if !groups.isEmpty {
@@ -30,12 +33,7 @@ struct tvOSChannelShelf: View {
                 ScrollView(.horizontal, showsIndicators: false) {
                     LazyHStack(alignment: .top, spacing: 40) {
                         ForEach(groups) { group in
-                            tvOSStationCard(
-                                group: group,
-                                style: style,
-                                serviceManager: serviceManager,
-                                onSelect: onSelect
-                            )
+                            card(for: group)
                         }
                     }
                     .padding(.horizontal, 60)
@@ -45,6 +43,21 @@ struct tvOSChannelShelf: View {
                 }
             }
         }
+    }
+
+    @ViewBuilder
+    private func card(for group: GroupedChannel) -> some View {
+        let card = tvOSStationCard(group: group, style: style,
+                                   serviceManager: serviceManager, onSelect: onSelect)
+        if let focus {
+            card.focused(focus, equals: Self.focusKey(title: title, group: group))
+        } else {
+            card
+        }
+    }
+
+    static func focusKey(title: String, group: GroupedChannel) -> String {
+        "\(title)/\(group.id)"
     }
 }
 
