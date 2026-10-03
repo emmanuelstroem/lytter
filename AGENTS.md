@@ -83,6 +83,10 @@ focused, which reads as "stuck on Home" (F35). Take a screenshot before believin
 
 - **Commits and PR descriptions carry no Claude attribution and no co-author line.**
 - **Never `git add .`** — stage only the files belonging to the change.
+- **No new warnings.** The build is warning-free; keep it so unless a warning is truly
+  unavoidable, and then say why. Check a *clean* build on iOS, tvOS and macOS
+  (`xcodebuild clean build-for-testing`): an incremental build reports only the files it
+  recompiles, and tvOS-only files never appear in an iOS build (S16).
 - Verify by running the app, not only by building it. A green build has shipped a crash here
   before.
 - Every new test gets a negative control: break it deliberately, watch it fail, restore it.

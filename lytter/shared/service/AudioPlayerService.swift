@@ -915,7 +915,9 @@ class AudioPlayerService: NSObject, ObservableObject {
         let token = player.addPeriodicTimeObserver(
             forInterval: CMTime(seconds: 1, preferredTimescale: 600), queue: .main
         ) { [weak self] _ in
-            self?.refreshSeekState()
+            // The closure is not main-actor isolated by type, but `queue: .main` is where
+            // it runs: say so, rather than call main-actor state from a nonisolated context.
+            MainActor.assumeIsolated { self?.refreshSeekState() }
         }
         timeObserver = (player, token)
     }

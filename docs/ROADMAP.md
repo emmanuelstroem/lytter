@@ -693,15 +693,20 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
       Test suites are `@MainActor`: the project sets
       `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor`, so the types under test are main-actor by
       inference while suites are nonisolated by default.
-- [ ] **S16. The build is not warning-free again.** Next up. A clean build shows:
-      - `AudioPlayerService`: `Log.playback` used from the audio-session queue's closures
-        (two, since #46), and the periodic time observer's closure calling the main-actor
-        `refreshSeekState()` from a nonisolated context. Safe today — the observer runs on
-        `.main` and `Logger` is `Sendable` — but this is the class of warning F31 crashed on.
-      - `TVScrollingUITests`: about 35, all its helpers reaching main-actor `XCUIElement` API
-        without `@MainActor`. tvOS-only, so incremental iOS builds never show them.
-      Check with a clean build on all three platforms; incremental builds only report files
-      they recompile, which is how these went unnoticed.
+- [x] ~~**S16. The build is not warning-free again.**~~ Done. A clean build on iOS, tvOS and
+      macOS now has no Swift warnings. There were:
+      - `AudioPlayerService` (three): `Log.playback` used from the audio-session queue —
+        `Log` is `nonisolated` now, which `Logger` being `Sendable` allows — and the
+        periodic time observer calling main-actor `refreshSeekState()` from a closure that
+        is nonisolated by type though it runs on `.main`; it says so with
+        `MainActor.assumeIsolated`.
+      - `TVScrollingUITests` (~35): its helpers are `@MainActor`, as its tests already were.
+      - `ConnectionStatusUITests`, shipped in #50 and fixed in #51.
+      What is left is `appintentsmetadataprocessor` noting that there is no AppIntents
+      dependency — a toolchain notice, not source; F15 removes it.
+      **Check with a clean build on all three platforms.** Incremental builds report only
+      the files they recompile, and tvOS-only test files never appear in an iOS build;
+      that is how these went unnoticed.
 - [ ] **S15. Revisit what default main-actor isolation actually buys.** With
       `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor`, types are main-actor unless they say
       otherwise — including `InFlightTasks`, whose whole purpose is to be touched from

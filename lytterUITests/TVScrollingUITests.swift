@@ -168,7 +168,12 @@ final class TVScrollingUITests: XCTestCase {
     }
 
     // MARK: - Helpers
+    //
+    // @MainActor: XCUIApplication and XCUIElement are main-actor API under Swift 6. The
+    // tests already were; the helpers they call were not, which was ~35 warnings that only
+    // a tvOS build shows (S16).
 
+    @MainActor
     private func launch(favourites: [String] = [], recentlyPlayed: [String] = [],
                         region: String? = nil) {
         app = XCUIApplication()
@@ -191,6 +196,7 @@ final class TVScrollingUITests: XCTestCase {
 
     /// Opens a sidebar destination. Left from the first card moves focus into the sidebar —
     /// not Menu, which from Home leaves the app altogether.
+    @MainActor
     private func openSection(_ name: String) {
         let destinations = ["Home", "Radio", "Now Playing", "Search"]
         XCTAssertTrue(moveFocus(.left, until: { destinations.contains($0.label) }, maxPresses: 8),
@@ -207,6 +213,7 @@ final class TVScrollingUITests: XCTestCase {
     }
 
     /// Plays P2 from Home, which switches to Now Playing.
+    @MainActor
     private func openPlayer() {
         XCTAssertTrue(moveFocus(.right, until: { $0.label.hasPrefix("P2") }), "could not reach P2")
         press(.select)
@@ -216,6 +223,7 @@ final class TVScrollingUITests: XCTestCase {
     /// Presses `button` until the focused element satisfies `matches`, rather than counting
     /// presses: how many it takes depends on where focus settled, and a count that is off by
     /// one tests the wrong card.
+    @MainActor
     @discardableResult
     private func moveFocus(_ button: XCUIRemote.Button,
                            until matches: (XCUIElement) -> Bool,
@@ -227,6 +235,7 @@ final class TVScrollingUITests: XCTestCase {
         return focused.exists && matches(focused)
     }
 
+    @MainActor
     private var focused: XCUIElement {
         app.descendants(matching: .any)
             .matching(NSPredicate(format: "hasFocus == true")).firstMatch
@@ -234,10 +243,12 @@ final class TVScrollingUITests: XCTestCase {
 
     /// The focused element's label, or "" while nothing has focus — reading `label` from an
     /// element that does not exist fails the test rather than returning nothing.
+    @MainActor
     private var focusedLabel: String {
         focused.exists ? focused.label : ""
     }
 
+    @MainActor
     private func shot(_ name: String) {
         let attachment = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
         attachment.name = name
@@ -245,6 +256,7 @@ final class TVScrollingUITests: XCTestCase {
         add(attachment)
     }
 
+    @MainActor
     private func isOnScreen(_ element: XCUIElement) -> Bool {
         guard element.exists else { return false }
         let screen = app.windows.firstMatch.frame
@@ -252,6 +264,7 @@ final class TVScrollingUITests: XCTestCase {
         return !frame.isEmpty && screen.contains(CGPoint(x: frame.midX, y: frame.midY))
     }
 
+    @MainActor
     private func press(_ button: XCUIRemote.Button, times: Int = 1) {
         for _ in 0..<times {
             XCUIRemote.shared.press(button)
