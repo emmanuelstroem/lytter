@@ -531,9 +531,41 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
 
 ### P2 — expansion
 
-- [ ] **F15. Adopt AppIntents** (`PlayChannelIntent`, `AppShortcutsProvider`) and retire
-      the legacy `NSUserActivity` donation path. Unlocks Spotlight, the Action Button,
-      Control Centre controls and Shortcuts automations.
+- [x] ~~**F15. Siri and Shortcuts.**~~ Done. Two mechanisms, because App Shortcuts must
+      name the app in every phrase and a radio app wants "Play P3":
+      - **App Intents, iPhone** (`PlaybackIntents.swift`), each phrase naming the app:
+        Resume ("Play Lytter"), Pause, sleep timer ("Stop Lytter in 30 minutes" — 15/30/45/60,
+        the app's own choices; phrases take enums, not free numbers), Stop after this
+        programme, What's On ("What's on Lytter?", for the station playing or last played).
+        Danish phrases in `AppShortcuts.xcstrings`. In the Shortcuts app and for the Action
+        Button too, alongside Play Station and What's On with a station picked from a list.
+      - **SiriKit media intent, iPhone and Apple TV** (`PlayMediaIntentHandler`): playing a
+        station by name — "Play P3", with or without "in Lytter". "P4" means the listener's
+        own district (`StationLookup`). Handled in the app (no extension). Needs Siri
+        permission, asked for from Settings (`SiriAccessRow`), and `com.apple.developer.siri`.
+      - Retired: `SiriShortcutsService`, the old Siri screen and its donations, and the
+        Siri prompt on opening it. Shortcuts saved the old way still run — their
+        `PlayChannelActivity` goes through the deep-link handler.
+      - **No App Shortcut takes a station, on purpose.** iOS 26 collapses an App Shortcut
+        with an entity parameter into one tile in the Shortcuts app and one row in Spotlight,
+        captioned with the *last* value and running the *first* — a "P8" tile that played P1,
+        and a Spotlight search for "P3" listing "P8". A textbook two-value entity (no app
+        code, no isolation, no custom presentation) does exactly the same on a fresh
+        simulator, so it is the system. Tried first and ruled out: the title's localisation
+        key, colon-free ids, `parameterPresentation` with an options provider, a `@Property`
+        name, names without digits. Enum parameters are not affected — the sleep timer's
+        four tiles are right. Revisit when a later iOS fixes it.
+      - **Not verified:** anything spoken. The simulator has no Siri voice, so the media
+        intent on iPhone and Apple TV, and the Danish phrases, need a device. Verified in
+        the simulator: every App Shortcut registers and runs from the Shortcuts app.
+      - Not done: Control Centre controls (a widget extension — F18), Spotlight indexing of
+        each station (`IndexedEntity`), App Shortcuts on Apple TV (no evidence Siri runs
+        them there), macOS.
+      - **Trap:** App Shortcuts do not run from an ad-hoc signed simulator build — the
+        Shortcuts app says "Couldn't find AppShortcutsProvider" and the station tiles never
+        appear. `xcodebuild` signs simulator builds ad hoc; re-sign the `.app` with the
+        team's Apple Development certificate (`codesign --force --sign … --entitlements
+        <lytter.app.xcent>`) before testing intents in the simulator.
 - [ ] **F16. On-demand playback.** Wire up `fetchScheduleSnapshot` and
       `isAvailableOnDemand` for catch-up listening.
 - [x] ~~**F17. Schedule / EPG view.**~~ Done in #14, reached from the full player's list
@@ -646,7 +678,7 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
       push, CloudKit or app-group code anywhere. Removed `aps-environment` (a *development*
       APNS entitlement), the iCloud/CloudKit container, the app group, and the
       `remote-notification` background mode. `com.apple.developer.siri` stays — the Siri
-      shortcuts are real. The app group should come back when the Top Shelf extension
+      shortcuts are real. (Since F15 it is for SiriKit's media intent, "Play P3".) The app group should come back when the Top Shelf extension
       actually shares the cached schedule (P14), not before.
 - [x] ~~**S3. Fix the extension deployment target.**~~ Done in #7: `TopShelfExtension`
       lowered from `TVOS_DEPLOYMENT_TARGET = 26.0` to `17.6` to match the host app. Verified
@@ -719,6 +751,12 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
       **Check with a clean build on all three platforms.** Incremental builds report only
       the files they recompile, and tvOS-only test files never appear in an iOS build;
       that is how these went unnoticed.
+- [ ] **S17. The test target does not build for macOS.** `lytterTests/StationCardTests.swift`
+      imports UIKit unconditionally (since #35), so `xcodebuild clean build-for-testing
+      -destination 'platform=macOS'` fails with "Unable to resolve module dependency:
+      'UIKit'". The app builds; the tests do not, so the clean macOS check AGENTS.md asks
+      for cannot pass. Guard the UIKit parts with `#if canImport(UIKit)` (or use a
+      platform-neutral API) without weakening what the tests check on iOS and tvOS.
 - [ ] **S15. Revisit what default main-actor isolation actually buys.** With
       `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor`, types are main-actor unless they say
       otherwise — including `InFlightTasks`, whose whole purpose is to be touched from

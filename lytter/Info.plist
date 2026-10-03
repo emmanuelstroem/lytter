@@ -8,6 +8,15 @@
 	<array>
 		<string>audio</string>
 	</array>
+    <!-- SiriKit's media intent, handled in the app (F15): the name-free "Play P3". -->
+    <key>INIntentsSupported</key>
+    <array>
+        <string>INPlayMediaIntent</string>
+    </array>
+    <key>INSupportedMediaCategories</key>
+    <array>
+        <string>INMediaCategoryRadio</string>
+    </array>
     <key>CFBundleURLTypes</key>
     <array>
         <dict>

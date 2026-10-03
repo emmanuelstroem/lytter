@@ -9,16 +9,17 @@ import SwiftUI
 
 @main
 struct lytterApp: App {
-    /// The one app-wide DRServiceManager. Every screen, and the Siri service, share this
-    /// instance. Constructing a second one is expensive: each init() loads the disk cache
+    /// The one app-wide DRServiceManager, `DRServiceManager.shared`. Every screen and every
+    /// App Intent use this instance. Constructing a second one is expensive: each init() loads the disk cache
     /// and then fetches the whole catalogue, and a successful fetch kicks off an unbounded
     /// preload of every image in the schedule.
-    @StateObject private var serviceManager = DRServiceManager()
+    @StateObject private var serviceManager = DRServiceManager.shared
     @StateObject private var deepLinkHandler = DeepLinkHandler()
     @Environment(\.scenePhase) private var scenePhase
 
-    #if os(iOS) || os(macOS)
-    @StateObject private var siriShortcutsService = SiriShortcutsService.shared
+    #if os(iOS) || os(tvOS)
+    /// Answers Siri's media intent, "Play P3" (F15).
+    @UIApplicationDelegateAdaptor(LytterAppDelegate.self) private var appDelegate
     #endif
 
     var body: some Scene {
@@ -27,9 +28,6 @@ struct lytterApp: App {
                 .modifier(PreferencesEnvironment(preferences: serviceManager.userPreferences))
                 .environmentObject(serviceManager)
                 .environmentObject(deepLinkHandler)
-                #if os(iOS) || os(macOS)
-                .environmentObject(siriShortcutsService)
-                #endif
                 #if os(tvOS)
                 // With the app in front, the Siri Remote's Play/Pause button arrives as a
                 // press event in the focus hierarchy, not as an MPRemoteCommand, so the
@@ -47,13 +45,17 @@ struct lytterApp: App {
                 .onChange(of: scenePhase) { _, phase in
                     serviceManager.setAppActive(phase == .active)
                 }
-                .task {
-                    // Hand the Siri service the shared manager rather than letting it
-                    // build one of its own.
-                    #if os(iOS) || os(macOS)
-                    siriShortcutsService.configure(with: serviceManager)
-                    #endif
+                #if os(iOS) || os(macOS)
+                // Shortcuts saved before App Intents (F15) carry a "PlayChannelActivity".
+                // Nothing donates those any more, but a listener's saved ones should keep
+                // working: they go the way a link does, retry and all.
+                .onContinueUserActivity("PlayChannelActivity") { activity in
+                    if let id = activity.userInfo?["channelId"] as? String,
+                       let url = URL(string: "\(DeepLinkHandler.urlScheme):///channel/\(id)") {
+                        deepLinkHandler.handleDeepLink(url)
+                    }
                 }
+                #endif
         }
 
         #if os(macOS)

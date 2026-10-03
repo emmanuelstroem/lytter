@@ -19,7 +19,8 @@ final class SettingsAndSearchUITests: XCTestCase {
 
     // MARK: - Settings
 
-    /// Shortcuts is no longer a tab; it is reached from Settings.
+    /// Shortcuts is no longer a tab. Settings says what to ask Siri, and links to the
+    /// app's shortcuts with the system's Shortcuts button (F15).
     @MainActor
     func testSiriAndShortcutsLivesInSettings() throws {
         launch()
@@ -28,13 +29,12 @@ final class SettingsAndSearchUITests: XCTestCase {
         openSettings()
         XCTAssertTrue(app.switches["Show Images"].waitForExistence(timeout: 5),
                       "Settings has no Show Images switch")
-        shot("settings")
 
-        let siri = app.buttons["Siri & Shortcuts"]
-        scrollUntilHittable(siri)
-        siri.tap()
-        XCTAssertTrue(app.navigationBars["Siri & Shortcuts"].waitForExistence(timeout: 5),
-                      "Siri & Shortcuts did not open from Settings")
+        let link = app.buttons.matching(NSPredicate(format: "label CONTAINS[c] 'shortcuts'")).firstMatch
+        scrollUntilHittable(link)
+        XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH 'Say “Play P3”'"))
+                        .firstMatch.exists, "Settings does not say what to ask Siri")
+        shot("settings")
     }
 
     /// The remembered region is shown, and forgetting it forgets it.
@@ -104,7 +104,13 @@ final class SettingsAndSearchUITests: XCTestCase {
         field.typeText("P2")
         let result = row("P2")
         XCTAssertTrue(result.waitForExistence(timeout: 5), "P2 is not a result")
+        // A tap while the keyboard is still settling can be dropped; the mini player taking
+        // P2 is the sign it landed. Once more if not — this test is about what is remembered.
+        let playing = app.descendants(matching: .any).matching(identifier: "miniPlayer")
+            .matching(NSPredicate(format: "label BEGINSWITH 'P2'")).firstMatch
         result.tap()
+        if !playing.waitForExistence(timeout: 5) { result.tap() }
+        XCTAssertTrue(playing.waitForExistence(timeout: 5), "choosing P2 did not start it")
 
         // Clear the query, which returns to the browse screen.
         field.buttons.firstMatch.tap()

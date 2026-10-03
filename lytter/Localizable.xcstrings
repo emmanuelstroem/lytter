@@ -124,6 +124,50 @@
         }
       }
     },
+    "15 minutes": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "15 minutter"
+          }
+        }
+      }
+    },
+    "30 minutes": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "30 minutter"
+          }
+        }
+      }
+    },
+    "45 minutes": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "45 minutter"
+          }
+        }
+      }
+    },
+    "60 minutes": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "60 minutter"
+          }
+        }
+      }
+    },
     "API access forbidden (403). Check your subscription key.": {
       "extractionState": "manual",
       "localizations": {
@@ -135,28 +179,6 @@
         }
       }
     },
-    "Add": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tilføj"
-          }
-        }
-      }
-    },
-    "Add All Channels to Siri": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tilføj alle kanaler til Siri"
-          }
-        }
-      }
-    },
     "Add to Favourites": {
       "extractionState": "manual",
       "localizations": {
@@ -164,17 +186,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Føj til favoritter"
-          }
-        }
-      }
-    },
-    "Add to Siri": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tilføj til Siri"
           }
         }
       }
@@ -235,13 +246,13 @@
       },
       "shouldTranslate": false
     },
-    "Available Channels": {
+    "Allow Siri to Play Stations": {
       "extractionState": "manual",
       "localizations": {
         "da": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tilgængelige kanaler"
+            "value": "Lad Siri afspille kanaler"
           }
         }
       }
@@ -253,17 +264,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Gennemse kategorier"
-          }
-        }
-      }
-    },
-    "Cancel": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Annullér"
           }
         }
       }
@@ -367,28 +367,6 @@
         }
       }
     },
-    "Configure Shortcut": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Konfigurer genvej"
-          }
-        }
-      }
-    },
-    "Configure Siri Shortcut": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Konfigurer Siri-genvej"
-          }
-        }
-      }
-    },
     "Could not reach the server. Please check your connection.": {
       "extractionState": "manual",
       "localizations": {
@@ -407,17 +385,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Kunne ikke afspille %@"
-          }
-        }
-      }
-    },
-    "Create custom shortcuts in the Shortcuts app to automate your radio listening experience.": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Opret dine egne genveje i Genveje-appen, og automatisér din radiolytning."
           }
         }
       }
@@ -441,6 +408,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "DR returnerede ingen sendeplan for %@."
+          }
+        }
+      }
+    },
+    "DR hasn't said what's on %@ right now.": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "DR har ikke oplyst, hvad der sendes på %@ lige nu."
+          }
+        }
+      }
+    },
+    "DR hasn't said when this programme ends.": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "DR har ikke oplyst, hvornår programmet slutter."
           }
         }
       }
@@ -485,6 +474,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Færdig"
+          }
+        }
+      }
+    },
+    "Duration": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Varighed"
           }
         }
       }
@@ -551,6 +551,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Glem region"
+          }
+        }
+      }
+    },
+    "Hold the Siri button on the remote and say “Play P3”.": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hold Siri-knappen på fjernbetjeningen nede, og sig “Spil P3”."
           }
         }
       }
@@ -821,6 +832,28 @@
         }
       }
     },
+    "Nothing has been played yet. Ask for a station by name.": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Der er ikke spillet noget endnu. Bed om en kanal ved navn."
+          }
+        }
+      }
+    },
+    "Nothing is playing.": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Der spiller ikke noget."
+          }
+        }
+      }
+    },
     "Now Playing": {
       "extractionState": "manual",
       "localizations": {
@@ -843,6 +876,28 @@
         }
       }
     },
+    "On %@ now: %@, until %@.": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "På %1$@ nu: %2$@, indtil %3$@."
+          }
+        }
+      }
+    },
+    "On %@ now: %@.": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "På %1$@ nu: %2$@."
+          }
+        }
+      }
+    },
     "On air": {
       "extractionState": "manual",
       "localizations": {
@@ -850,17 +905,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Sender nu"
-          }
-        }
-      }
-    },
-    "Open Shortcuts App": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Åbn Genveje"
           }
         }
       }
@@ -899,6 +943,17 @@
         }
       }
     },
+    "Pauses the radio.": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sætter radioen på pause."
+          }
+        }
+      }
+    },
     "Play": {
       "extractionState": "manual",
       "localizations": {
@@ -906,6 +961,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Afspil"
+          }
+        }
+      }
+    },
+    "Play ${station}": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Afspil ${station}"
           }
         }
       }
@@ -921,13 +987,13 @@
         }
       }
     },
-    "Play a station by asking Siri, or from the Shortcuts app.": {
+    "Play Station": {
       "extractionState": "manual",
       "localizations": {
         "da": {
           "stringUnit": {
             "state": "translated",
-            "value": "Afspil en kanal ved at spørge Siri eller fra appen Genveje."
+            "value": "Afspil kanal"
           }
         }
       }
@@ -950,6 +1016,39 @@
           "stringUnit": {
             "state": "translated",
             "value": "Afspilningen fortsætter, når du er online igen."
+          }
+        }
+      }
+    },
+    "Playing %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spiller %@"
+          }
+        }
+      }
+    },
+    "Plays a DR radio station live.": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Afspiller en DR-radiokanal direkte."
+          }
+        }
+      }
+    },
+    "Plays the station you last listened to.": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Afspiller den kanal, du sidst lyttede til."
           }
         }
       }
@@ -983,17 +1082,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Programforløb"
-          }
-        }
-      }
-    },
-    "Quick Actions": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Hurtige handlinger"
           }
         }
       }
@@ -1098,6 +1186,17 @@
         }
       }
     },
+    "Resume Listening": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fortsæt lytning"
+          }
+        }
+      }
+    },
     "Say \"Hey Siri, play %@\"": {
       "extractionState": "manual",
       "localizations": {
@@ -1116,6 +1215,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "Sig \"Hey Siri, afspil [kanalnavn]\" for at lytte til dine foretrukne DR-kanaler."
+          }
+        }
+      }
+    },
+    "Say “Play P3” — Siri learns that Lytter is where you listen to the radio. With the app's name there is more: “Stop Lytter in 30 minutes”, “Stop Lytter after this programme”, “What's on Lytter?”. The same actions are in the Shortcuts app.": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sig “Spil P3” – Siri lærer, at det er i Lytter, du hører radio. Med appens navn kan du mere: “Stop Lytter om 30 minutter”, “Stop Lytter efter dette program”, “Hvad sendes der i Lytter?”. De samme handlinger findes i appen Genveje."
+          }
+        }
+      }
+    },
+    "Says which programme is on a station now.": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fortæller, hvilket program der sendes på en kanal lige nu."
           }
         }
       }
@@ -1197,6 +1318,17 @@
         }
       }
     },
+    "Set Sleep Timer": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Indstil sleep-timer"
+          }
+        }
+      }
+    },
     "Settings": {
       "extractionState": "manual",
       "localizations": {
@@ -1226,17 +1358,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Genveje"
-          }
-        }
-      }
-    },
-    "Shortcuts App Integration": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Integration med Genveje"
           }
         }
       }
@@ -1274,6 +1395,17 @@
         }
       }
     },
+    "Siri": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Siri"
+          }
+        }
+      }
+    },
     "Siri & Shortcuts": {
       "extractionState": "manual",
       "localizations": {
@@ -1285,13 +1417,24 @@
         }
       }
     },
-    "Siri Shortcuts": {
+    "Siri can play stations": {
       "extractionState": "manual",
       "localizations": {
         "da": {
           "stringUnit": {
             "state": "translated",
-            "value": "Siri-genveje"
+            "value": "Siri kan afspille kanaler"
+          }
+        }
+      }
+    },
+    "Siri is turned off for Lytter. Turn it on in the Settings app, under Siri.": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Siri er slået fra for Lytter. Slå det til i appen Indstillinger under Siri."
           }
         }
       }
@@ -1318,6 +1461,17 @@
         }
       }
     },
+    "Sleep Timer": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sleep-timer"
+          }
+        }
+      }
+    },
     "Sleep timer": {
       "extractionState": "manual",
       "localizations": {
@@ -1325,6 +1479,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Sleep-timer"
+          }
+        }
+      }
+    },
+    "Station": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kanal"
           }
         }
       }
@@ -1392,6 +1557,28 @@
         }
       }
     },
+    "Stop After This Programme": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stop efter dette program"
+          }
+        }
+      }
+    },
+    "Stop in ${duration}": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stop om ${duration}"
+          }
+        }
+      }
+    },
     "Stopping": {
       "extractionState": "manual",
       "localizations": {
@@ -1403,6 +1590,50 @@
         }
       }
     },
+    "Stopping in %lld minutes": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stopper om %lld minutter"
+          }
+        }
+      }
+    },
+    "Stopping when this programme ends": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stopper, når programmet slutter"
+          }
+        }
+      }
+    },
+    "Stops the radio after a while, fading out first.": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stopper radioen efter et stykke tid og skruer først langsomt ned."
+          }
+        }
+      }
+    },
+    "Stops the radio when the programme on air ends.": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stopper radioen, når programmet slutter."
+          }
+        }
+      }
+    },
     "Tap play to start": {
       "extractionState": "manual",
       "localizations": {
@@ -1410,6 +1641,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Tryk på afspil for at starte"
+          }
+        }
+      }
+    },
+    "That station isn't on DR's list right now.": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Den kanal er ikke på DR's liste lige nu."
           }
         }
       }
@@ -1443,17 +1685,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Streamen startede ikke. Tryk på Afspil for at prøve igen."
-          }
-        }
-      }
-    },
-    "These shortcuts will be available in the Shortcuts app and can be triggered by Siri.": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Genvejene bliver tilgængelige i Genveje-appen og kan aktiveres med Siri."
           }
         }
       }
@@ -1557,24 +1788,24 @@
         }
       }
     },
-    "Voice Command": {
+    "What's On": {
       "extractionState": "manual",
       "localizations": {
         "da": {
           "stringUnit": {
             "state": "translated",
-            "value": "Talekommando"
+            "value": "Hvad sendes der"
           }
         }
       }
     },
-    "Voice Commands": {
+    "What's on ${station}": {
       "extractionState": "manual",
       "localizations": {
         "da": {
           "stringUnit": {
             "state": "translated",
-            "value": "Talekommandoer"
+            "value": "Hvad sendes der på ${station}"
           }
         }
       }

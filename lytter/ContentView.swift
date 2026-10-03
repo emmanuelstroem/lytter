@@ -9,16 +9,12 @@ import SwiftUI
 import os
 
 struct ContentView: View {
-    /// Owned by lytterApp and shared with the Siri service — see the note there.
+    /// `DRServiceManager.shared`, handed down by lytterApp — see the note there.
     @EnvironmentObject var serviceManager: DRServiceManager
     @StateObject private var selectionState = SelectionState()
     @SceneStorage("selectedTab") private var selectedTabIndex = 0
 
     @EnvironmentObject var deepLinkHandler: DeepLinkHandler
-    
-    #if os(iOS) || os(macOS)
-    @EnvironmentObject var siriShortcutsService: SiriShortcutsService
-    #endif
     
     var body: some View {
         #if os(iOS)
@@ -112,12 +108,7 @@ struct ContentView: View {
         .sheet(isPresented: $selectionState.isShowingFullPlayer) {
             FullPlayerSheet(serviceManager: serviceManager, selectionState: selectionState)
         }
-        .onContinueUserActivity("PlayChannelActivity") { userActivity in
-            #if os(iOS) || os(macOS)
-            siriShortcutsService.handleUserActivity(userActivity)
-            #endif
-        }
-        
+
     #elseif os(tvOS)
         tvOSHomeView(
             serviceManager: serviceManager,
@@ -139,10 +130,6 @@ struct ContentView: View {
         )
         .environmentObject(serviceManager)
         .environmentObject(selectionState)
-        .environmentObject(siriShortcutsService)
-        .onContinueUserActivity("PlayChannelActivity") { userActivity in
-            siriShortcutsService.handleUserActivity(userActivity)
-        }
 
     #endif
     }
@@ -182,7 +169,4 @@ struct ContentView: View {
     ContentView()
         .environmentObject(DRServiceManager())
         .environmentObject(DeepLinkHandler())
-        #if os(iOS) || os(macOS)
-        .environmentObject(SiriShortcutsService.shared)
-        #endif
 }
