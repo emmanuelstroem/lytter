@@ -20,7 +20,11 @@ import os
 /// Read them with:
 ///
 ///     log stream --predicate 'subsystem == "com.eopio.lytter"' --level debug
-enum Log {
+///
+/// `nonisolated`: under `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor` these were main-actor
+/// statics, and logging from the audio-session queue warned for it (S16). `Logger` is
+/// `Sendable`, so any queue can use them.
+nonisolated enum Log {
     private static let subsystem = Bundle.main.bundleIdentifier ?? "com.eopio.lytter"
 
     /// Requests to DR's API — the one place to look when playback or the channel list
