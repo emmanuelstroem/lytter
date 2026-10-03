@@ -309,6 +309,8 @@ struct CachedAsyncImage<Content: View, Placeholder: View>: View {
     let placeholder: () -> Placeholder
 
     @State private var image: PlatformImage?
+    /// Show Images (F43). Off, this is its placeholder and fetches nothing.
+    @Environment(\.showsArtwork) private var showsArtwork
 
     init(url: URL?,
          maxPixelSize: CGFloat = ImageCacheService.defaultMaxPixelSize,
@@ -322,7 +324,7 @@ struct CachedAsyncImage<Content: View, Placeholder: View>: View {
 
     var body: some View {
         Group {
-            if let image {
+            if let image, showsArtwork {
                 content(Image(platformImage: image))
             } else {
                 placeholder()
@@ -330,8 +332,8 @@ struct CachedAsyncImage<Content: View, Placeholder: View>: View {
         }
         // Keyed on the URL: changing channel cancels the previous load and starts the
         // new one, rather than racing it.
-        .task(id: url?.absoluteString) {
-            guard let url else {
+        .task(id: showsArtwork ? url?.absoluteString : nil) {
+            guard showsArtwork, let url else {
                 image = nil
                 return
             }

@@ -143,6 +143,11 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
       filter could not do. `role: .search` was already declared, so `.searchable` gets the
       system presentation. Home, Radio and Search now share one `GroupedChannel.grouped`
       rather than three copies.
+      Later laid out as Music's Search is: before typing, Recently Searched (stations
+      chosen from a search) and Browse Categories tiles; once typing, a plain list of
+      rows rather than the Radio grid. A district name now lists the districts —
+      "Fyn" gives P4 Fyn and P5 Fyn — not P4 and P5 to choose from again
+      (`GroupedChannel.searchResult`).
       Superseded note, kept for history — the original entry read: Port `tvOSSearchView`'s filter logic behind
       `.searchable`. Replace the `"coming soon"` stub in `lytter/ios/SearchView.swift`.
 - [x] ~~**F2. Fill in the tvOS Brand Assets.**~~ Done in #8, which grew to cover every
@@ -460,9 +465,10 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
       at the screen.
 - [ ] **F36. tvOS: Search at the top of the sidebar.** Move Search above the other
       destinations.
-- [ ] **F37. tvOS: Settings at the bottom of the sidebar.** A Settings destination holding
-      the choices the app currently makes silently or hides elsewhere: the remembered
-      region (and a way to clear it), resetting favourites, clearing recently played.
+- [x] ~~**F37. tvOS: Settings at the bottom of the sidebar.**~~ Done with F43: the last
+      sidebar destination, holding the remembered region (shown, with Forget Region),
+      Remove All Favourites and Clear Recently Played, each of the last two confirmed
+      first. The same sections are on iOS and in the Mac's Settings window.
 - [ ] **F38. An animated playing mark.** Replace the static speaker symbol beside a playing
       station's name — on tvOS cards, and in the district pickers on both platforms — with a
       small mark made of concentric circles, like a speaker cone, that pulse in and out while
@@ -503,18 +509,24 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
       `dr-down-cached`, `reconnects`) so they never touch the machine's network. Not
       verified on a real dropped connection mid-stream: the simulator shares the Mac's
       network, so that path (`reloadIfStalled`) is checked by reading, not by running.
-- [ ] **F43. Settings.** A Settings screen — on tvOS, the sidebar destination F37 proposes —
-      with, to start:
-      - **Show images** (default on). Off shows the station colour and name instead of
-        programme artwork: less data on a slow connection, and a calmer screen.
-      - **Screen off** (default 30 s). After that long without interaction while playing,
-        the screen goes black — audio continues — until the listener touches a control or
-        the remote, which brings it back without acting on that first press. For a radio
-        left playing on a TV, and a phone on a stand. Today `preventScreenSleep` in
-        `AudioPlayerService` only keeps the system from sleeping. Options for the delay,
-        including off.
-      Persist through `UserPreferencesService`, and observe it directly (see AGENTS.md on
-      nested `ObservableObject`s).
+- [x] ~~**F43. Settings.**~~ Done. One set of sections (`SettingsSections`) in three
+      containers: a Settings tab on iOS, which took the Shortcuts tab's place — Siri &
+      Shortcuts is a row inside it now — the last sidebar destination on tvOS (F37), and
+      the Settings window (⌘,) on the Mac.
+      - **Show Images** (default on). Off, every picture is the station's colour and name
+        (`StationArtworkPlaceholder`), and the catalogue's images are not preloaded. An
+        environment value that `CachedAsyncImage` reads, so no screen has to remember it.
+        The station colour replaced a hue taken from `hashValue`, which changed per launch.
+      - **Screen Off** (default 30 s; never, 30 s, 1, 2 or 5 min). iOS and tvOS only.
+        `ScreenOffController` watches the window with a recogniser that notices every touch
+        and press and recognises none; after the delay, while playing, a black window goes
+        up above the app's — above the full player sheet too, which an overlay would not
+        be — and swallows the first touch or press, Menu included. VoiceOver sees one
+        element that a double-tap dismisses. `preventScreenSleep` is untouched: the system
+        still locks on its own schedule. Off under UI tests unless a test sets it.
+        **Not covered by a UI test**: fixture streams never play, and the blackout only
+        runs while playing. Checked by reading; check by hand on a real stream.
+      Persisted through `UserPreferencesService`; the views observe it directly.
 - [ ] **F14. Add a README.** Nineteen commits and no entry point for a reader.
 
 ### P2 — expansion

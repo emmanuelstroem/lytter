@@ -122,7 +122,8 @@ struct ChannelShelfCard: View {
                          maxPixelSize: ImageCacheService.thumbnailMaxPixelSize) { image in
             image.resizable().aspectRatio(contentMode: .fill)
         } placeholder: {
-            Rectangle().fill(Color(.tertiarySystemFill))
+            // The caption already names the station.
+            StationArtworkPlaceholder(channel: channel, showsName: false)
         }
         .frame(width: style.metrics.width, height: style.metrics.height)
         .clipped()

@@ -86,6 +86,21 @@ final class TVScrollingUITests: XCTestCase {
         XCTAssertTrue(isOnScreen(focused), "a result in the last row has focus but is off screen")
     }
 
+    // MARK: - Settings
+
+    /// Settings is a form taller than the screen. Pressing down has to walk it to the last
+    /// row, and the last row has to be on screen when it gets there.
+    @MainActor
+    func testSettingsScrolls() throws {
+        // Favourites, history and a region, so every row is enabled and can take focus.
+        launch(favourites: ["p1"], recentlyPlayed: ["p2"], region: "Fyn")
+        openSection("Settings")
+
+        XCTAssertTrue(moveFocus(.down, until: { $0.label.hasPrefix("Version") }, maxPresses: 12),
+                      "pressing down never reached the last row; focus is on \(focusedLabel)")
+        XCTAssertTrue(isOnScreen(focused), "the last row has focus but is off screen")
+    }
+
     // MARK: - District picker
 
     /// The picker is one column of ten districts, taller than its panel. Pressing down has to
@@ -198,7 +213,7 @@ final class TVScrollingUITests: XCTestCase {
     /// not Menu, which from Home leaves the app altogether.
     @MainActor
     private func openSection(_ name: String) {
-        let destinations = ["Home", "Radio", "Now Playing", "Search"]
+        let destinations = ["Home", "Radio", "Now Playing", "Search", "Settings"]
         XCTAssertTrue(moveFocus(.left, until: { destinations.contains($0.label) }, maxPresses: 8),
                       "could not move into the sidebar; focus is on \(focusedLabel)")
         shot("in-sidebar")

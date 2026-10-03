@@ -187,6 +187,7 @@ struct MiniPlayerComponents: View {
             .accessibilityElement(children: .combine)
             .accessibilityAddTraits(.isButton)
             .accessibilityHint("Opens the player")
+            .accessibilityIdentifier("miniPlayer")
 
             // Right: Controls
             HStack(spacing: 12) {
@@ -308,67 +309,28 @@ struct ChannelArtworkView: View {
     @EnvironmentObject var serviceManager: DRServiceManager
     let size: CGFloat
     
-    private var channelIcon: String {
-        // Get the current program and use its category-based icon
-        if let currentProgram = serviceManager.getCurrentProgram(for: playingChannel) {
-            return currentProgram.categoryIcon
-        }
-        
-        // Fallback to default radio icon if no current program
-        return "antenna.radiowaves.left.and.right"
-    }
-    
     var body: some View {
-        if let currentProgram = serviceManager.getCurrentProgram(for: playingChannel),
-           let imageURL = currentProgram.primaryImageURL,
-           let url = URL(string: imageURL) {
-            CachedAsyncImage(url: url) { image in
-                image
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-            } placeholder: {
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    .fill(
-                        LinearGradient(
-                            colors: [.purple.opacity(0.8), .blue.opacity(0.6)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .overlay {
-                        Image(systemName: channelIcon)
-                            .font(.system(size: size * 0.4, weight: .medium))
-                            .foregroundColor(.white)
-                    }
-            }
-            .frame(width: size, height: size)
-            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    .stroke(Color.white.opacity(0.18), lineWidth: 1.2)
-            )
-            .shadow(color: Color.black.opacity(0.15), radius: 4, y: 2)
-        } else {
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .fill(
-                    LinearGradient(
-                        colors: [.purple.opacity(0.8), .blue.opacity(0.6)],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
-                .frame(width: size, height: size)
-                .overlay {
-                    Image(systemName: channelIcon)
-                        .font(.system(size: size * 0.4, weight: .medium))
-                        .foregroundColor(.white)
-                }
-                .overlay(
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .stroke(Color.white.opacity(0.18), lineWidth: 1.2)
-                )
-                .shadow(color: Color.black.opacity(0.15), radius: 4, y: 2)
+        // The station's colour and name while the picture loads, when there is none, and
+        // when Show Images is off.
+        CachedAsyncImage(url: artworkURL) { image in
+            image
+                .resizable()
+                .aspectRatio(contentMode: .fill)
+        } placeholder: {
+            StationArtworkPlaceholder(channel: playingChannel)
         }
+        .frame(width: size, height: size)
+        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .stroke(Color.white.opacity(0.18), lineWidth: 1.2)
+        )
+        .shadow(color: Color.black.opacity(0.15), radius: 4, y: 2)
+    }
+
+    private var artworkURL: URL? {
+        serviceManager.getCurrentProgram(for: playingChannel)?.primaryImageURL
+            .flatMap(URL.init(string:))
     }
 }
 

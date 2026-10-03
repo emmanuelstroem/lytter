@@ -185,12 +185,8 @@ struct tvOSStationCard: View {
                          maxPixelSize: ImageCacheService.thumbnailMaxPixelSize) { image in
             image.resizable().aspectRatio(contentMode: .fill)
         } placeholder: {
-            ZStack {
-                Color(white: 0.14)
-                Image(systemName: "dot.radiowaves.left.and.right")
-                    .font(.system(size: metrics.width * 0.2))
-                    .foregroundStyle(.white.opacity(0.3))
-            }
+            // The caption already names the station.
+            StationArtworkPlaceholder(channel: channel, showsName: false)
         }
         .frame(width: metrics.width, height: metrics.height)
         .clipped()

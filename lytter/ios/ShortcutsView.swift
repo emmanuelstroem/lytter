@@ -20,64 +20,62 @@ struct ShortcutsView: View {
     @State private var showingAddShortcut = false
     @State private var selectedChannel: DRChannel?
     
+    /// Pushed from Settings, so it brings no `NavigationStack` of its own — it was a tab,
+    /// and a stack inside a stack draws two navigation bars.
     var body: some View {
-        NavigationStack {
-            List {
-                Section(header: Text("Siri Shortcuts")) {
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("Voice Commands")
-                            .font(.headline)
-                            .foregroundColor(.primary)
-                        
-                        Text("Say \"Hey Siri, play [channel name]\" to start listening to your favorite DR radio channels.")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                        
-                        Button("Add All Channels to Siri") {
-                            addAllChannelsToSiri()
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .padding(.top, 8)
+        List {
+            Section(header: Text("Siri Shortcuts")) {
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Voice Commands")
+                        .font(.headline)
+                        .foregroundColor(.primary)
+                    
+                    Text("Say \"Hey Siri, play [channel name]\" to start listening to your favorite DR radio channels.")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                    
+                    Button("Add All Channels to Siri") {
+                        addAllChannelsToSiri()
                     }
-                    .padding(.vertical, 8)
+                    .buttonStyle(.borderedProminent)
+                    .padding(.top, 8)
                 }
-                
-                Section(header: Text("Available Channels")) {
-                    ForEach(serviceManager.availableChannels, id: \.id) { channel in
-                        ChannelShortcutRow(channel: channel)
-                    }
-                }
-                
-                Section(header: Text("Quick Actions"), footer: Text("These shortcuts will be available in the Shortcuts app and can be triggered by Siri.")) {
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("Shortcuts App Integration")
-                            .font(.headline)
-                            .foregroundColor(.primary)
-                        
-                        Text("Create custom shortcuts in the Shortcuts app to automate your radio listening experience.")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                        
-                        Button("Open Shortcuts App") {
-                            openShortcutsApp()
-                        }
-                        .buttonStyle(.bordered)
-                        .padding(.top, 8)
-                    }
-                    .padding(.vertical, 8)
+                .padding(.vertical, 8)
+            }
+            
+            Section(header: Text("Available Channels")) {
+                ForEach(serviceManager.availableChannels, id: \.id) { channel in
+                    ChannelShortcutRow(channel: channel)
                 }
             }
-            .navigationTitle("Siri & Shortcuts")
-            .navigationBarTitleDisplayMode(.large)
-            .onAppear {
-                // Request Siri authorization when user accesses Shortcuts tab
-                if #available(iOS 12.0, *) {
-                    INPreferences.requestSiriAuthorization { status in
-                        Log.siri.debug("authorization status \(status.rawValue, privacy: .public)")
+            
+            Section(header: Text("Quick Actions"), footer: Text("These shortcuts will be available in the Shortcuts app and can be triggered by Siri.")) {
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Shortcuts App Integration")
+                        .font(.headline)
+                        .foregroundColor(.primary)
+                    
+                    Text("Create custom shortcuts in the Shortcuts app to automate your radio listening experience.")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                    
+                    Button("Open Shortcuts App") {
+                        openShortcutsApp()
                     }
+                    .buttonStyle(.bordered)
+                    .padding(.top, 8)
                 }
-                siriShortcutsService.refreshShortcuts()
+                .padding(.vertical, 8)
             }
+        }
+        .navigationTitle("Siri & Shortcuts")
+        .navigationBarTitleDisplayMode(.inline)
+        .onAppear {
+            // Asked for here, where Siri is what the listener has come to set up.
+            INPreferences.requestSiriAuthorization { status in
+                Log.siri.debug("authorization status \(status.rawValue, privacy: .public)")
+            }
+            siriShortcutsService.refreshShortcuts()
         }
     }
     
@@ -144,28 +142,7 @@ struct ChannelShortcutRow: View {
         }
     }
     
-    private var channelColor: Color {
-        switch channel.slug.lowercased() {
-        case "p1":
-            return Color.blue
-        case "p2":
-            return Color.green
-        case "p3":
-            return Color.orange
-        case "p4":
-            return Color.purple
-        case "p5":
-            return Color.red
-        case "p6":
-            return Color.pink
-        case "p7":
-            return Color.yellow
-        case "p8":
-            return Color.indigo
-        default:
-            return Color.gray
-        }
-    }
+    private var channelColor: Color { channel.stationColor }
 }
 
 struct ShortcutConfigurationView: View {
@@ -244,28 +221,7 @@ struct ShortcutConfigurationView: View {
         }
     }
     
-    private var channelColor: Color {
-        switch channel.slug.lowercased() {
-        case "p1":
-            return Color.blue
-        case "p2":
-            return Color.green
-        case "p3":
-            return Color.orange
-        case "p4":
-            return Color.purple
-        case "p5":
-            return Color.red
-        case "p6":
-            return Color.pink
-        case "p7":
-            return Color.yellow
-        case "p8":
-            return Color.indigo
-        default:
-            return Color.gray
-        }
-    }
+    private var channelColor: Color { channel.stationColor }
     
     private func addToSiri() {
         siriShortcutsService.donateShortcut(for: channel)
@@ -279,7 +235,7 @@ struct ShortcutConfigurationView: View {
 }
 
 #Preview {
-    ShortcutsView()
+    NavigationStack { ShortcutsView() }
         .environmentObject(SiriShortcutsService.shared)
         .environmentObject(DRServiceManager())
 }

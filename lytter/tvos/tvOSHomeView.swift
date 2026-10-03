@@ -70,6 +70,10 @@ struct tvOSHomeView: View {
                         tvOSSearchView(serviceManager: serviceManager,
                                        selectionState: selectionState)
                     }
+                    // Last, at the bottom of the sidebar, as in the TV app (F37).
+                    Tab("Settings", systemImage: "gearshape", value: tvOSSection.settings) {
+                        tvOSSettingsView(preferences: serviceManager.userPreferences)
+                    }
                 }
                 // No `.tabViewSidebarHeader` — the app name above the list would suit it,
                 // but that modifier is tvOS 27 and this ships to 17.6.
@@ -112,6 +116,10 @@ struct tvOSHomeView: View {
             tvOSSearchView(serviceManager: serviceManager, selectionState: selectionState)
                 .tabItem { Label("Search", systemImage: "magnifyingglass") }
                 .tag(tvOSSection.search)
+
+            tvOSSettingsView(preferences: serviceManager.userPreferences)
+                .tabItem { Label("Settings", systemImage: "gearshape") }
+                .tag(tvOSSection.settings)
         }
         .tint(.white)
     }
@@ -231,6 +239,7 @@ enum tvOSSection: String, CaseIterable, Identifiable, Hashable {
     case radio
     case nowPlaying
     case search
+    case settings
 
     var id: String { rawValue }
 }

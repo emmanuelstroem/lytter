@@ -111,4 +111,22 @@ extension GroupedChannel {
                 || (nowPlaying(channel)?.localizedCaseInsensitiveContains(trimmed) ?? false)
         }
     }
+
+    /// What a search lists for this station: the station, the districts that matched, or
+    /// nothing.
+    ///
+    /// The whole station when its own name matches — "P4" means P4. Otherwise only the
+    /// variants that answered, so "Fyn" lists P4 Fyn and P5 Fyn as channels to play rather
+    /// than P4 and P5 as stations to pick a district from all over again.
+    func searchResult(for query: String,
+                      nowPlaying: (DRChannel) -> String? = { _ in nil }) -> GroupedChannel? {
+        guard matches(query, nowPlaying: nowPlaying) else { return nil }
+
+        let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard hasMultipleDistricts, !trimmed.isEmpty,
+              !name.localizedCaseInsensitiveContains(trimmed) else { return self }
+
+        let hits = channels.filter { GroupedChannel(channels: [$0]).matches(trimmed, nowPlaying: nowPlaying) }
+        return hits.count == channels.count ? self : GroupedChannel(channels: hits)
+    }
 }
