@@ -179,6 +179,9 @@ enum StationCard {
     struct Subtitle: View {
         let text: String
         let metrics: StationCardMetrics
+        /// Leads the line with the playing marker, for a card whose name has no room for it
+        /// beside it (the Mac's standard card, F44).
+        var showsPlayingMarker = false
         /// Dynamic Type for the line under the card. The size is still the card's — the
         /// television's card is larger — scaled by the reader's text size; tvOS has no
         /// Dynamic Type, so this stays 1 there. The name on the artwork does not scale: it
@@ -188,10 +191,16 @@ enum StationCard {
         var body: some View {
             // Concrete rather than hierarchical: this sits on the background, not on a
             // material, and inside a Button hierarchical styles resolve against the tint.
-            Text(text)
-                .font(.system(size: metrics.subtitleFontSize * textScale))
-                .foregroundStyle(Color.secondaryOnPage)
-                .lineLimit(1)
+            HStack(spacing: 4) {
+                if showsPlayingMarker {
+                    Image(systemName: "speaker.wave.2.fill")
+                        .accessibilityHidden(true)
+                }
+                Text(text)
+                    .lineLimit(1)
+            }
+            .font(.system(size: metrics.subtitleFontSize * textScale))
+            .foregroundStyle(Color.secondaryOnPage)
                 // A rounded card container clips text that starts flush at its edge —
                 // "Orientering" came out as "rientering". Six points on the phone's card,
                 // scaled with the card so the television's sits the same way.
