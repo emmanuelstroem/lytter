@@ -145,6 +145,11 @@ struct iOSFullPlayerSheet: View {
                             onLiveTap: serviceManager.canSeek ? { serviceManager.seekToLive() } : nil,
                             isBehindLive: serviceManager.isBehindLive
                         )
+                        // Fixed heights for the two icon rows. Both size their symbols from
+                        // their own frame, and between the Spacers that frame was whatever was
+                        // left over — so larger Dynamic Type text above shrank the play
+                        // button and the action icons. The Spacers absorb the difference now.
+                        .frame(height: 96)
                         
                         Spacer()
                         
@@ -161,6 +166,7 @@ struct iOSFullPlayerSheet: View {
                                 showingSleepSheet = true
                             }
                         )
+                        .frame(height: 56)
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }

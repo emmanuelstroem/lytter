@@ -11,11 +11,15 @@ public struct MarqueeText: View {
     public var alignment: Alignment
     
     @State private var animate = false
+    /// The text's real rendered size, measured from a hidden copy. It used to be guessed —
+    /// 8pt a character and 16pt tall whatever the font — which clipped any text larger than
+    /// 16pt to a strip, and so ruled out Dynamic Type for everything set in a marquee.
+    @State private var textSize: CGSize = .zero
     var isCompact = false
     
     public var body: some View {
-        let stringWidth  = text.widthOfString(usingFont: font)
-        let stringHeight = text.heightOfString(usingFont: font)
+        let stringWidth  = textSize.width
+        let stringHeight = textSize.height
         
         // Create our animations
         let animation = Animation
@@ -76,28 +80,35 @@ public struct MarqueeText: View {
                 // Trigger scrolling if needed
                 self.animate = needsScrolling
             }
-            .onValueChanged(of: text) { oldValue, newValue in
-                let newStringWidth = newValue.widthOfString(usingFont: font)
-                if newStringWidth > geo.size.width {
-                    // Stop the old animation first
-                    self.animate = false
-                    
-                    // Kick off a new animation on the next runloop
-                    DispatchQueue.main.async {
-                        self.animate = true
-                    }
-                } else {
-                    self.animate = false
-                }
-            }
+            // The measurement lands a moment after the text changes, and a new text size
+            // (Dynamic Type) changes it too, so restart from whether it now overflows.
+            .onValueChanged(of: needsScrolling) { _, scroll in restart(scrolling: scroll) }
+            .onValueChanged(of: text) { _, _ in restart(scrolling: needsScrolling) }
         }
         .frame(height: stringHeight)
         .frame(maxWidth: isCompact ? stringWidth : nil)
+        .background(alignment: .topLeading) {
+            // The measuring copy: same text and font, never drawn, at its ideal size.
+            Text(text)
+                .font(font)
+                .lineLimit(1)
+                .fixedSize()
+                .hidden()
+                .onGeometryChange(for: CGSize.self, of: \.size) { textSize = $0 }
+        }
         .onDisappear {
             self.animate = false
         }
     }
     
+    /// Stops any running scroll and, if the text overflows, starts it again from the top on
+    /// the next run loop — an animation cannot be restarted in the same update.
+    private func restart(scrolling: Bool) {
+        animate = false
+        guard scrolling else { return }
+        DispatchQueue.main.async { animate = true }
+    }
+
     // MARK: - Marquee pair of texts
     @ViewBuilder
     private func makeMarqueeTexts(
@@ -178,21 +189,6 @@ extension MarqueeText {
         var view = self
         view.isCompact = compact
         return view
-    }
-}
-
-extension String {
-    func widthOfString(usingFont font: Font) -> CGFloat {
-        // Use a simple estimation based on character count and font size
-        // This is a simplified approach for SwiftUI Font
-        let estimatedWidth = CGFloat(self.count) * 8.0 // Rough estimation
-        return estimatedWidth
-    }
-    
-    func heightOfString(usingFont font: Font) -> CGFloat {
-        // Use a simple estimation for font height
-        // This is a simplified approach for SwiftUI Font
-        return 16.0 // Rough estimation for font height
     }
 }
 

@@ -71,54 +71,50 @@ struct PlayerInfoView: View {
     }
     
     var body: some View {
-        GeometryReader { geometry in
-            VStack(spacing: geometry.size.height * 0.1) {
-                HStack {
-                    VStack(alignment: .leading, spacing: geometry.size.height * 0.03) {
-                        Text(title)
-                            .font(.system(size: min(geometry.size.width, geometry.size.height) * 0.3, weight: .medium))
-                            .foregroundStyle(Color.primary)
-                            .lineLimit(1)
-                        
-                        MarqueeText(
-                            text: subtitle,
-                            font: .system(size: min(geometry.size.width, geometry.size.height) * 0.3),
-                            leftFade: geometry.size.width * 0.05,
-                            rightFade: geometry.size.width * 0.05,
-                            startDelay: 1.5
-                        )
-                        .foregroundStyle(Color.secondary)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.5)
-                    }
-                    
-                    Spacer()
-                    
-                    // A share button, not a menu. The menu had exactly one live item —
-                    // this same ShareLink — so it cost a tap for nothing.
-                    #if os(iOS) || os(macOS)
-                    ShareLink(
-                        item: shareText,
-                        preview: SharePreview(
-                            title,
-                            image: shareImage != nil ? Image(platformImage: shareImage!) : Image(systemName: "music.note")
-                        )
-                    ) {
-                        Image(systemName: "square.and.arrow.up.circle.fill")
-                            .font(.system(size: min(geometry.size.width, geometry.size.height) * 0.375,
-                                          weight: .medium))
-                            .foregroundStyle(Color.primary)
-                            .symbolRenderingMode(.hierarchical)
-                            // 44pt is the minimum comfortable target in the HIG.
-                            .frame(width: 44, height: 44)
-                    }
-                    .accessibilityLabel("Share")
-                    #endif
-                }
+        // Sized by text styles, not by a share of a GeometryReader's frame as before, which
+        // ignored Dynamic Type: at the largest sizes the station and track stayed small while
+        // the progress row below them grew. The row now takes the height its text needs.
+        HStack(alignment: .center, spacing: 12) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.headline)
+                    .foregroundStyle(Color.primary)
+                    .lineLimit(1)
+                    .accessibilityIdentifier("player.title")
+
+                MarqueeText(
+                    text: subtitle,
+                    font: .subheadline,
+                    leftFade: 16,
+                    rightFade: 16,
+                    startDelay: 1.5
+                )
+                .foregroundStyle(Color.secondary)
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .padding(.horizontal, geometry.size.width * 0.05)
+
+            Spacer(minLength: 0)
+
+            // A share button, not a menu. The menu had exactly one live item —
+            // this same ShareLink — so it cost a tap for nothing.
+            #if os(iOS) || os(macOS)
+            ShareLink(
+                item: shareText,
+                preview: SharePreview(
+                    title,
+                    image: shareImage != nil ? Image(platformImage: shareImage!) : Image(systemName: "music.note")
+                )
+            ) {
+                Image(systemName: "square.and.arrow.up.circle.fill")
+                    .font(.title2.weight(.medium))
+                    .foregroundStyle(Color.primary)
+                    .symbolRenderingMode(.hierarchical)
+                    // 44pt is the minimum comfortable target in the HIG.
+                    .frame(minWidth: 44, minHeight: 44)
+            }
+            .accessibilityLabel("Share")
+            #endif
         }
+        .padding(.horizontal, 20)
         .onAppear {
             loadShareImage()
         }
