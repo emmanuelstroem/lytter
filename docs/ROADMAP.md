@@ -409,9 +409,18 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
 - [ ] **F33. Favourite shows, not just channels.** Store series ids and surface a
       favourited programme with when it is next on. Needs the per-channel schedule snapshot
       that #14 wired up. Deliberately deferred: favourites are channels for now.
-- [ ] **F34. tvOS: the sidebar opens expanded on every launch.** The Home entry in the
-      sidebar starts expanded each time the app opens. It should start collapsed, as the
-      TV and Music apps do, so the first thing on screen is the content.
+- [x] ~~**F34. tvOS: the sidebar opens expanded on every launch.**~~ Done. tvOS shows a
+      `.sidebarAdaptable` sidebar expanded at launch and folds it away only once focus is
+      in the content, which the system did some seconds later. There is no API to start it
+      collapsed: `.prefersDefaultFocus`, `.defaultFocus` and disabling every tab
+      (`Tab.disabled`, tvOS 18.4) all left it open. Home now puts focus on its first card
+      itself (`placeLaunchFocus`, a `@FocusState` the shelves tag their cards with, retried
+      until it lands — one attempt was dropped on a slower launch), and a plain cover hides
+      the screen meanwhile, so the sidebar folding away is not seen as a glitch. The cover
+      fades once a card has focus (about 1.2 s in the simulator), or after 5 s if no content
+      arrives — a cold start on a slow connection — leaving the sidebar to take focus.
+      Measured with screenshot bursts every ~0.35 s after launch. Covered by
+      `TVLaunchFocusUITests`.
 - [x] ~~**F35. tvOS: Back and the TV button should leave the app.**~~ Not reproducible
       on tvOS 26.5. Reported as Back getting stuck on the app's own Home instead of
       returning to the Apple TV home screen. Driven with `XCUIRemote` and a screenshot
