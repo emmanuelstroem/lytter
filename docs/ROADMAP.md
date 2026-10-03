@@ -463,8 +463,10 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
       Trap for whoever re-checks: just after the app leaves, XCUITest still reports it
       `runningForeground` with nothing focused, which looks exactly like "stuck" — look
       at the screen.
-- [ ] **F36. tvOS: Search at the top of the sidebar.** Move Search above the other
-      destinations.
+- [x] ~~**F36. tvOS: Search at the top of the sidebar.**~~ Done. Search is the first
+      tab, above Home, as in the TV and Music apps; the tvOS 17 tab bar has the same order.
+      Home is still where the app opens. `TVScrollingUITests.testSidebarOrder` walks the
+      sidebar with the remote and checks the whole order.
 - [x] ~~**F37. tvOS: Settings at the bottom of the sidebar.**~~ Done with F43: the last
       sidebar destination, holding the remembered region (shown, with Forget Region),
       Remove All Favourites and Clear Recently Played, each of the last two confirmed

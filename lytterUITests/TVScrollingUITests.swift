@@ -86,6 +86,27 @@ final class TVScrollingUITests: XCTestCase {
         XCTAssertTrue(isOnScreen(focused), "a result in the last row has focus but is off screen")
     }
 
+    // MARK: - Sidebar
+
+    /// Search heads the sidebar, as in the TV and Music apps (F36), and Settings ends it
+    /// (F37). Not a scrolling surface, but these tests already know how to walk the sidebar.
+    @MainActor
+    func testSidebarOrder() throws {
+        launch()
+        let destinations = ["Search", "Home", "Radio", "Now Playing", "Settings"]
+        XCTAssertTrue(moveFocus(.left, until: { destinations.contains($0.label) }, maxPresses: 8),
+                      "could not move into the sidebar; focus is on \(focusedLabel)")
+        press(.up, times: destinations.count)
+
+        var order = [focusedLabel]
+        for _ in 1..<destinations.count {
+            press(.down)
+            order.append(focusedLabel)
+        }
+        shot("sidebar-order")
+        XCTAssertEqual(order, destinations)
+    }
+
     // MARK: - Settings
 
     /// Settings is a form taller than the screen. Pressing down has to walk it to the last
@@ -213,7 +234,7 @@ final class TVScrollingUITests: XCTestCase {
     /// not Menu, which from Home leaves the app altogether.
     @MainActor
     private func openSection(_ name: String) {
-        let destinations = ["Home", "Radio", "Now Playing", "Search", "Settings"]
+        let destinations = ["Search", "Home", "Radio", "Now Playing", "Settings"]
         XCTAssertTrue(moveFocus(.left, until: { destinations.contains($0.label) }, maxPresses: 8),
                       "could not move into the sidebar; focus is on \(focusedLabel)")
         shot("in-sidebar")
