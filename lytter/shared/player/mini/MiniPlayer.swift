@@ -95,12 +95,12 @@ struct MiniPlayerComponents: View {
                                     let programTitle = serviceManager.getCurrentProgram(for: playingChannel)
                                     VStack(alignment: .leading, spacing: 1) {
                                         Text(verbatim: "\(playingChannel.title) - \(programTitle?.cleanTitle() ?? "")")
-                                            .font(.system(size: 13, weight: .medium))
+                                            .font(.footnote.weight(.medium))
                                             .foregroundStyle(Color.primary)
                                             .lineLimit(1)
                                         MarqueeText(
                                             text: track.displayText,
-                                            font: .system(size: 11, weight: .regular),
+                                            font: .caption2,
                                             leftFade: 5,
                                             rightFade: 24,
                                             startDelay: 1.5
@@ -111,12 +111,12 @@ struct MiniPlayerComponents: View {
                                     let programTitle = serviceManager.getCurrentProgram(for: playingChannel)?.cleanTitle() ?? String(localized: "Live")
                                     VStack(alignment: .leading, spacing: 1) {
                                         Text(playingChannel.title)
-                                            .font(.system(size: 13, weight: .medium))
+                                            .font(.footnote.weight(.medium))
                                             .foregroundStyle(Color.primary)
                                             .lineLimit(1)
                                         MarqueeText(
                                             text: programTitle,
-                                            font: .system(size: 11, weight: .regular),
+                                            font: .caption2,
                                             leftFade: 5,
                                             rightFade: 24,
                                             startDelay: 1.5
@@ -126,12 +126,12 @@ struct MiniPlayerComponents: View {
                                 }
                             } else if let currentProgram = serviceManager.getCurrentProgram(for: playingChannel) {
                                 Text(playingChannel.title)
-                                    .font(.system(size: 13, weight: .medium))
+                                    .font(.footnote.weight(.medium))
                                     .foregroundStyle(Color.primary)
                                     .lineLimit(1)
                                 MarqueeText(
                                     text: currentProgram.cleanTitle(),
-                                    font: .system(size: 11, weight: .regular),
+                                    font: .caption2,
                                     leftFade: 5,
                                     rightFade: 24,
                                     startDelay: 1.5
@@ -139,7 +139,7 @@ struct MiniPlayerComponents: View {
                                 .foregroundStyle(Color.secondary)
                             } else {
                                 Text(serviceManager.isPlaying ? "Live Now" : "Paused")
-                                    .font(.system(size: 13, weight: .medium))
+                                    .font(.footnote.weight(.medium))
                                     .foregroundColor(serviceManager.isPlaying ? Color.red : Color.secondary)
                                     .lineLimit(1)
                             }
@@ -149,12 +149,12 @@ struct MiniPlayerComponents: View {
                                 let programTitle = serviceManager.getCurrentProgram(for: lastPlayedChannel)?.cleanTitle() ?? String(localized: "Live")
                                 VStack(alignment: .leading, spacing: 1) {
                                     Text(lastPlayedChannel.title)
-                                        .font(.system(size: 13, weight: .medium))
+                                        .font(.footnote.weight(.medium))
                                         .foregroundStyle(Color.primary)
                                         .lineLimit(1)
                                     MarqueeText(
                                         text: programTitle,
-                                        font: .system(size: 11, weight: .regular),
+                                        font: .caption2,
                                         leftFade: 5,
                                         rightFade: 24,
                                         startDelay: 1.5
@@ -163,17 +163,20 @@ struct MiniPlayerComponents: View {
                                 }
                             } else {
                                 Text("Not Playing")
-                                    .font(.system(size: 13, weight: .medium))
+                                    .font(.footnote.weight(.medium))
                                     .foregroundStyle(Color.primary)
                                     .lineLimit(1)
                                 Text(serviceManager.availableChannels.isEmpty ? "No channels available" : "Tap play to start")
-                                    .font(.system(size: 11, weight: .regular))
+                                    .font(.caption2)
                                     .foregroundStyle(Color.secondary)
                                     .lineLimit(1)
                             }
                         }
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
+                    // Text styles now, so the bar follows Dynamic Type — but it is a fixed-height
+                    // bar, so it stops growing where the system's own compact bars do.
+                    .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
                 }
             }
             .contentShape(Rectangle())

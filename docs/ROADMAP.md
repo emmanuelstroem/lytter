@@ -301,13 +301,25 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
       no translations and correctly falls back to English, plurals included.
       **The Danish wording has not been reviewed by a native speaker** — it was written
       alongside the code. The mechanism is verified; the phrasing is not.
-- [ ] **F11b. Dynamic Type in the player.** The accessibility labels landed in #19, but the
-      player still sizes its type with `.font(.system(size:))` off `GeometryReader`, so it
-      ignores Dynamic Type entirely. That is a layout change rather than a labelling one.
+- [x] ~~**F11b. Dynamic Type in the player.**~~ Done. Three things stood in the way:
+      1. **The player sized its type off a `GeometryReader`**, so at AX3 the station and
+         track stayed small while the progress row beneath — already on text styles — grew.
+         `PlayerInfoView` now uses `.headline` / `.subheadline` and takes the height its text
+         needs.
+      2. **`MarqueeText` never measured its text.** It guessed 8pt a character and 16pt tall
+         whatever the font, which would have clipped larger text to a strip. It now reads
+         the real size from a hidden copy (`onGeometryChange`), which also closes P12.
+      3. **The icon rows sized themselves from leftover space**, so bigger text shrank the
+         play button and the action icons. Both rows have fixed heights now; the Spacers
+         absorb the difference, and the artwork gives way at the largest sizes.
+      The mini player is on text styles with the same sizes at the default setting, capped at
+      `xxxLarge` as the system's own compact bars are. Checked by screenshots at the default
+      size and AX3. Covered by `PlayerDynamicTypeUITests`.
 - [ ] **F11. Accessibility pass.** *Partly done in #19 — every control in the player, the
       channel cards and the district rows now carry labels, though nobody has yet heard them
-      through VoiceOver.* Remaining: Dynamic Type support
-      (all typography is currently hardcoded `.system(size:)`), Reduce Motion for the
+      through VoiceOver.* Remaining: Dynamic Type beyond the player (F11b did the full and mini
+      players; Home, Radio, Search and the sheets still use `.system(size:)` in
+      places), Reduce Motion for the
       marquee and focus animations, and a contrast check on the white-on-artwork text.
 - [x] ~~**F12. Replace `NavigationView` with `NavigationStack`.**~~ Done in #21. Five
       containers across four files, and the useful finding was that **the app has no
@@ -444,6 +456,29 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
       actually playing: it used to stay on a paused channel and on the last-played channel
       restored at launch, fixed alongside this entry by `DRServiceManager.isAudible`.
       Respect Reduce Motion: a still mark then, not a pulsing one.
+- [ ] **F42. Network errors in the UI.** Decide how the app tells the listener that the
+      network is the problem, and what they can do about it. Today it is uneven:
+      `DRServiceManager.error` (channel list) and `playbackError` (stream) are shown on some
+      screens only — iOS Home, Radio and Search, macOS Home — and tvOS shows little or
+      nothing; the polled track and schedule fail silently and the UI keeps stale data. Cover:
+      no connection at launch (cached channels, nothing cached), the connection dropping
+      mid-stream, DR's API down while the network is fine, and slow responses (see the 5 s
+      launch hold in F34). Prefer one shared presentation — an inline banner with a retry —
+      over per-screen alerts, recover automatically when the connection returns
+      (`NWPathMonitor`), and keep wording that distinguishes "you are offline" from "DR is
+      not answering". New strings need their Danish.
+- [ ] **F43. Settings.** A Settings screen — on tvOS, the sidebar destination F37 proposes —
+      with, to start:
+      - **Show images** (default on). Off shows the station colour and name instead of
+        programme artwork: less data on a slow connection, and a calmer screen.
+      - **Screen off** (default 30 s). After that long without interaction while playing,
+        the screen goes black — audio continues — until the listener touches a control or
+        the remote, which brings it back without acting on that first press. For a radio
+        left playing on a TV, and a phone on a stand. Today `preventScreenSleep` in
+        `AudioPlayerService` only keeps the system from sleeping. Options for the delay,
+        including off.
+      Persist through `UserPreferencesService`, and observe it directly (see AGENTS.md on
+      nested `ObservableObject`s).
 - [ ] **F14. Add a README.** Nineteen commits and no entry point for a reader.
 
 ### P2 — expansion
@@ -717,9 +752,9 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
       enabled: the lock screen and Control Centre showed skip buttons that ignored every
       press. Also removed the same two buttons from the iOS full player, which called the
       same no-ops.
-- [ ] **P12. Cache `MarqueeText` measurements.** `widthOfString` / `heightOfString`
-      construct a `UIFont` and measure on **every body evaluation** — and `MarqueeText` lives
-      in the mini player, which re-renders on every player state change.
+- [x] ~~**P12. Cache `MarqueeText` measurements.**~~ Moot after F11b: the measuring
+      functions were estimates that ignored the font, and are gone. `MarqueeText` now reads
+      the real rendered size once per layout, from a hidden copy of its text.
 
 ### P2
 
