@@ -527,14 +527,16 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
         **Not covered by a UI test**: fixture streams never play, and the blackout only
         runs while playing. Checked by reading; check by hand on a real stream.
       Persisted through `UserPreferencesService`; the views observe it directly.
-- [ ] **F44. Long district names overflow the Mac's standard card when playing.** The Mac
-      card puts the playing marker beside the name; at 160 points the six longest district
-      names do not fit beside it ("P4 - Nordjylland": 125 points against 121), so a playing
-      district in Recently Played is truncated. Widening does not help — the marker scales
-      with the card, and it would take about 450 points. The marker has to go somewhere else
-      on that card (on the artwork, or in place of the subtitle), or the name drop the
-      district while playing. `StationCardTests.everyNameFitsAMacCardBesideThePlayingMarker`
-      records it as a known issue and fails once it is fixed.
+- [x] ~~**F44. Long district names overflow the Mac's standard card when playing.**~~ Done.
+      The Mac card put the playing marker beside the name; at 160 points the six longest
+      district names do not fit beside it ("P4 - Nordjylland": 125 points against 121), and
+      widening does not help because the marker scales with the card. On the standard card
+      the marker now leads the programme line beneath the card (`StationCard.Subtitle`'s
+      `showsPlayingMarker`) and the name has the caption to itself; the featured card, where
+      every name fits with it, keeps it beside the name. One rule decides it,
+      `macOSStationCard.marksPlayingBesideName`, and
+      `StationCardTests.everyNameFitsAMacCard` measures whichever layout it picks — the
+      known-issue wrapper is gone.
 - [ ] **F14. Add a README.** Nineteen commits and no entry point for a reader.
 
 ### P2 — expansion

@@ -50,6 +50,18 @@ struct macOSStationCard: View {
 
     private var isPlaying: Bool { serviceManager.playingChannel?.id == channel.id }
 
+    /// Whether the playing marker goes beside the name, or leads the programme beneath the
+    /// card instead.
+    ///
+    /// Beside the name only where every name DR broadcasts fits with it: on the standard
+    /// card "P4 - Nordjylland" measures 125 points and beside the marker there are 121 —
+    /// and widening the card does not help, because the marker grows with it (F44).
+    /// The line beneath has the room, and it is where Music marks the playing item too.
+    /// `StationCardTests` measures both.
+    static func marksPlayingBesideName(_ style: StationCardStyle) -> Bool {
+        style == .featured
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             artwork
@@ -133,7 +145,7 @@ struct macOSStationCard: View {
             StationCard.Caption(title: title, subtitle: subtitle, metrics: metrics) {
                 if opensPicker {
                     StationCard.PickerCue(metrics: metrics)
-                } else if isPlaying {
+                } else if isPlaying, Self.marksPlayingBesideName(style) {
                     // Beside the name, not badged onto the artwork — Music marks the
                     // playing item in its caption and leaves the picture alone.
                     Image(systemName: "speaker.wave.2.fill")
@@ -164,7 +176,9 @@ struct macOSStationCard: View {
     @ViewBuilder
     private var caption: some View {
         if !style.captionsProgramme {
-            StationCard.Subtitle(text: subtitle, metrics: metrics)
+            StationCard.Subtitle(text: subtitle, metrics: metrics,
+                                 showsPlayingMarker: isPlaying && !opensPicker
+                                     && !Self.marksPlayingBesideName(style))
                 .frame(height: metrics.subtitleFontSize + 4, alignment: .leading)
         }
     }

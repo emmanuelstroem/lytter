@@ -95,18 +95,23 @@ struct StationCardTests {
         try expectEveryNameFitsBesideTheMarker(on: .tvOS(style))
     }
 
-    /// So does the Mac's card — and on the standard one the longest district names do not
-    /// fit: "P4 - Nordjylland" measures 125 points against 121 available, so a playing
-    /// district in Recently Played is truncated. Widening the card cannot fix it (the marker
-    /// grows with the card); the design has to change. Recorded as a known issue until it
-    /// does — F44 — and this fails the day it is fixed, as a reminder to remove the wrapper.
+    #if os(macOS)
+    /// The Mac's card marks it beside the name only where every name fits with it; on the
+    /// standard card the longest districts do not ("P4 - Nordjylland" measures 125 points
+    /// against 121), so there the marker leads the programme beneath the card and the name
+    /// has the caption to itself (F44).
     @Test(arguments: [StationCardStyle.featured, .standard])
-    func everyNameFitsAMacCardBesideThePlayingMarker(style: StationCardStyle) throws {
-        try withKnownIssue("F44: long district names overflow the Mac's standard card",
-                           isIntermittent: false) {
-            try expectEveryNameFitsBesideTheMarker(on: .macOS(style))
-        } when: {
-            style == .standard
+    func everyNameFitsAMacCard(style: StationCardStyle) throws {
+        let metrics = StationCardMetrics.macOS(style)
+        if macOSStationCard.marksPlayingBesideName(style) {
+            try expectEveryNameFitsBesideTheMarker(on: metrics)
+        } else {
+            for title in Self.live {
+                let name = name(title)
+                #expect(width(of: name, on: metrics) <= room(on: metrics),
+                        "\(name) does not fit a \(metrics.width)-point card")
+            }
         }
     }
+    #endif
 }
