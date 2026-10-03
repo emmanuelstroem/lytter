@@ -102,6 +102,7 @@ struct tvOSStationCard: View {
                 label: { face },
                 itemTitle: { $0.district ?? $0.name },
                 itemSymbols: symbols(for:),
+                itemIsPlaying: serviceManager.isAudible,
                 itemMenu: { favouriteButton(for: $0) },
                 onSelect: { picked in
                     // Choosing here says where the listener is, so the next regional station
@@ -138,15 +139,14 @@ struct tvOSStationCard: View {
         }
     }
 
-    /// The marks the phone's district sheet shows: their region, a favourite, what is
-    /// playing.
+    /// The marks the phone's district sheet shows: their region, a favourite. What is
+    /// playing is `PlayingMark`, through `itemIsPlaying`.
     private func symbols(for channel: DRChannel) -> [String] {
         var symbols: [String] = []
         if let region = preferences.preferredDistrict, channel.districtID == region.id {
             symbols.append("location.fill")
         }
         if preferences.isFavourite(channel.id) { symbols.append("star.fill") }
-        if serviceManager.isAudible(channel) { symbols.append("speaker.wave.2.fill") }
         return symbols
     }
 
@@ -168,10 +168,9 @@ struct tvOSStationCard: View {
             // Beside the name, where Music marks the playing item, rather than badged onto
             // the artwork. The name's size leaves room for it on the longest station.
             if isPlaying {
-                Image(systemName: "speaker.wave.2.fill")
+                PlayingMark()
                     .font(.system(size: metrics.accessoryFontSize))
                     .foregroundStyle(Color.accentColor)
-                    .accessibilityHidden(true)
             }
             if opensPicker {
                 Spacer(minLength: 4)

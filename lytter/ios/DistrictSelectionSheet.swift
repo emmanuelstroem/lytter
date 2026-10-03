@@ -96,10 +96,9 @@ struct DistrictSelectionSheet: View {
             }
 
             if isPlaying(channel) {
-                Image(systemName: "speaker.wave.2.fill")
+                PlayingMark()
                     .font(.caption)
                     .foregroundStyle(Color.accentColor)
-                    .accessibilityHidden(true)
             }
         }
         .contentShape(Rectangle())

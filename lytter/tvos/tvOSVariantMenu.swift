@@ -20,8 +20,12 @@ struct tvOSVariantMenu<Label: View, Item: Identifiable & Hashable, ItemMenu: Vie
     let itemTitle: (Item) -> String
 
     /// Symbols after an item's title, for what the list knows about it — the listener's
-    /// region, a favourite, what is playing. The same marks the phone's sheet shows.
+    /// region, a favourite. The same marks the phone's sheet shows.
     var itemSymbols: (Item) -> [String] = { _ in [] }
+
+    /// Whether an item is playing now, marked after its symbols with `PlayingMark` — not a
+    /// symbol, because it moves.
+    var itemIsPlaying: (Item) -> Bool = { _ in false }
 
     /// Hold-select on an item. The picker is where a district is named, so it is where one
     /// is pinned: the card it opened from stands for all of them.
@@ -88,6 +92,10 @@ struct tvOSVariantMenu<Label: View, Item: Identifiable & Hashable, ItemMenu: Vie
                                     ForEach(itemSymbols(item), id: \.self) { symbol in
                                         Image(systemName: symbol)
                                             .accessibilityHidden(true)
+                                    }
+
+                                    if itemIsPlaying(item) {
+                                        PlayingMark()
                                     }
                                 }
                                 .font(.title3)

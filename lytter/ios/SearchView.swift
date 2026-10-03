@@ -340,10 +340,9 @@ struct StationSearchRow: View {
                 Spacer(minLength: 8)
 
                 if !opensPicker && serviceManager.isAudible(channel) {
-                    Image(systemName: "speaker.wave.2.fill")
+                    PlayingMark()
                         .font(.caption)
                         .foregroundStyle(Color.accentColor)
-                        .accessibilityHidden(true)
                 } else if opensPicker {
                     Image(systemName: "chevron.right")
                         .font(.footnote.weight(.semibold))

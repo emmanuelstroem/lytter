@@ -193,8 +193,7 @@ enum StationCard {
             // material, and inside a Button hierarchical styles resolve against the tint.
             HStack(spacing: 4) {
                 if showsPlayingMarker {
-                    Image(systemName: "speaker.wave.2.fill")
-                        .accessibilityHidden(true)
+                    PlayingMark()
                 }
                 Text(text)
                     .lineLimit(1)

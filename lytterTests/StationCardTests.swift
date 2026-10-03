@@ -54,10 +54,10 @@ struct StationCardTests {
     private func markerWidth(on metrics: StationCardMetrics) throws -> CGFloat {
         #if canImport(UIKit)
         let marker = try #require(UIImage(
-            systemName: "speaker.wave.2.fill",
+            systemName: PlayingMark.sizingSymbol,
             withConfiguration: UIImage.SymbolConfiguration(pointSize: metrics.accessoryFontSize)))
         #else
-        let marker = try #require(NSImage(systemSymbolName: "speaker.wave.2.fill",
+        let marker = try #require(NSImage(systemSymbolName: PlayingMark.sizingSymbol,
                                           accessibilityDescription: nil)?
             .withSymbolConfiguration(.init(pointSize: metrics.accessoryFontSize, weight: .regular)))
         #endif
