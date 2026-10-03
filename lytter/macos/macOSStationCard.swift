@@ -148,10 +148,9 @@ struct macOSStationCard: View {
                 } else if isPlaying, Self.marksPlayingBesideName(style) {
                     // Beside the name, not badged onto the artwork — Music marks the
                     // playing item in its caption and leaves the picture alone.
-                    Image(systemName: "speaker.wave.2.fill")
+                    PlayingMark()
                         .font(.system(size: metrics.accessoryFontSize))
                         .foregroundStyle(.secondary)
-                        .accessibilityHidden(true)
                 }
             }
         }

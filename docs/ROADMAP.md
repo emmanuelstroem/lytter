@@ -469,13 +469,21 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
       sidebar destination, holding the remembered region (shown, with Forget Region),
       Remove All Favourites and Clear Recently Played, each of the last two confirmed
       first. The same sections are on iOS and in the Mac's Settings window.
-- [ ] **F38. An animated playing mark.** Replace the static speaker symbol beside a playing
-      station's name — on tvOS cards, and in the district pickers on both platforms — with a
-      small mark made of concentric circles, like a speaker cone, that pulse in and out while
-      the station plays and stop when it does not. The mark itself only appears while sound is
-      actually playing: it used to stay on a paused channel and on the last-played channel
-      restored at launch, fixed alongside this entry by `DRServiceManager.isAudible`.
-      Respect Reduce Motion: a still mark then, not a pulsing one.
+- [x] ~~**F38. An animated playing mark.**~~ Done. `PlayingMark` replaced
+      `speaker.wave.2.fill` wherever it said "this one is playing": tvOS cards, the district
+      pickers (the phone's sheet, the television's panel — through `itemIsPlaying`, since a
+      moving mark is not a symbol name), the phone's search rows and the Mac's cards. A dot
+      and two rings, like a speaker cone head on, that breathe in and out over 1.6 s, the
+      outer ring a little behind the inner. It takes the box of a hidden `circle` symbol, so
+      it sits where the symbol did and follows Dynamic Type, and draws in the foreground
+      style, so it inverts with a focused pill like the marks beside it. The mark itself
+      only appears while sound is actually playing: it used to stay on a paused channel and
+      on the last-played channel restored at launch, fixed alongside this entry by
+      `DRServiceManager.isAudible`. Reduce Motion draws the same rings still. Covered by
+      `PlayingMarkAnimationTests` (it moves, repeats, stays inside its box, and holds still
+      at rest); `StationCardTests` measures names against the new mark's box. Checked
+      running on iPhone (search rows, district sheet, Reduce Motion on and off) and Apple
+      TV (cards and picker); the Mac only built and unit-tested, not looked at.
 - [x] ~~**F42. Network errors in the UI.**~~ Done. Each screen used to decide for itself
       from `DRServiceManager.error` and `playbackError`, in whatever words the error carried;
       tvOS Home showed nothing at all. Now:
