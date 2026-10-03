@@ -679,6 +679,14 @@ final class DRLocalCache {
 
 // MARK: - Service Manager
 class DRServiceManager: ObservableObject {
+    /// The app's one manager.
+    ///
+    /// Static rather than created by the scene, because an App Intent (F15) can start the
+    /// app with no scene at all — Siri, the Action Button or a Shortcuts automation
+    /// launching it in the background to play a station. lytterApp hands this same
+    /// instance to every screen, so what the intent starts is what the screens show.
+    static let shared = DRServiceManager()
+
     // Direct observable properties
     @Published var availableChannels: [DRChannel] = []
     @Published var isLoading = false

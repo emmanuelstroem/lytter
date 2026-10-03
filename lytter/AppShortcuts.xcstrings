@@ -1,0 +1,116 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "Pause ${applicationName}": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sæt ${applicationName} på pause"
+          }
+        }
+      }
+    },
+    "Play ${applicationName}": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spil ${applicationName}"
+          }
+        }
+      }
+    },
+    "Resume ${applicationName}": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fortsæt ${applicationName}"
+          }
+        }
+      }
+    },
+    "Stop ${applicationName}": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stop ${applicationName}"
+          }
+        }
+      }
+    },
+    "Stop ${applicationName} after this program": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sluk ${applicationName} efter dette program"
+          }
+        }
+      }
+    },
+    "Stop ${applicationName} after this programme": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stop ${applicationName} efter dette program"
+          }
+        }
+      }
+    },
+    "Stop ${applicationName} in ${duration}": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stop ${applicationName} om ${duration}"
+          }
+        }
+      }
+    },
+    "Turn off ${applicationName} in ${duration}": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sluk ${applicationName} om ${duration}"
+          }
+        }
+      }
+    },
+    "What's on ${applicationName}": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hvad sendes der i ${applicationName}"
+          }
+        }
+      }
+    },
+    "What's playing on ${applicationName}": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hvad spiller ${applicationName}"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

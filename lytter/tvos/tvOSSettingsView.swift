@@ -19,6 +19,14 @@ struct tvOSSettingsView: View {
                 SettingsSections(preferences: preferences)
 
                 Section {
+                    SiriAccessRow()
+                } header: {
+                    Text("Siri")
+                } footer: {
+                    Text("Hold the Siri button on the remote and say “Play P3”.")
+                }
+
+                Section {
                     LabeledContent("Version") {
                         Text(verbatim: Bundle.main.versionDescription)
                     }

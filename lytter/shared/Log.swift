@@ -32,5 +32,4 @@ nonisolated enum Log {
     static let network = Logger(subsystem: subsystem, category: "network")
     static let playback = Logger(subsystem: subsystem, category: "playback")
     static let deepLink = Logger(subsystem: subsystem, category: "deeplink")
-    static let siri = Logger(subsystem: subsystem, category: "siri")
 }
