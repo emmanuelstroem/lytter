@@ -527,6 +527,14 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
         **Not covered by a UI test**: fixture streams never play, and the blackout only
         runs while playing. Checked by reading; check by hand on a real stream.
       Persisted through `UserPreferencesService`; the views observe it directly.
+- [ ] **F44. Long district names overflow the Mac's standard card when playing.** The Mac
+      card puts the playing marker beside the name; at 160 points the six longest district
+      names do not fit beside it ("P4 - Nordjylland": 125 points against 121), so a playing
+      district in Recently Played is truncated. Widening does not help — the marker scales
+      with the card, and it would take about 450 points. The marker has to go somewhere else
+      on that card (on the artwork, or in place of the subtitle), or the name drop the
+      district while playing. `StationCardTests.everyNameFitsAMacCardBesideThePlayingMarker`
+      records it as a known issue and fails once it is fixed.
 - [ ] **F14. Add a README.** Nineteen commits and no entry point for a reader.
 
 ### P2 — expansion
@@ -751,12 +759,10 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
       **Check with a clean build on all three platforms.** Incremental builds report only
       the files they recompile, and tvOS-only test files never appear in an iOS build;
       that is how these went unnoticed.
-- [ ] **S17. The test target does not build for macOS.** `lytterTests/StationCardTests.swift`
-      imports UIKit unconditionally (since #35), so `xcodebuild clean build-for-testing
-      -destination 'platform=macOS'` fails with "Unable to resolve module dependency:
-      'UIKit'". The app builds; the tests do not, so the clean macOS check AGENTS.md asks
-      for cannot pass. Guard the UIKit parts with `#if canImport(UIKit)` (or use a
-      platform-neutral API) without weakening what the tests check on iOS and tvOS.
+- [x] ~~**S17. The test target does not build for macOS.**~~ Done. `StationCardTests` imported
+      UIKit unconditionally (since #35); it now measures with AppKit on the Mac, so
+      `xcodebuild clean build-for-testing -destination 'platform=macOS'` builds and the unit
+      tests run there. Porting it found a bug the suite had never been able to see — F44.
 - [ ] **S15. Revisit what default main-actor isolation actually buys.** With
       `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor`, types are main-actor unless they say
       otherwise — including `InFlightTasks`, whose whole purpose is to be touched from
