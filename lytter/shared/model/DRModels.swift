@@ -595,35 +595,85 @@ struct DRIndexPointsResponse: Codable, Equatable {
 }
 
 // MARK: - Local Disk Cache
+
+/// The last catalogue DR returned, on disk, so a launch has something to show before the
+/// network answers — or when it never does (F42).
+///
+/// Two things made it unsafe to lean on (P13). It had no version, so a change to `DREpisode`
+/// that the old file could not decode emptied it without a word: the next offline launch
+/// showed "You're offline" with nothing behind it, as if nothing had ever been cached. And it
+/// had no age, so a snapshot from last week was loaded as readily as one from a minute ago.
 final class DRLocalCache {
     static let shared = DRLocalCache()
-    private init() {}
 
-    private let fileName = "dr_schedules_cache.json"
+    /// Bump when `DREpisode` changes in a way an older file cannot decode. A file written
+    /// under another version is discarded, and says so in the log.
+    static let schemaVersion = 1
+
+    /// Older than this, a snapshot is not loaded at all. Its programmes are long over and
+    /// DR's line-up may have moved on; the channel list it would give is not worth showing.
+    static let maxAge: TimeInterval = 7 * 24 * 60 * 60
+
+    /// What is written: the schedules, and when and under which version they were saved.
+    struct Snapshot: Codable {
+        let version: Int
+        let savedAt: Date
+        let schedules: [DREpisode]
+    }
+
+    private let fileURL: URL?
     private let encoder = JSONEncoder()
     private let decoder = JSONDecoder()
 
-    private var cacheURL: URL? {
-        FileManager.default
+    private convenience init() {
+        self.init(fileURL: FileManager.default
             .urls(for: .cachesDirectory, in: .userDomainMask)
             .first?
-            .appendingPathComponent(fileName)
+            .appendingPathComponent("dr_schedules_cache.json"))
+    }
+
+    /// For tests, which point it at a file of their own.
+    init(fileURL: URL?) {
+        self.fileURL = fileURL
     }
 
     /// Persist schedules to disk. Call only after a successful API response.
-    func save(_ schedules: [DREpisode]) {
-        guard let url = cacheURL,
-              let data = try? encoder.encode(schedules) else { return }
+    func save(_ schedules: [DREpisode], at date: Date = Date()) {
+        let snapshot = Snapshot(version: Self.schemaVersion, savedAt: date, schedules: schedules)
+        guard let url = fileURL, let data = try? encoder.encode(snapshot) else { return }
         try? data.write(to: url, options: .atomic)
     }
 
-    /// Load schedules from disk. Returns an empty array if nothing is cached yet.
-    func load() -> [DREpisode] {
-        guard let url = cacheURL,
-              let data = try? Data(contentsOf: url),
-              let schedules = try? decoder.decode([DREpisode].self, from: data)
-        else { return [] }
-        return schedules
+    /// The cached schedules, or an empty array if there are none worth using.
+    func load(now: Date = Date()) -> [DREpisode] {
+        guard let url = fileURL, let data = try? Data(contentsOf: url) else { return [] }
+        guard let snapshot = decode(data, writtenAt: modificationDate(of: url)) else {
+            Log.network.warning("discarding a disk cache that does not decode as this version")
+            return []
+        }
+        guard snapshot.version == Self.schemaVersion else {
+            Log.network.warning(
+                "discarding a disk cache from schema version \(snapshot.version, privacy: .public)")
+            return []
+        }
+        guard now.timeIntervalSince(snapshot.savedAt) <= Self.maxAge else {
+            Log.network.info("discarding a disk cache older than its maximum age")
+            return []
+        }
+        return snapshot.schedules
+    }
+
+    /// The current format, or the bare array written before it had a version. That one is
+    /// read as version 1 — the same `DREpisode` — so an update does not throw away the cache
+    /// every existing install has, and dated by the file, which is when it was saved.
+    private func decode(_ data: Data, writtenAt fileDate: Date?) -> Snapshot? {
+        if let snapshot = try? decoder.decode(Snapshot.self, from: data) { return snapshot }
+        guard let legacy = try? decoder.decode([DREpisode].self, from: data) else { return nil }
+        return Snapshot(version: 1, savedAt: fileDate ?? .distantPast, schedules: legacy)
+    }
+
+    private func modificationDate(of url: URL) -> Date? {
+        (try? FileManager.default.attributesOfItem(atPath: url.path))?[.modificationDate] as? Date
     }
 }
 
@@ -676,6 +726,7 @@ class DRServiceManager: ObservableObject {
         loadDiskCache()   // Populate UI instantly from disk
         loadChannels()    // Refresh from API in background
         networkMonitor.start { [weak self] online in self?.networkPathChanged(online: online) }
+        startScheduleRefresh()
     }
 
     /// Synchronously loads the last persisted schedules so the UI is populated
@@ -762,12 +813,6 @@ class DRServiceManager: ObservableObject {
             retryAttempt = 0
             startCatalogueFetch()
         }
-    }
-
-    /// Fetches the catalogue, joining a fetch already under way, and returns when it is done.
-    private func refreshCatalogue() async {
-        if !cachedSchedules.isEmpty && isCacheValid() { return }
-        await startCatalogueFetch().value
     }
 
     @discardableResult
@@ -1080,8 +1125,19 @@ class DRServiceManager: ObservableObject {
     /// The programme on air now, whatever the listener is hearing. For wall-clock needs:
     /// the stream to start, and when the programme ends for the sleep timer.
     func liveProgram(for channel: DRChannel) -> DREpisode? {
-        let channelPrograms = cachedSchedules.filter { $0.channel.id == channel.id }
-        return channelPrograms.first { $0.isCurrentlyPlaying } ?? channelPrograms.first
+        Self.liveProgram(in: cachedSchedules.filter { $0.channel.id == channel.id }, at: Date())
+    }
+
+    /// The programme on air at `date`, or failing that one whose times DR did not give,
+    /// which cannot be judged either way.
+    ///
+    /// Never one that has ended. This fell back to whatever the channel's first cached
+    /// programme was, so a launch from a day-old disk cache, or an hour of DR not answering,
+    /// showed long-finished programmes as on air — on every card, the player, the lock
+    /// screen, and as the end the sleep timer counted down to.
+    static func liveProgram(in programmes: [DREpisode], at date: Date) -> DREpisode? {
+        programmes.first { $0.isPlaying(at: date) }
+            ?? programmes.first { $0.startDate == nil || $0.endDate == nil }
     }
 
     // MARK: - What is being heard
@@ -1280,8 +1336,6 @@ class DRServiceManager: ObservableObject {
     
     
     private var trackPollingTask: Task<Void, Never>?
-    private var programRefreshTask: Task<Void, Never>?
-    private let programRefreshInterval: TimeInterval = 5 * 60
     
     /// Polls the live track for as long as `channel` is actually playing.
     ///
@@ -1318,26 +1372,13 @@ class DRServiceManager: ObservableObject {
                 try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
             }
         }
-        
-        programRefreshTask = Task { [weak self] in
-            while !Task.isCancelled {
-                try? await Task.sleep(nanoseconds: UInt64(self?.programRefreshInterval ?? 300) * 1_000_000_000)
-                guard !Task.isCancelled, let self else { return }
-                // The catalogue is the schedule. It used to be fetched once, at launch, so
-                // a long listen went on showing the programme that was on air then.
-                await self.refreshCatalogue()
-                self.refreshCurrentProgram()
-            }
-        }
     }
     
-    /// Stops both loops. Cancellation is real now: `Task.sleep` throws on cancel and the
-    /// loops check `Task.isCancelled`, so nothing is left in flight.
+    /// Stops the track loop. Cancellation is real now: `Task.sleep` throws on cancel and the
+    /// loop checks `Task.isCancelled`, so nothing is left in flight.
     private func stopPolling() {
         trackPollingTask?.cancel()
         trackPollingTask = nil
-        programRefreshTask?.cancel()
-        programRefreshTask = nil
         isPollingForTrack = false
         nextLivePollingTime = nil
     }
@@ -1423,6 +1464,83 @@ class DRServiceManager: ObservableObject {
         sleepTimerTask = nil
     }
 
+
+    // MARK: - Keeping the schedule current
+
+    /// `/schedules/all/now` is the schedule, and it only carries what is on air at the
+    /// moment it is asked. So it has to be asked again as programmes end — at first that
+    /// happened only at launch, then every five minutes while playing, which left every
+    /// card on Home showing what was on when the app opened.
+    private var scheduleRefreshTask: Task<Void, Never>?
+
+    /// Whether the app is in front. Refreshing is for someone looking or listening: in the
+    /// background with nothing playing, there is no one to refresh for.
+    private var isAppActive = true
+
+    /// Past this, a refresh is due even if no programme has ended — DR changes its plans.
+    private static let scheduleMaxAge: TimeInterval = 10 * 60
+    /// After a programme's end, how long to give DR to move on to the next.
+    private static let boundaryBuffer: TimeInterval = 5
+    /// However the programmes fall, wake no sooner and no later than these.
+    private static let refreshBounds: ClosedRange<TimeInterval> = 60...(10 * 60)
+
+    /// Called by the app as its scene comes and goes.
+    func setAppActive(_ active: Bool) {
+        isAppActive = active
+        if active { refreshScheduleIfNeeded() }
+    }
+
+    /// Whether to fetch the schedule again: never fetched, fetched too long ago, or a
+    /// programme in it has ended.
+    static func needsScheduleRefresh(_ programmes: [DREpisode], lastFetched: Date?,
+                                     now: Date) -> Bool {
+        guard let lastFetched, now.timeIntervalSince(lastFetched) < scheduleMaxAge else {
+            return true
+        }
+        return hasEnded(programmes, at: now)
+    }
+
+    static func hasEnded(_ programmes: [DREpisode], at now: Date) -> Bool {
+        programmes.contains { ($0.endDate ?? .distantFuture) <= now }
+    }
+
+    /// How long until the next refresh: just after the soonest programme still on air ends.
+    static func scheduleRefreshDelay(_ programmes: [DREpisode], now: Date) -> TimeInterval {
+        let nextEnd = programmes.compactMap(\.endDate).filter { $0 > now }.min()
+        let delay = nextEnd.map { $0.timeIntervalSince(now) + boundaryBuffer }
+            ?? refreshBounds.upperBound
+        return min(max(delay, refreshBounds.lowerBound), refreshBounds.upperBound)
+    }
+
+    private func startScheduleRefresh() {
+        scheduleRefreshTask = Task { [weak self] in
+            while !Task.isCancelled {
+                // Read without holding self across the sleep.
+                guard let delay = self.map({ Self.scheduleRefreshDelay($0.cachedSchedules,
+                                                                       now: Date()) })
+                else { return }
+                try? await Task.sleep(for: .seconds(delay))
+                guard !Task.isCancelled, let self else { return }
+                self.refreshScheduleIfNeeded()
+            }
+        }
+    }
+
+    private func refreshScheduleIfNeeded() {
+        let now = Date()
+        // A programme that ended is no longer drawn as on air, whether or not a fetch
+        // follows — offline, none will. The views ask on every render; this is what
+        // makes them render.
+        if Self.hasEnded(cachedSchedules, at: now) {
+            objectWillChange.send()
+            refreshCurrentProgram()
+        }
+        guard isAppActive || audioPlayer.wantsPlayback, isOnline,
+              Self.needsScheduleRefresh(cachedSchedules, lastFetched: lastSchedulesUpdate,
+                                        now: now)
+        else { return }
+        startCatalogueFetch()
+    }
 
     // MARK: - Program Refresh
     

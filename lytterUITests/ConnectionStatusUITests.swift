@@ -72,11 +72,13 @@ final class ConnectionStatusUITests: XCTestCase {
         return app
     }
 
+    @MainActor
     private func element(_ app: XCUIApplication, labelStartingWith prefix: String) -> XCUIElement {
         app.descendants(matching: .any)
             .matching(NSPredicate(format: "label BEGINSWITH %@", prefix)).firstMatch
     }
 
+    @MainActor
     private func card(_ app: XCUIApplication, _ name: String) -> XCUIElement {
         app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", name)).firstMatch
     }
