@@ -693,6 +693,15 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
       Test suites are `@MainActor`: the project sets
       `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor`, so the types under test are main-actor by
       inference while suites are nonisolated by default.
+- [ ] **S16. The build is not warning-free again.** Next up. A clean build shows:
+      - `AudioPlayerService`: `Log.playback` used from the audio-session queue's closures
+        (two, since #46), and the periodic time observer's closure calling the main-actor
+        `refreshSeekState()` from a nonisolated context. Safe today — the observer runs on
+        `.main` and `Logger` is `Sendable` — but this is the class of warning F31 crashed on.
+      - `TVScrollingUITests`: about 35, all its helpers reaching main-actor `XCUIElement` API
+        without `@MainActor`. tvOS-only, so incremental iOS builds never show them.
+      Check with a clean build on all three platforms; incremental builds only report files
+      they recompile, which is how these went unnoticed.
 - [ ] **S15. Revisit what default main-actor isolation actually buys.** With
       `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor`, types are main-actor unless they say
       otherwise — including `InFlightTasks`, whose whole purpose is to be touched from
@@ -794,9 +803,24 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
 
 ### P2
 
-- [ ] **P13. Version and age-check the disk cache.** Add a schema version to
-      `DRLocalCache`; a model change currently kills the cache silently and permanently. Add
-      a max-age so a stale snapshot isn't presented as live.
+- [x] ~~**P13. Version and age-check the disk cache.**~~ Done. F42 made the disk cache what
+      an offline launch shows, which made its two gaps matter:
+      - **Version.** The file is now a `Snapshot` (schema version, when it was saved, the
+        schedules). One from another version is discarded and logged rather than failing to
+        decode in silence. The bare array written before the version existed still loads,
+        as version 1 dated by the file, so updating does not empty every install's cache.
+        "Permanently" in the original note was too strong: the next successful fetch
+        overwrites the file. The cost was an offline launch with nothing to show.
+      - **Age.** A snapshot over 7 days old is not loaded.
+      - **Not presented as live.** That was mostly not the cache's doing: `liveProgram(for:)`
+        fell back to the channel's first cached programme, ended or not, so a day-old cache —
+        or an hour of DR not answering — showed finished programmes as on air on every card,
+        the player, the lock screen, and as the sleep timer's end. It now returns only a
+        programme on air, or one DR gave no times for. The schedule is refetched as
+        programmes end (just after the soonest end, between 1 and 10 minutes), while the app
+        is in front or playing; before, it was refetched only every 5 minutes while playing,
+        so Home kept showing what was on when it opened.
+      Covered by `DiskCacheTests` and `ScheduleFreshnessTests`.
 - [ ] **P14. Share the cache with the Top Shelf extension** via the already-declared
       `group.com.eopio.lytter` app group, so the extension stops making its own cold network
       call on every Top Shelf refresh.

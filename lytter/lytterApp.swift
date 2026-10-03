@@ -15,6 +15,7 @@ struct lytterApp: App {
     /// preload of every image in the schedule.
     @StateObject private var serviceManager = DRServiceManager()
     @StateObject private var deepLinkHandler = DeepLinkHandler()
+    @Environment(\.scenePhase) private var scenePhase
 
     #if os(iOS) || os(macOS)
     @StateObject private var siriShortcutsService = SiriShortcutsService.shared
@@ -41,6 +42,9 @@ struct lytterApp: App {
                 #endif
                 .onOpenURL { url in
                     deepLinkHandler.handleDeepLink(url)
+                }
+                .onChange(of: scenePhase) { _, phase in
+                    serviceManager.setAppActive(phase == .active)
                 }
                 .task {
                     // Hand the Siri service the shared manager rather than letting it
