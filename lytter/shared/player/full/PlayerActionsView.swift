@@ -49,6 +49,9 @@ struct PlayerActionsView: View {
                         Image(systemName: "info.circle")
                             .font(.system(size: min(geometry.size.width, geometry.size.height) * 0.3, weight: .medium))
                             .foregroundStyle(Color.secondary)
+                        // The glyph is about 19pt; the target is the HIG's 44pt minimum.
+                        .frame(minWidth: 44, minHeight: 44)
+                        .contentShape(Rectangle())
                     }
                     .accessibilityLabel("Programme information")
                 }
@@ -73,6 +76,9 @@ struct PlayerActionsView: View {
                         Image(systemName: "list.bullet")
                             .font(.system(size: min(geometry.size.width, geometry.size.height) * 0.3, weight: .medium))
                             .foregroundStyle(Color.secondary)
+                        // The glyph is about 19pt; the target is the HIG's 44pt minimum.
+                        .frame(minWidth: 44, minHeight: 44)
+                        .contentShape(Rectangle())
                     }
                     .accessibilityLabel("Today's schedule")
                 }
@@ -87,6 +93,9 @@ struct PlayerActionsView: View {
                             // Tinted while running: the only indication on this screen
                             // that playback is going to stop by itself.
                             .foregroundStyle(isRunning ? Color.accentColor : Color.secondary)
+                        // The glyph is about 19pt; the target is the HIG's 44pt minimum.
+                        .frame(minWidth: 44, minHeight: 44)
+                        .contentShape(Rectangle())
                     }
                     .accessibilityLabel("Sleep timer")
                     .accessibilityValue(

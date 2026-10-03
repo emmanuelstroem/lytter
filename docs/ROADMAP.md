@@ -315,12 +315,26 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
       The mini player is on text styles with the same sizes at the default setting, capped at
       `xxxLarge` as the system's own compact bars are. Checked by screenshots at the default
       size and AX3. Covered by `PlayerDynamicTypeUITests`.
-- [ ] **F11. Accessibility pass.** *Partly done in #19 — every control in the player, the
-      channel cards and the district rows now carry labels, though nobody has yet heard them
-      through VoiceOver.* Remaining: Dynamic Type beyond the player (F11b did the full and mini
-      players; Home, Radio, Search and the sheets still use `.system(size:)` in
-      places), Reduce Motion for the
-      marquee and focus animations, and a contrast check on the white-on-artwork text.
+- [x] ~~**F11. Accessibility pass.**~~ Done, with the system's accessibility audit
+      (`performAccessibilityAudit`) run over Home, Radio, Search and the player as the
+      checklist. Labels landed in #19 and the player's Dynamic Type in F11b; the rest:
+      - **Hit targets.** The player's info, schedule and sleep icons were 19pt targets;
+        they have 44pt frames now.
+      - **Dynamic Type beyond the player.** The programme line under a station card scales
+        (`@ScaledMetric`, so tvOS — which has no Dynamic Type — is unchanged). The station
+        name on a card's artwork deliberately does not: it sits in a fixed card, sized so
+        every name DR broadcasts fits (`StationCardTests`), and would only truncate.
+      - **Contrast.** Secondary text on the page and the player sheet moved from
+        `Color.secondary` (60%) to `Color.secondaryOnPage` (primary at 75%); 60% grey on the
+        page's #1C1C1E and the lighter sheet sat at or under 4.5:1 for 11pt text. The
+        audit still flags some of it — but it also flags full-strength white on the sheet,
+        so its contrast check is not usable here; judged by the colours instead.
+      - **Reduce Motion.** The marquee stops scrolling and truncates. The tvOS focus springs,
+        which overshoot, become a short ease (`focusAnimation(value:)`).
+      Guarded by `AccessibilityAuditUITests` (hit targets and element descriptions only — the
+      checks the audit makes reliably). **Not done:** nobody has listened to the app through
+      VoiceOver, and the marquee's Reduce Motion path was checked by reading, not on screen
+      (no fixture title is long enough to scroll).
 - [x] ~~**F12. Replace `NavigationView` with `NavigationStack`.**~~ Done in #21. Five
       containers across four files, and the useful finding was that **the app has no
       `NavigationLink` anywhere** — nothing was navigating. Three of the five had a title

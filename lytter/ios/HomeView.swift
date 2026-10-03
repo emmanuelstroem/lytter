@@ -178,7 +178,7 @@ struct HomeHeader: View {
                 
                 Text("Live Danish Radio")
                     .font(.subheadline)
-                    .foregroundStyle(Color.secondary)
+                    .foregroundStyle(Color.secondaryOnPage)
             }
             
             Spacer()

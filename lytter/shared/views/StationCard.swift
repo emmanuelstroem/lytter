@@ -179,13 +179,18 @@ enum StationCard {
     struct Subtitle: View {
         let text: String
         let metrics: StationCardMetrics
+        /// Dynamic Type for the line under the card. The size is still the card's — the
+        /// television's card is larger — scaled by the reader's text size; tvOS has no
+        /// Dynamic Type, so this stays 1 there. The name on the artwork does not scale: it
+        /// sits in a fixed card, sized so that every name DR broadcasts fits.
+        @ScaledMetric(relativeTo: .caption2) private var textScale: CGFloat = 1
 
         var body: some View {
             // Concrete rather than hierarchical: this sits on the background, not on a
             // material, and inside a Button hierarchical styles resolve against the tint.
             Text(text)
-                .font(.system(size: metrics.subtitleFontSize))
-                .foregroundStyle(Color.secondary)
+                .font(.system(size: metrics.subtitleFontSize * textScale))
+                .foregroundStyle(Color.secondaryOnPage)
                 .lineLimit(1)
                 // A rounded card container clips text that starts flush at its edge —
                 // "Orientering" came out as "rientering". Six points on the phone's card,

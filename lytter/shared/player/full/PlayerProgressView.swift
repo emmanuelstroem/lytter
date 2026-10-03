@@ -50,13 +50,15 @@ struct PlayerProgressView: View {
                 Label("LIVE", systemImage: "dot.radiowaves.left.and.right")
                     .imageScale(.small)
                     .fontWeight(.semibold)
+                    // Its own width, always: squeezed between the two times it was clipped.
+                    .fixedSize()
 
                 Spacer(minLength: 0)
 
                 Text(end.formatted(date: .omitted, time: .shortened))
             }
             .font(.caption2.monospacedDigit())
-            .foregroundStyle(Color.secondary)
+            .foregroundStyle(Color.secondaryOnPage)
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Programme progress")

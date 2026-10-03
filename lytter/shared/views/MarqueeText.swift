@@ -15,6 +15,8 @@ public struct MarqueeText: View {
     /// 8pt a character and 16pt tall whatever the font — which clipped any text larger than
     /// 16pt to a strip, and so ruled out Dynamic Type for everything set in a marquee.
     @State private var textSize: CGSize = .zero
+    /// With Reduce Motion on the text never scrolls; what does not fit is truncated.
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     var isCompact = false
     
     public var body: some View {
@@ -31,7 +33,7 @@ public struct MarqueeText: View {
         
         GeometryReader { geo in
             // Decide if scrolling is needed
-            let needsScrolling = (stringWidth > geo.size.width)
+            let needsScrolling = !reduceMotion && (stringWidth > geo.size.width)
             
             ZStack {
                 if needsScrolling {
@@ -64,6 +66,8 @@ public struct MarqueeText: View {
                     // MARK: - Non-scrolling version
                     Text(text)
                         .font(font)
+                        .lineLimit(1)
+                        .truncationMode(.tail)
                         .onValueChanged(of: text) { _, _ in
                             self.animate = false // No scrolling needed
                         }

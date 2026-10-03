@@ -198,7 +198,7 @@ struct tvOSMusicCardButtonStyle: ButtonStyle {
             configuration.label
                 .scaleEffect(isFocused ? 1.1 : 1.0, anchor: .center)
                 .shadow(color: .black.opacity(isFocused ? 0.55 : 0), radius: 24, x: 0, y: 18)
-                .animation(.spring(response: 0.28, dampingFraction: 0.72), value: isFocused)
+                .focusAnimation(value: isFocused)
                 // Prevent tvOS from creating a _UIReplicantView for the default
                 // focus lift effect — we own all focus visuals above.
                 .focusEffectDisabled()
