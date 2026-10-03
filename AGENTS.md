@@ -68,6 +68,17 @@ with `ictool` (command in `docs/ROADMAP.md` F40) and look at it, in Default and 
 `UserPreferencesService` directly rather than reaching it through `DRServiceManager`, or the
 view will not redraw when it changes.
 
+**`xcodebuild test` can hang after the tests have finished.** Now and then it never exits —
+seen tearing down a simulator clone, on both the unit and the tvOS UI tests — and it looks
+exactly like a test that is stuck. Before suspecting the code, check whether every result
+was already printed; rerunning the same command usually finishes in under a minute. Run
+tests with a time limit, and write the log to a file rather than piping it through a filter
+that only flushes at the end.
+
+**On tvOS, XCUITest reports an app that has just left as still in front.** For a moment
+after Back exits to the Apple TV home screen, `app.state` is `runningForeground` with nothing
+focused, which reads as "stuck on Home" (F35). Take a screenshot before believing it.
+
 ## Conventions
 
 - **Commits and PR descriptions carry no Claude attribution and no co-author line.**

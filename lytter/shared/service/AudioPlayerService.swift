@@ -179,25 +179,14 @@ class AudioPlayerService: NSObject, ObservableObject {
     
     private func resumeAfterInterruption() {
         // The decision was made by InterruptionState.ended(); this only carries it out.
-        guard let player = player else { return }
-        
-        // Reactivate audio session
-        do {
-            let audioSession = AVAudioSession.sharedInstance()
-            try audioSession.setCategory(.playback, mode: .default, policy: .longFormAudio)
-            try audioSession.setActive(true)
-        } catch {
-            Log.playback.error(
-                "could not reactivate the audio session after an interruption: \(error.localizedDescription, privacy: .public)")
-            return
+        guard player != nil else { return }
+
+        activateSession(longFormAudio: true, context: "after an interruption") { [weak self] activated in
+            guard activated, let self, let player = self.player else { return }
+            player.play()
+            self.isPlaying = true
+            self.updateCommandCenterPlaybackState()
         }
-        
-        // Resume playback
-        player.play()
-        isPlaying = true
-        
-        // Update Command Center playback state
-        updateCommandCenterPlaybackState()
     }
     #endif
 
@@ -558,24 +547,14 @@ class AudioPlayerService: NSObject, ObservableObject {
         // Starting a channel is deliberate, so any pending resume intent is void.
         interruption.playbackSettledDeliberately()
         
-            // Setup and activate audio session when starting playback
+            // Activate the session off the main thread; the player is built meanwhile.
+            // There is no need to wait: the item has to load over the network before
+            // readyToPlay calls play(), and the session queue is done long before that.
+        activateSession(context: "play")
         #if os(iOS) || os(tvOS)
-        do {
-            let audioSession = AVAudioSession.sharedInstance()
-            
-                // Set category first
-            try audioSession.setCategory(.playback, mode: .default)
-            
-                // Then activate
-            try audioSession.setActive(true)
-            
-                // Setup AirPlay monitoring if not already done
-            if !audioSessionSetup {
-                setupAirPlayMonitoring()
-                audioSessionSetup = true
-            }
-        } catch {
-                // Silent error handling
+        if !audioSessionSetup {
+            setupAirPlayMonitoring()
+            audioSessionSetup = true
         }
         #endif
         
@@ -719,7 +698,7 @@ class AudioPlayerService: NSObject, ObservableObject {
             // Session activation is off the main thread: setActive(true) can block, and
             // AVAudioSession warns when it is called there. play() waits for it, since
             // starting against an inactive session is what failed silently before.
-        activateSessionThenOnMain { [weak self] in
+        activateSession(context: "resume") { [weak self] _ in
             guard let self, let player = self.player else { return }
             player.play()
             self.isPlaying = true
@@ -728,24 +707,54 @@ class AudioPlayerService: NSObject, ObservableObject {
         }
     }
 
-    /// Activates the playback session on a background queue, then runs `then` on main.
-    /// A failure is logged and `then` still runs: a session that is already active
-    /// reports no error, and trying to play is better than staying silent.
-    private func activateSessionThenOnMain(_ then: @escaping () -> Void) {
+    // MARK: - Audio session
+
+    /// Where the audio session is activated and deactivated. `setActive` can block, and
+    /// AVAudioSession warns whenever it is called on the main thread — every press of play
+    /// did. Serial, so the calls land in the order they were made: a stop's deactivation
+    /// must never overtake the next play's activation.
+    private let sessionQueue = DispatchQueue(label: "lytter.audio-session", qos: .userInitiated)
+
+    /// Activates the playback session on `sessionQueue`, then runs `then` on main with
+    /// whether it succeeded. A failure is logged; most callers carry on regardless, since a
+    /// session that is already active reports no error and trying to play beats silence.
+    /// `longFormAudio` asks for the long-form route-sharing policy, as the interruption
+    /// path always has. A Bool rather than the policy itself, which macOS does not have.
+    private func activateSession(longFormAudio: Bool = false,
+                                 context: StaticString,
+                                 then: (@MainActor @Sendable (Bool) -> Void)? = nil) {
         #if os(iOS) || os(tvOS)
-        DispatchQueue.global(qos: .userInitiated).async {
+        sessionQueue.async {
+            var activated = true
             do {
                 let audioSession = AVAudioSession.sharedInstance()
-                try audioSession.setCategory(.playback, mode: .default)
+                try audioSession.setCategory(.playback, mode: .default,
+                                             policy: longFormAudio ? .longFormAudio : .default)
                 try audioSession.setActive(true)
             } catch {
+                activated = false
                 Log.playback.error(
-                    "could not activate the audio session on resume: \(error.localizedDescription, privacy: .public)")
+                    "could not activate the audio session (\(context, privacy: .public)): \(error.localizedDescription, privacy: .public)")
             }
-            DispatchQueue.main.async(execute: then)
+            if let then { Task { @MainActor in then(activated) } }
         }
         #else
-        then()
+        if let then { Task { @MainActor in then(true) } }
+        #endif
+    }
+
+    /// Releases the session on `sessionQueue`, so other apps' audio can come back.
+    private func deactivateSession() {
+        #if os(iOS) || os(tvOS)
+        sessionQueue.async {
+            do {
+                try AVAudioSession.sharedInstance()
+                    .setActive(false, options: .notifyOthersOnDeactivation)
+            } catch {
+                Log.playback.error(
+                    "could not deactivate the audio session: \(error.localizedDescription, privacy: .public)")
+            }
+        }
         #endif
     }
 
@@ -774,15 +783,7 @@ class AudioPlayerService: NSObject, ObservableObject {
             // Clear Command Center info
         clearCommandCenterInfo()
         
-            // Deactivate audio session when stopping playback
-        #if os(iOS) || os(tvOS)
-        do {
-            let audioSession = AVAudioSession.sharedInstance()
-            try audioSession.setActive(false, options: .notifyOthersOnDeactivation)
-        } catch {
-                // Silent error handling
-        }
-        #endif
+        deactivateSession()
     }
     
     // MARK: - Seeking within the DVR window
