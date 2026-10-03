@@ -99,6 +99,11 @@ struct tvOSNowPlayingView: View {
                     .padding(.top, 12)
             }
 
+            // Not focusable, so it never joins the row of controls below; Play is the retry.
+            ConnectionBanner(serviceManager: serviceManager, playbackOnly: true,
+                             showsRetry: false)
+                .padding(.top, 28)
+
             Spacer(minLength: 36)
 
             programmeProgress(for: channel)

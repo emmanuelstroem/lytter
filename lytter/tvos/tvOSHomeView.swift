@@ -131,8 +131,22 @@ struct tvOSHomeView: View {
     }
 
     private var shelves: some View {
+        CatalogueStateView(serviceManager: serviceManager) {
+            shelfList
+        }
+        .background(Color.black.ignoresSafeArea())
+        .onAppear(perform: placeLaunchFocus)
+        .onChange(of: serviceManager.availableChannels.count) { _, _ in placeLaunchFocus() }
+    }
+
+    private var shelfList: some View {
         ScrollView(.vertical, showsIndicators: false) {
             LazyVStack(alignment: .leading, spacing: 48) {
+                // Above the shelves, inset to line up with their headings. A connection
+                // problem with nothing to list is `CatalogueStateView`'s, full screen.
+                ConnectionBanner(serviceManager: serviceManager)
+                    .padding(.horizontal, 60)
+
                 ForEach(shelfContents, id: \.title) { shelf in
                     tvOSChannelShelf(
                         title: shelf.title,
@@ -146,9 +160,6 @@ struct tvOSHomeView: View {
             }
             .padding(.vertical, 32)
         }
-        .background(Color.black.ignoresSafeArea())
-        .onAppear(perform: placeLaunchFocus)
-        .onChange(of: serviceManager.availableChannels.count) { _, _ in placeLaunchFocus() }
     }
 
     /// Puts focus on the first card, once, as soon as there is one. Left to the system, focus

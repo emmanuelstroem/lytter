@@ -312,6 +312,17 @@
         }
       }
     },
+    "Couldn't play %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kunne ikke afspille %@"
+          }
+        }
+      }
+    },
     "Create custom shortcuts in the Shortcuts app to automate your radio listening experience.": {
       "extractionState": "manual",
       "localizations": {
@@ -346,6 +357,17 @@
         }
       }
     },
+    "DR isn't answering": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "DR svarer ikke"
+          }
+        }
+      }
+    },
     "DR server error (%lld). Try again later.": {
       "extractionState": "manual",
       "localizations": {
@@ -353,6 +375,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Serverfejl hos DR (%lld). Prøv igen senere."
+          }
+        }
+      }
+    },
+    "DR's channels will load as soon as you're back online.": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "DR's kanaler hentes, så snart du er online igen."
           }
         }
       }
@@ -386,17 +419,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Slutter nu"
-          }
-        }
-      }
-    },
-    "Error loading channels": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Kunne ikke indlæse kanaler"
           }
         }
       }
@@ -564,17 +586,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ingen kanal afspilles"
-          }
-        }
-      }
-    },
-    "No channels": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ingen kanaler"
           }
         }
       }
@@ -756,17 +767,6 @@
         }
       }
     },
-    "Playback Error": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Afspilningsfejl"
-          }
-        }
-      }
-    },
     "Playback fades out before it stops.": {
       "extractionState": "manual",
       "localizations": {
@@ -774,6 +774,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Lyden toner ud, før afspilningen stopper."
+          }
+        }
+      }
+    },
+    "Playback resumes when you're back online.": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Afspilningen fortsætter, når du er online igen."
           }
         }
       }
@@ -852,17 +863,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Fjern fra favoritter"
-          }
-        }
-      }
-    },
-    "Retry": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Prøv igen"
           }
         }
       }
@@ -977,6 +977,28 @@
         }
       }
     },
+    "Showing what was loaded last. It will update when you're back online.": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Viser det, der sidst blev hentet. Det opdateres, når du er online igen."
+          }
+        }
+      }
+    },
+    "Showing what was loaded last. Trying again automatically.": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Viser det, der sidst blev hentet. Prøver igen automatisk."
+          }
+        }
+      }
+    },
     "Siri & Shortcuts": {
       "extractionState": "manual",
       "localizations": {
@@ -1032,6 +1054,17 @@
         }
       }
     },
+    "Still waiting for DR…": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Venter stadig på DR …"
+          }
+        }
+      }
+    },
     "Stopping": {
       "extractionState": "manual",
       "localizations": {
@@ -1050,6 +1083,39 @@
           "stringUnit": {
             "state": "translated",
             "value": "Tryk på afspil for at starte"
+          }
+        }
+      }
+    },
+    "The schedule couldn't be loaded.": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sendeplanen kunne ikke hentes."
+          }
+        }
+      }
+    },
+    "The stream didn't start.": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Streamen startede ikke."
+          }
+        }
+      }
+    },
+    "The stream didn't start. Press Play to try again.": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Streamen startede ikke. Tryk på Afspil for at prøve igen."
           }
         }
       }
@@ -1098,13 +1164,24 @@
         }
       }
     },
-    "Try refreshing to load channels": {
+    "Try Again": {
       "extractionState": "manual",
       "localizations": {
         "da": {
           "stringUnit": {
             "state": "translated",
-            "value": "Prøv at opdatere for at hente kanaler"
+            "value": "Prøv igen"
+          }
+        }
+      }
+    },
+    "Trying again automatically.": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prøver igen automatisk."
           }
         }
       }
@@ -1149,6 +1226,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Talekommandoer"
+          }
+        }
+      }
+    },
+    "You're offline": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Du er offline"
           }
         }
       }

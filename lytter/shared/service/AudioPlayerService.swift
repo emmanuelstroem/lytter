@@ -43,6 +43,12 @@ class AudioPlayerService: NSObject, ObservableObject {
     /// seconds so it publishes at most once a second, and only when it moves.
     @Published private(set) var secondsBehindLive: TimeInterval = 0
     @Published var error: String?
+
+    /// Whether the listener means audio to be coming out: set by starting or resuming,
+    /// cleared by pausing or stopping. Not `isPlaying`, which follows the player and goes
+    /// false when a stream fails or stalls on a dead connection — exactly the case where
+    /// the app has to know the listener still wants it back (F42).
+    private(set) var wantsPlayback = false
     
         // Control for screen sleep behavior
     @Published var preventScreenSleep = false
@@ -544,6 +550,7 @@ class AudioPlayerService: NSObject, ObservableObject {
         pausedAt = nil
         isLoading = true
         error = nil
+        wantsPlayback = true
         // Starting a channel is deliberate, so any pending resume intent is void.
         interruption.playbackSettledDeliberately()
         
@@ -597,6 +604,8 @@ class AudioPlayerService: NSObject, ObservableObject {
                             // Update Command Center playback state
                         self?.updateCommandCenterPlaybackState()
                     case .failed:
+                        Log.playback.error(
+                            "stream failed: \(playerItem.error?.localizedDescription ?? "no error", privacy: .public)")
                         self?.isLoading = false
                         self?.error = playerItem.error?.localizedDescription ?? "Failed to load audio"
                     case .unknown:
@@ -641,6 +650,7 @@ class AudioPlayerService: NSObject, ObservableObject {
     func pause(resumable: Bool = false) {
         player?.pause()
         isPlaying = false
+        wantsPlayback = false
         pausedAt = Date()
 
         if !resumable {
@@ -694,6 +704,7 @@ class AudioPlayerService: NSObject, ObservableObject {
             return
         }
         pausedAt = nil
+        wantsPlayback = true
 
             // Session activation is off the main thread: setActive(true) can block, and
             // AVAudioSession warns when it is called there. play() waits for it, since
@@ -758,6 +769,21 @@ class AudioPlayerService: NSObject, ObservableObject {
         #endif
     }
 
+    /// Reloads the stream if the listener wants audio and the player is not producing it.
+    ///
+    /// For when the connection comes back. A live HLS item that ran dry while offline sits
+    /// in `.waitingToPlayAtSpecifiedRate` with no error and does not always pick up again on
+    /// its own, and from the outside that is indistinguishable from playing: `isPlaying` is
+    /// still true. Returns whether it reloaded.
+    @discardableResult
+    func reloadIfStalled() -> Bool {
+        guard wantsPlayback, let player, player.timeControlStatus != .playing,
+              let url = (player.currentItem?.asset as? AVURLAsset)?.url else { return false }
+        Log.playback.info("connection back with the stream not playing; reloading it")
+        play(url: url)
+        return true
+    }
+
     /// `play()` on a paused item can leave it stalled with no error — either back at
     /// `.paused`, or forever in `.waitingToPlayAtSpecifiedRate` on a live window that has
     /// moved on. If it is not actually playing a few seconds later, reload the stream.
@@ -772,6 +798,7 @@ class AudioPlayerService: NSObject, ObservableObject {
     }
     
     func stop() {
+        wantsPlayback = false
         player?.pause()
         playerObservations.removeAll()
         removeTimeObserver()

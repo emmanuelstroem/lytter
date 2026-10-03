@@ -33,29 +33,30 @@ struct SearchView: View {
             ZStack {
                 AppBackground()
 
-                if serviceManager.isLoading && serviceManager.availableChannels.isEmpty {
-                    LoadingView()
-                } else if let error = serviceManager.error, serviceManager.availableChannels.isEmpty {
-                    ErrorView(error: error) { serviceManager.loadChannels() }
-                } else if results.isEmpty {
-                    ContentUnavailableView.search(text: query)
-                } else {
-                    ScrollView {
-                        LazyVGrid(columns: [GridItem(.adaptive(minimum: 148), spacing: 16)],
-                                  spacing: 20) {
-                            ForEach(results) { groupedChannel in
-                                ChannelShelfCard(
-                                    group: groupedChannel,
-                                    serviceManager: serviceManager,
-                                    onTap: { channel in
-                                        serviceManager.playChannel(channel)
-                                        selectionState.selectChannel(channel, showSheet: false)
-                                    }
-                                )
+                CatalogueStateView(serviceManager: serviceManager) {
+                    if results.isEmpty {
+                        ContentUnavailableView.search(text: query)
+                    } else {
+                        ScrollView {
+                            ConnectionBanner(serviceManager: serviceManager)
+                                .padding(.horizontal, 16)
+
+                            LazyVGrid(columns: [GridItem(.adaptive(minimum: 148), spacing: 16)],
+                                      spacing: 20) {
+                                ForEach(results) { groupedChannel in
+                                    ChannelShelfCard(
+                                        group: groupedChannel,
+                                        serviceManager: serviceManager,
+                                        onTap: { channel in
+                                            serviceManager.playChannel(channel)
+                                            selectionState.selectChannel(channel, showSheet: false)
+                                        }
+                                    )
+                                }
                             }
+                            .padding(.horizontal, 16)
+                            .padding(.bottom, 100) // Space for the mini player
                         }
-                        .padding(.horizontal, 16)
-                        .padding(.bottom, 100) // Space for the mini player
                     }
                 }
             }

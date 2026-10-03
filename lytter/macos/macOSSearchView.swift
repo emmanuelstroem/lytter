@@ -22,19 +22,24 @@ struct macOSSearchView: View {
     }
 
     var body: some View {
-        ScrollView {
-            if results.isEmpty {
-                ContentUnavailableView.search(text: query)
-                    .padding(.top, 80)
-            } else {
-                LazyVGrid(columns: [GridItem(.adaptive(minimum: 160), spacing: 20)],
-                          spacing: 24) {
-                    ForEach(results) { group in
-                        macOSStationCard(group: group, serviceManager: serviceManager,
-                                          onSelect: onSelect)
+        CatalogueStateView(serviceManager: serviceManager) {
+            ScrollView {
+                ConnectionBanner(serviceManager: serviceManager)
+                    .padding([.horizontal, .top], 24)
+
+                if results.isEmpty {
+                    ContentUnavailableView.search(text: query)
+                        .padding(.top, 80)
+                } else {
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 160), spacing: 20)],
+                              spacing: 24) {
+                        ForEach(results) { group in
+                            macOSStationCard(group: group, serviceManager: serviceManager,
+                                              onSelect: onSelect)
+                        }
                     }
+                    .padding(24)
                 }
-                .padding(24)
             }
         }
         .searchable(text: $query, placement: .toolbar,

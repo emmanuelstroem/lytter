@@ -106,6 +106,10 @@ struct iOSFullPlayerSheet: View {
                     
                     // Bottom VStack - All other components
                     VStack(spacing: 30) {
+                        // Only what stops audio: offline, or this stream failing.
+                        ConnectionBanner(serviceManager: serviceManager, playbackOnly: true)
+                            .padding(.horizontal, 20)
+
                         // Info Component
                         // The share control lives inside PlayerInfoView.
                         PlayerInfoView(

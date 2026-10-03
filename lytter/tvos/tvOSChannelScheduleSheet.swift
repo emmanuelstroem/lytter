@@ -25,6 +25,8 @@ struct tvOSChannelScheduleSheet: View {
 
     @State private var items: [DREpisode] = []
     @State private var isLoading = true
+    /// Why the schedule could not be fetched; see the iOS sheet.
+    @State private var failure: ConnectionProblem?
     @FocusState private var focusedRow: String?
 
     /// Where focus starts: what is on now, so the schedule opens where the listener is.
@@ -44,6 +46,15 @@ struct tvOSChannelScheduleSheet: View {
                 if isLoading {
                     ProgressView()
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else if let failure {
+                    ContentUnavailableView {
+                        Label(failure.title, systemImage: failure.systemImage)
+                    } description: {
+                        Text("The schedule couldn't be loaded.")
+                    } actions: {
+                        Button("Try Again") { Task { await load() } }
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else if items.isEmpty {
                     Text("No schedule")
                         .font(.title3)
@@ -91,13 +102,23 @@ struct tvOSChannelScheduleSheet: View {
         }
         .onExitCommand { dismiss() }
         .task {
-            items = await serviceManager.loadSchedule(for: channel)
-            isLoading = false
+            await load()
             // Set once the rows exist. `defaultFocus` is read when the sheet appears, before
             // the schedule has loaded, and focus fell to the first programme of the day.
             try? await Task.sleep(for: .milliseconds(150))
             focusedRow = onAirRow
         }
+    }
+
+    private func load() async {
+        isLoading = true
+        do {
+            items = try await serviceManager.fetchSchedule(for: channel)
+            failure = nil
+        } catch {
+            failure = .forFailedRequest(error, isOnline: serviceManager.isOnline)
+        }
+        isLoading = false
     }
 
     /// The time column is fixed-width so the titles line up, and monospaced-digit so the
