@@ -470,17 +470,39 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
       actually playing: it used to stay on a paused channel and on the last-played channel
       restored at launch, fixed alongside this entry by `DRServiceManager.isAudible`.
       Respect Reduce Motion: a still mark then, not a pulsing one.
-- [ ] **F42. Network errors in the UI.** Decide how the app tells the listener that the
-      network is the problem, and what they can do about it. Today it is uneven:
-      `DRServiceManager.error` (channel list) and `playbackError` (stream) are shown on some
-      screens only — iOS Home, Radio and Search, macOS Home — and tvOS shows little or
-      nothing; the polled track and schedule fail silently and the UI keeps stale data. Cover:
-      no connection at launch (cached channels, nothing cached), the connection dropping
-      mid-stream, DR's API down while the network is fine, and slow responses (see the 5 s
-      launch hold in F34). Prefer one shared presentation — an inline banner with a retry —
-      over per-screen alerts, recover automatically when the connection returns
-      (`NWPathMonitor`), and keep wording that distinguishes "you are offline" from "DR is
-      not answering". New strings need their Danish.
+- [x] ~~**F42. Network errors in the UI.**~~ Done. Each screen used to decide for itself
+      from `DRServiceManager.error` and `playbackError`, in whatever words the error carried;
+      tvOS Home showed nothing at all. Now:
+      - **One answer.** `ConnectionProblem` — *offline*, *DR isn't answering*, *couldn't
+        play P3*, most fundamental first — from `NWPathMonitor` (`NetworkMonitor`), how the
+        last catalogue fetch failed (`RequestFailure`), and the stream. The path monitor is
+        what tells the first two apart: `DRNetworkService` waits for connectivity, so an
+        offline request does not fail as offline, it times out like a request to a DR that
+        is down.
+      - **One presentation.** `ConnectionBanner` over channels still on screen (cached or
+        fresh), on every channel list on all three platforms; `CatalogueStateView` in their
+        place when there are none — loading, the problem with Try Again, or empty. The
+        players show only what stops audio (offline, the stream failing): a banner in the
+        iOS full player, a line without a button on tvOS Now Playing (Play is the retry, and
+        a button would join the transport's focus row), the programme line of the macOS
+        player bar. DR's API being down is not shown there; the stream plays on.
+      - **Recovery.** When the path returns, the catalogue is fetched and a stream that
+        failed or stalled is restarted (`AudioPlayerService.wantsPlayback`,
+        `reloadIfStalled`). While DR is down, retries run at 15 s, 30 s, 60 s, then every
+        2 minutes. Concurrent `loadChannels()` calls — every screen's `onAppear` makes one —
+        now share one fetch.
+      - **Slow.** After 6 s with nothing on screen, "Still waiting for DR…" — after the 5 s
+        tvOS launch hold (F34) lifts.
+      - **Stale data.** The catalogue is the schedule, and it was fetched once at launch: a
+        long listen kept showing the programme on then. The programme refresh now refetches
+        it every 10 minutes while playing. A failed track poll drops a track that has ended
+        instead of showing it indefinitely. The schedule sheets say the fetch failed, with
+        Try Again, instead of "No schedule".
+      Covered by `ConnectionProblemTests` and `ConnectionStatusUITests`, which simulate the
+      conditions with `LYTTER_UITEST_NETWORK` (`offline`, `offline-cached`, `dr-down`,
+      `dr-down-cached`, `reconnects`) so they never touch the machine's network. Not
+      verified on a real dropped connection mid-stream: the simulator shares the Mac's
+      network, so that path (`reloadIfStalled`) is checked by reading, not by running.
 - [ ] **F43. Settings.** A Settings screen — on tvOS, the sidebar destination F37 proposes —
       with, to start:
       - **Show images** (default on). Off shows the station colour and name instead of

@@ -33,16 +33,10 @@ struct HomeView: View {
             ScrollView {
                 VStack(spacing: 24) {
                     HomeHeader()
-                    
-                    if serviceManager.isLoading {
-                        LoadingView()
-                    } else if let error = serviceManager.error {
-                        ErrorView(error: error) {
-                            serviceManager.loadChannels()
-                        }
-                    } else if serviceManager.availableChannels.isEmpty {
-                        EmptyStateView()
-                    } else {
+
+                    ConnectionBanner(serviceManager: serviceManager)
+
+                    CatalogueStateView(serviceManager: serviceManager) {
                         let play: (DRChannel) -> Void = { channel in
                             serviceManager.playChannel(channel)
                             selectionState.selectChannel(channel, showSheet: false)
@@ -75,16 +69,6 @@ struct HomeView: View {
                             )
                         }
                     }
-
-                    // Playback error alert
-                    if let playbackError = serviceManager.playbackError {
-                        PlaybackErrorAlert(
-                            error: playbackError,
-                            onDismiss: {
-                                serviceManager.clearPlaybackError()
-                            }
-                        )
-                    }
                 }
                 .padding(.horizontal, 16)
                 .padding(.bottom, 100) // Space for bottom tab bar
@@ -99,72 +83,6 @@ struct HomeView: View {
 }
 
 #endif
-
-// MARK: - Loading View
-struct LoadingView: View {
-    var body: some View {
-        VStack(spacing: 20) {
-            ProgressView()
-                .scaleEffect(1.5)
-                .progressViewStyle(CircularProgressViewStyle())
-            
-            Text("Loading channels...")
-                .font(.headline)
-                .foregroundStyle(Color.primary)
-        }
-    }
-}
-
-// MARK: - Error View
-struct ErrorView: View {
-    let error: String
-    let retryAction: () -> Void
-    
-    var body: some View {
-        VStack(spacing: 20) {
-            Image(systemName: "exclamationmark.triangle")
-                .font(.system(size: 50))
-                .foregroundColor(.orange)
-            
-            Text("Error loading channels")
-                .font(.headline)
-                .foregroundStyle(Color.primary)
-            
-            Text(error)
-                .font(.subheadline)
-                .foregroundStyle(Color.secondary)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 40)
-            
-            Button("Retry") {
-                retryAction()
-            }
-            .foregroundColor(.blue)
-            .padding()
-            .background(Color(.tertiarySystemFill))
-            .cornerRadius(10)
-        }
-    }
-}
-
-// MARK: - Empty State View
-struct EmptyStateView: View {
-    var body: some View {
-        VStack(spacing: 20) {
-            Image(systemName: "radio")
-                .font(.system(size: 50))
-                .foregroundStyle(Color.secondary)
-            
-            Text("No channels available")
-                .font(.headline)
-                .foregroundStyle(Color.primary)
-            
-            Text("Try refreshing to load channels")
-                .font(.subheadline)
-                .foregroundStyle(Color.secondary)
-        }
-    }
-}
 
 // MARK: - Home Header
 struct HomeHeader: View {
@@ -200,57 +118,6 @@ struct HomeHeader: View {
                 }
         }
         .padding(.top, 8)
-    }
-}
-
-// MARK: - Playback Error Alert
-struct PlaybackErrorAlert: View {
-    let error: String
-    let onDismiss: () -> Void
-    
-    var body: some View {
-        VStack(spacing: 0) {
-            HStack {
-                Image(systemName: "exclamationmark.triangle.fill")
-                    .foregroundColor(.orange)
-                    .font(.system(size: 16))
-                
-                Text("Playback Error")
-                    .font(.subheadline)
-                    .fontWeight(.semibold)
-                    .foregroundStyle(Color.primary)
-                
-                Spacer()
-                
-                Button(action: onDismiss) {
-                    Image(systemName: "xmark.circle.fill")
-                        .foregroundStyle(Color.secondary)
-                        .font(.system(size: 16))
-                }
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
-            
-            Text(error)
-                .font(.caption)
-                .foregroundStyle(Color.secondary)
-                .multilineTextAlignment(.leading)
-                .padding(.horizontal, 16)
-                .padding(.bottom, 12)
-        }
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(.ultraThinMaterial)
-                .opacity(0.9)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.orange.opacity(0.3), lineWidth: 1)
-        )
-        .padding(.horizontal, 16)
-        .padding(.bottom, 8)
-        .transition(.move(edge: .bottom).combined(with: .opacity))
-        .animation(.easeInOut(duration: 0.3), value: error)
     }
 }
 

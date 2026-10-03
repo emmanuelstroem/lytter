@@ -24,6 +24,69 @@ enum UITestFixtures {
         ProcessInfo.processInfo.environment["LYTTER_UITEST_FIXTURES"] == "1"
     }
 
+    // MARK: - Network conditions (F42)
+
+    /// A network condition to simulate, from `LYTTER_UITEST_NETWORK`, so the connection
+    /// states can be driven in a UI test without touching the machine's own network.
+    enum SimulatedNetwork: String {
+        /// No route to the internet, and nothing cached: the full-screen offline state.
+        case offline
+        /// No route, with the fixtures standing in for the disk cache: the banner over them.
+        case offlineCached = "offline-cached"
+        /// Online, but DR's API answers 503.
+        case drDown = "dr-down"
+        /// As `drDown`, over cached channels.
+        case drDownCached = "dr-down-cached"
+        /// Offline at launch, back online a few seconds later — automatic recovery.
+        case reconnects
+    }
+
+    static var simulatedNetwork: SimulatedNetwork? {
+        guard isActive else { return nil }
+        return ProcessInfo.processInfo.environment["LYTTER_UITEST_NETWORK"]
+            .flatMap(SimulatedNetwork.init(rawValue:))
+    }
+
+    /// What the simulated path monitor last reported. Fixture requests fail as offline
+    /// while it is false, as real ones would.
+    static var isSimulatedOnline = true
+
+    /// Whether the fixtures stand in for the disk cache at launch.
+    static var seedsCache: Bool {
+        simulatedNetwork == .offlineCached || simulatedNetwork == .drDownCached
+    }
+
+    /// The fixture catalogue as `/schedules/all/now` would answer under the simulated
+    /// condition.
+    static func schedulesResponse() throws -> [DREpisode] {
+        if !isSimulatedOnline { throw URLError(.notConnectedToInternet) }
+        switch simulatedNetwork {
+        case .drDown, .drDownCached: throw NetworkError.httpError(503)
+        default: return schedules()
+        }
+    }
+
+    /// Drives `NetworkMonitor` under UI tests: online unless the condition says otherwise,
+    /// whatever the machine running the tests is connected to.
+    static func simulatePath(_ onChange: @escaping @MainActor (Bool) -> Void) {
+        let report: @MainActor (Bool) -> Void = { online in
+            isSimulatedOnline = online
+            onChange(online)
+        }
+        switch simulatedNetwork {
+        case .offline, .offlineCached:
+            report(false)
+        case .reconnects:
+            report(false)
+            Task { @MainActor in
+                try? await Task.sleep(for: .seconds(4))
+                report(true)
+            }
+        default:
+            report(true)
+        }
+    }
+
     /// Every channel DR broadcasts, each with a programme on air now whose description is
     /// far longer than the player's info sheet can show at once.
     static func schedules(now: Date = Date()) -> [DREpisode] {

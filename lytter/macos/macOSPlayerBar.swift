@@ -65,11 +65,20 @@ struct macOSPlayerBar: View {
                 Text(channel.qualifiedName)
                     .font(.system(size: 12, weight: .semibold))
                     .lineLimit(1)
-                Text(serviceManager.getCurrentProgram(for: channel)?.programmeName
-                     ?? String(localized: "Live"))
-                    .font(.system(size: 11))
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
+                // A problem that stops audio takes the programme's line: the bar is the
+                // one place on the Mac that is always in view.
+                if let problem = serviceManager.connectionProblem, problem.affectsPlayback {
+                    Label(problem.title, systemImage: problem.systemImage)
+                        .font(.system(size: 11))
+                        .foregroundStyle(.orange)
+                        .lineLimit(1)
+                } else {
+                    Text(serviceManager.getCurrentProgram(for: channel)?.programmeName
+                         ?? String(localized: "Live"))
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
             }
             .frame(maxWidth: 260, alignment: .leading)
         } else {

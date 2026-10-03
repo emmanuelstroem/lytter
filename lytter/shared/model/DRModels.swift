@@ -632,7 +632,13 @@ class DRServiceManager: ObservableObject {
     // Direct observable properties
     @Published var availableChannels: [DRChannel] = []
     @Published var isLoading = false
-    @Published var error: String?
+    /// Why the last catalogue fetch failed, or nil once one succeeds. Views read
+    /// `connectionProblem`, not this.
+    @Published private(set) var catalogueFailure: RequestFailure?
+    /// Whether the device has a route to the internet. Assumed until `NetworkMonitor` says.
+    @Published private(set) var isOnline = true
+    /// True once a fetch with nothing on screen has run past `ConnectionTiming.slowAfter`.
+    @Published private(set) var isWaitingLong = false
     
     @Published var playingChannel: DRChannel?
     @Published var currentLiveProgram: DREpisode?
@@ -663,10 +669,13 @@ class DRServiceManager: ObservableObject {
     private var nextLivePollingTime: Date?
     private var isPollingForTrack = false
     
+    private let networkMonitor = NetworkMonitor()
+
     init() {
         setupBindings()
         loadDiskCache()   // Populate UI instantly from disk
         loadChannels()    // Refresh from API in background
+        networkMonitor.start { [weak self] online in self?.networkPathChanged(online: online) }
     }
 
     /// Synchronously loads the last persisted schedules so the UI is populated
@@ -674,9 +683,12 @@ class DRServiceManager: ObservableObject {
     private func loadDiskCache() {
         #if DEBUG
         // UI tests start from their fixtures alone, not from whatever the simulator cached.
-        if UITestFixtures.isActive { return }
-        #endif
+        let schedules = UITestFixtures.isActive
+            ? (UITestFixtures.seedsCache ? UITestFixtures.schedules() : [])
+            : DRLocalCache.shared.load()
+        #else
         let schedules = DRLocalCache.shared.load()
+        #endif
         guard !schedules.isEmpty else { return }
         cachedSchedules = schedules
         availableChannels = Array(Set(schedules.map { $0.channel }))
@@ -726,60 +738,157 @@ class DRServiceManager: ObservableObject {
         return Date().timeIntervalSince(lastUpdate) < cacheValidityDuration
     }
     
+    /// The catalogue fetch in flight, if any. Every screen's `onAppear` asks for the
+    /// catalogue when it has none, and before this each ask started a fetch of its own.
+    private var catalogueTask: Task<Void, Never>?
+    /// The next automatic retry while DR is not answering, and how many have run.
+    private var retryTask: Task<Void, Never>?
+    private var retryAttempt = 0
+
+    /// Refreshes the catalogue unless what is in memory is recent enough.
     func loadChannels() {
         // In-memory cache still valid — nothing to do
         if !cachedSchedules.isEmpty && isCacheValid() { return }
+        startCatalogueFetch()
+    }
 
-        // Only show loading spinner when there is no data at all (first launch)
-        isLoading = availableChannels.isEmpty
-        error = nil
-
-        Task {
-            do {
-                // Fetched side by side. The directory is a refinement, not a requirement:
-                // if it fails, the last one known is used, and failing that channels read
-                // their titles as they always did.
-                async let fetchedDirectory = try? networkService.fetchChannelDirectory()
-                let fetchedSchedules = try await networkService.fetchAllSchedules()
-                let directory = await fetchedDirectory ?? self.channelDirectory
-
-                let schedules = fetchedSchedules.map { episode in
-                    var episode = episode
-                    episode.channel = directory.apply(to: episode.channel)
-                    return episode
-                }
-                let channels = Array(Set(schedules.map { $0.channel })).sorted { $0.title < $1.title }
-
-                await MainActor.run {
-                    self.channelDirectory = directory
-                    self.cachedSchedules = schedules
-                    self.lastSchedulesUpdate = Date()
-                    self.availableChannels = channels
-                    self.isLoading = false
-                    self.restoreLastPlayedChannel()
-                }
-
-                // Persist to disk only after a confirmed successful response — and never
-                // fixtures, which would otherwise greet the next ordinary launch.
-                #if DEBUG
-                if !UITestFixtures.isActive { DRLocalCache.shared.save(schedules) }
-                #else
-                DRLocalCache.shared.save(schedules)
-                #endif
-
-                await self.preloadChannelImages(from: schedules)
-            } catch {
-                await MainActor.run {
-                    // Surface the error only when we have no data to show
-                    if self.availableChannels.isEmpty {
-                        self.error = error.localizedDescription
-                    }
-                    self.isLoading = false
-                }
-            }
+    /// What every Try Again does: fetch whatever failed now, whatever the cache says.
+    func retry() {
+        if playbackError != nil, let channel = playingChannel {
+            playbackError = nil
+            playChannel(channel)
+        }
+        if catalogueFailure != nil || availableChannels.isEmpty {
+            retryAttempt = 0
+            startCatalogueFetch()
         }
     }
-    
+
+    /// Fetches the catalogue, joining a fetch already under way, and returns when it is done.
+    private func refreshCatalogue() async {
+        if !cachedSchedules.isEmpty && isCacheValid() { return }
+        await startCatalogueFetch().value
+    }
+
+    @discardableResult
+    private func startCatalogueFetch() -> Task<Void, Never> {
+        if let catalogueTask { return catalogueTask }
+
+        retryTask?.cancel()
+        retryTask = nil
+        // Only show loading spinner when there is no data at all (first launch)
+        isLoading = availableChannels.isEmpty
+        let task = Task { [weak self] in
+            guard let self else { return }
+            await self.fetchCatalogue()
+            self.catalogueTask = nil
+            self.isLoading = false
+            self.isWaitingLong = false
+        }
+        catalogueTask = task
+        if isLoading { watchForSlowAnswer(to: task) }
+        return task
+    }
+
+    /// Says "still waiting" if the fetch with nothing on screen runs long, so a slow DR
+    /// does not look like a stuck app.
+    private func watchForSlowAnswer(to task: Task<Void, Never>) {
+        Task { [weak self] in
+            try? await Task.sleep(for: ConnectionTiming.slowAfter)
+            guard let self, self.catalogueTask == task, self.isLoading else { return }
+            self.isWaitingLong = true
+        }
+    }
+
+    private func fetchCatalogue() async {
+        do {
+            // Fetched side by side. The directory is a refinement, not a requirement:
+            // if it fails, the last one known is used, and failing that channels read
+            // their titles as they always did.
+            async let fetchedDirectory = try? networkService.fetchChannelDirectory()
+            let fetchedSchedules = try await networkService.fetchAllSchedules()
+            let directory = await fetchedDirectory ?? self.channelDirectory
+
+            let schedules = fetchedSchedules.map { episode in
+                var episode = episode
+                episode.channel = directory.apply(to: episode.channel)
+                return episode
+            }
+            let channels = Array(Set(schedules.map { $0.channel })).sorted { $0.title < $1.title }
+
+            self.channelDirectory = directory
+            self.cachedSchedules = schedules
+            self.lastSchedulesUpdate = Date()
+            self.availableChannels = channels
+            self.catalogueFailure = nil
+            self.retryAttempt = 0
+            self.restoreLastPlayedChannel()
+            self.refreshCurrentProgram()
+
+            // Persist to disk only after a confirmed successful response — and never
+            // fixtures, which would otherwise greet the next ordinary launch.
+            #if DEBUG
+            if !UITestFixtures.isActive { DRLocalCache.shared.save(schedules) }
+            #else
+            DRLocalCache.shared.save(schedules)
+            #endif
+
+            await self.preloadChannelImages(from: schedules)
+        } catch {
+            Log.network.error("catalogue fetch failed: \(error.localizedDescription, privacy: .public)")
+            // Kept whether or not there are channels to show. It used to be dropped when
+            // the disk cache had filled the screen, which left a listener looking at
+            // yesterday's programmes with nothing to say they were not today's.
+            self.catalogueFailure = RequestFailure(error)
+            self.scheduleAutomaticRetry()
+        }
+    }
+
+    /// While DR is not answering, asks again on a widening interval. Offline is left to
+    /// `networkPathChanged`, which knows when it is worth asking.
+    private func scheduleAutomaticRetry() {
+        guard isOnline, case .drUnavailable = catalogueFailure, retryTask == nil else { return }
+        let delay = ConnectionTiming.retryDelay(afterAttempt: retryAttempt)
+        retryAttempt += 1
+        retryTask = Task { [weak self] in
+            try? await Task.sleep(for: delay)
+            guard !Task.isCancelled, let self else { return }
+            self.retryTask = nil
+            Log.network.info("retrying the catalogue while DR is not answering")
+            self.startCatalogueFetch()
+        }
+    }
+
+    /// The connection came or went.
+    private func networkPathChanged(online: Bool) {
+        guard online != isOnline else { return }
+        Log.network.info("network path is \(online ? "online" : "offline", privacy: .public)")
+        isOnline = online
+        guard online else {
+            retryTask?.cancel()
+            retryTask = nil
+            return
+        }
+        // Back: fetch what failed or never came, and restart a stream that died with it.
+        retryAttempt = 0
+        if catalogueFailure != nil || availableChannels.isEmpty || !isCacheValid() {
+            startCatalogueFetch()
+        }
+        if playbackError != nil, audioPlayer.wantsPlayback, let channel = playingChannel {
+            playbackError = nil
+            playChannel(channel)
+        } else {
+            audioPlayer.reloadIfStalled()
+        }
+    }
+
+    /// What to tell the listener about the connection, if anything. See `ConnectionProblem`.
+    var connectionProblem: ConnectionProblem? {
+        ConnectionProblem.current(isOnline: isOnline,
+                                  catalogueFailure: catalogueFailure,
+                                  failedStream: playbackError == nil ? nil : playingChannel?.title)
+    }
+
     /// Whether `channel` can be heard right now.
     ///
     /// Not the same as being `playingChannel`, which names whatever is loaded in the player:
@@ -930,6 +1039,11 @@ class DRServiceManager: ObservableObject {
             }
         } else {
             Task { @MainActor in
+                // Stop what was playing and name the channel that failed. Before, the
+                // previous channel played on under an error about this one, and the
+                // message could not say which channel it meant.
+                self.audioPlayer.stop()
+                self.playingChannel = channel
                 self.playbackError = "No stream URL available for \(channel.title)"
             }
         }
@@ -1056,12 +1170,18 @@ class DRServiceManager: ObservableObject {
     /// day comes from the snapshot endpoint — which `DRNetworkService` has always
     /// implemented and nothing has ever called.
     func loadSchedule(for channel: DRChannel) async -> [DREpisode] {
+        (try? await fetchSchedule(for: channel)) ?? []
+    }
+
+    /// As `loadSchedule`, but saying why it failed — for the schedule sheets, which used to
+    /// show "No schedule" for a dead connection as if DR had nothing to list.
+    func fetchSchedule(for channel: DRChannel) async throws -> [DREpisode] {
         do {
             return try await networkService.fetchScheduleSnapshot(for: channel.slug).items
         } catch {
             Log.network.error(
                 "schedule snapshot failed for \(channel.slug, privacy: .public): \(error.localizedDescription, privacy: .public)")
-            return []
+            throw error
         }
     }
     
@@ -1150,6 +1270,9 @@ class DRServiceManager: ObservableObject {
                 return currentTrack
             }
         } catch {
+            // Keep what is known only while it is still true. The last track used to stay
+            // on screen however long ago it ended, for as long as the polls kept failing.
+            reselectHeard()
             return nil
         }
     }
@@ -1200,7 +1323,10 @@ class DRServiceManager: ObservableObject {
             while !Task.isCancelled {
                 try? await Task.sleep(nanoseconds: UInt64(self?.programRefreshInterval ?? 300) * 1_000_000_000)
                 guard !Task.isCancelled, let self else { return }
-                await MainActor.run { self.refreshCurrentProgram() }
+                // The catalogue is the schedule. It used to be fetched once, at launch, so
+                // a long listen went on showing the programme that was on air then.
+                await self.refreshCatalogue()
+                self.refreshCurrentProgram()
             }
         }
     }
@@ -1297,10 +1423,7 @@ class DRServiceManager: ObservableObject {
         sleepTimerTask = nil
     }
 
-    func clearPlaybackError() {
-        playbackError = nil
-    }
-    
+
     // MARK: - Program Refresh
     
     func refreshCurrentProgram() {

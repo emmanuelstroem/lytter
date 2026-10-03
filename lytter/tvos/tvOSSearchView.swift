@@ -51,22 +51,28 @@ struct tvOSSearchView: View {
 
             NavigationStack {
                 ScrollView {
-                    if results.isEmpty {
-                        ContentUnavailableView.search(text: query)
-                            .padding(.top, 120)
-                    } else {
-                        LazyVGrid(columns: columns, spacing: 48) {
-                            ForEach(results) { group in
-                                tvOSStationCard(
-                                    group: group,
-                                    serviceManager: serviceManager,
-                                    onSelect: play
-                                )
-                            }
-                        }
-                        // Focus lifts a card; without room the grid clips it.
+                    ConnectionBanner(serviceManager: serviceManager)
                         .padding(.horizontal, 60)
-                        .padding(.vertical, 40)
+                        .padding(.top, 40)
+
+                    CatalogueStateView(serviceManager: serviceManager) {
+                        if results.isEmpty {
+                            ContentUnavailableView.search(text: query)
+                                .padding(.top, 120)
+                        } else {
+                            LazyVGrid(columns: columns, spacing: 48) {
+                                ForEach(results) { group in
+                                    tvOSStationCard(
+                                        group: group,
+                                        serviceManager: serviceManager,
+                                        onSelect: play
+                                    )
+                                }
+                            }
+                            // Focus lifts a card; without room the grid clips it.
+                            .padding(.horizontal, 60)
+                            .padding(.vertical, 40)
+                        }
                     }
             }
             .background(Color.black.ignoresSafeArea())

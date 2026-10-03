@@ -18,6 +18,9 @@ struct iOSChannelScheduleSheet: View {
 
     @State private var items: [DREpisode] = []
     @State private var isLoading = true
+    /// Why the schedule could not be fetched. It used to read "No schedule", as if DR had
+    /// nothing to list, when the connection was the problem.
+    @State private var failure: ConnectionProblem?
 
     var body: some View {
         NavigationStack {
@@ -25,6 +28,14 @@ struct iOSChannelScheduleSheet: View {
                 if isLoading {
                     ProgressView()
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else if let failure {
+                    ContentUnavailableView {
+                        Label(failure.title, systemImage: failure.systemImage)
+                    } description: {
+                        Text("The schedule couldn't be loaded.")
+                    } actions: {
+                        Button("Try Again") { Task { await load() } }
+                    }
                 } else if items.isEmpty {
                     ContentUnavailableView(
                         "No schedule",
@@ -56,10 +67,18 @@ struct iOSChannelScheduleSheet: View {
             }
         }
         .presentationDetents([.medium, .large])
-        .task {
-            items = await serviceManager.loadSchedule(for: channel)
-            isLoading = false
+        .task { await load() }
+    }
+
+    private func load() async {
+        isLoading = true
+        do {
+            items = try await serviceManager.fetchSchedule(for: channel)
+            failure = nil
+        } catch {
+            failure = .forFailedRequest(error, isOnline: serviceManager.isOnline)
         }
+        isLoading = false
     }
 }
 

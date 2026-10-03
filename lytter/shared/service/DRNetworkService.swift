@@ -64,7 +64,7 @@ class DRNetworkService {
     // MARK: - Fetch All Schedules (with retry)
     func fetchAllSchedules(retries: Int = 3) async throws -> [DREpisode] {
         #if DEBUG
-        if UITestFixtures.isActive { return UITestFixtures.schedules() }
+        if UITestFixtures.isActive { return try UITestFixtures.schedulesResponse() }
         #endif
         guard let url = URL(string: DRAPIConfig.schedulesAllNow) else {
             throw NetworkError.invalidURL

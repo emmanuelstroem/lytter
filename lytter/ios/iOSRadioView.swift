@@ -12,7 +12,6 @@ struct iOSRadioView: View {
     @ObservedObject var serviceManager: DRServiceManager
     @ObservedObject var selectionState: SelectionState
     @State private var searchText = ""
-    @State private var isLoading = false
     
     var filteredGroupedChannels: [GroupedChannel] {
         GroupedChannel.grouped(from: serviceManager.availableChannels)
@@ -34,35 +33,35 @@ struct iOSRadioView: View {
                         .padding(.horizontal, 16)
                         .padding(.vertical, 8)
                     
+                    ConnectionBanner(serviceManager: serviceManager)
+                        .padding(.horizontal, 16)
+                        .padding(.bottom, 8)
+
                     // Channel list
-                    if serviceManager.isLoading {
-                        LoadingView()
-                    } else if let error = serviceManager.error {
-                        ErrorView(error: error) {
-                            serviceManager.loadChannels()
-                        }
-                    } else if filteredGroupedChannels.isEmpty {
-                        EmptyStateView()
-                    } else {
-                        ScrollView {
-                            // The same card as Home, in a grid. Radio was a list of rows
-                            // with a thumbnail — a second way of drawing a station, in the
-                            // one place you go to look at all of them.
-                            LazyVGrid(columns: [GridItem(.adaptive(minimum: 148), spacing: 16)],
-                                      spacing: 20) {
-                                ForEach(filteredGroupedChannels) { groupedChannel in
-                                    ChannelShelfCard(
-                                        group: groupedChannel,
-                                        serviceManager: serviceManager,
-                                        onTap: { channel in
-                                            serviceManager.playChannel(channel)
-                                            selectionState.selectChannel(channel, showSheet: false)
-                                        }
-                                    )
+                    CatalogueStateView(serviceManager: serviceManager) {
+                        if filteredGroupedChannels.isEmpty {
+                            ContentUnavailableView.search(text: searchText)
+                        } else {
+                            ScrollView {
+                                // The same card as Home, in a grid. Radio was a list of rows
+                                // with a thumbnail — a second way of drawing a station, in the
+                                // one place you go to look at all of them.
+                                LazyVGrid(columns: [GridItem(.adaptive(minimum: 148), spacing: 16)],
+                                          spacing: 20) {
+                                    ForEach(filteredGroupedChannels) { groupedChannel in
+                                        ChannelShelfCard(
+                                            group: groupedChannel,
+                                            serviceManager: serviceManager,
+                                            onTap: { channel in
+                                                serviceManager.playChannel(channel)
+                                                selectionState.selectChannel(channel, showSheet: false)
+                                            }
+                                        )
+                                    }
                                 }
+                                .padding(.horizontal, 16)
+                                .padding(.bottom, 100) // Space for mini player
                             }
-                            .padding(.horizontal, 16)
-                            .padding(.bottom, 100) // Space for mini player
                         }
                     }
                 }

@@ -16,40 +16,27 @@ struct macOSHomeView: View {
     var body: some View {
         // Silence used to be the only state this screen had: an empty catalogue and a
         // catalogue still loading looked identical, because neither drew anything at all.
-        // iOS and tvOS both say something here; this did not.
-        Group {
-            if serviceManager.availableChannels.isEmpty && serviceManager.isLoading {
-                ProgressView("Loading")
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else if let error = serviceManager.error, serviceManager.availableChannels.isEmpty {
-                ContentUnavailableView {
-                    Label("Couldn't Load Channels", systemImage: "wifi.slash")
-                } description: {
-                    Text(error)
-                } actions: {
-                    Button("Try Again") { serviceManager.loadChannels() }
-                }
-            } else if serviceManager.availableChannels.isEmpty {
-                ContentUnavailableView("No Channels", systemImage: "dot.radiowaves.left.and.right")
-            } else {
-                ScrollView {
-                    LazyVStack(alignment: .leading, spacing: 32) {
-                        shelf(title: String(localized: "Favourites"),
-                              groups: singles(serviceManager.userPreferences.favourites
-                                  .resolve(in: serviceManager.availableChannels)),
-                              style: .featured)
+        // Loading, empty and failed are now `CatalogueStateView`'s, shared by every screen.
+        CatalogueStateView(serviceManager: serviceManager) {
+            ScrollView {
+                LazyVStack(alignment: .leading, spacing: 32) {
+                    ConnectionBanner(serviceManager: serviceManager)
 
-                        shelf(title: String(localized: "Recently Played"),
-                              groups: singles(serviceManager.userPreferences.recentlyPlayed
-                                  .resolve(in: serviceManager.availableChannels)))
+                    shelf(title: String(localized: "Favourites"),
+                          groups: singles(serviceManager.userPreferences.favourites
+                              .resolve(in: serviceManager.availableChannels)),
+                          style: .featured)
 
-                        ForEach(serviceManager.broadcasterSections) { section in
-                            shelf(title: section.broadcaster.name,
-                                  groups: GroupedChannel.grouped(from: section.channels))
-                        }
+                    shelf(title: String(localized: "Recently Played"),
+                          groups: singles(serviceManager.userPreferences.recentlyPlayed
+                              .resolve(in: serviceManager.availableChannels)))
+
+                    ForEach(serviceManager.broadcasterSections) { section in
+                        shelf(title: section.broadcaster.name,
+                              groups: GroupedChannel.grouped(from: section.channels))
                     }
-                    .padding(24)
                 }
+                .padding(24)
             }
         }
         .onAppear {

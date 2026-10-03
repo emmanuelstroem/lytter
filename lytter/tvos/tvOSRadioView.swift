@@ -47,20 +47,10 @@ struct tvOSRadioView: View {
                             .foregroundStyle(.white)
                             .padding(.horizontal, 60)
 
-                        if serviceManager.isLoading {
-                            ProgressView().scaleEffect(1.4).tint(.white)
-                                .padding(.horizontal, 60)
-                        } else if let error = serviceManager.error {
-                            VStack(spacing: 16) {
-                                Image(systemName: "exclamationmark.triangle").font(.system(size: 60)).foregroundColor(.orange)
-                                Text(error).foregroundColor(.white)
-                                Button("Retry") { serviceManager.loadChannels() }
-                            }
+                        ConnectionBanner(serviceManager: serviceManager)
                             .padding(.horizontal, 60)
-                        } else if primaryChannels.isEmpty {
-                            Text("No channels").foregroundColor(.white)
-                                .padding(.horizontal, 60)
-                        } else {
+
+                        CatalogueStateView(serviceManager: serviceManager) {
                             // Horizontal shelf — like the Music Home tab
                             ScrollView(.horizontal, showsIndicators: false) {
                                 LazyHStack(alignment: .top, spacing: 40) {
