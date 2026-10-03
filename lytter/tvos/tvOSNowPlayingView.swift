@@ -412,7 +412,7 @@ struct tvOSNowPlayingControls: View {
                 .background(isFocused ? Color.white : Color.clear, in: Circle())
                 .background(.ultraThinMaterial, in: Circle())
                 .shadow(color: .gray.opacity(isFocused ? 0.25 : 0), radius: 12, x: 0, y: 0)
-                .animation(.spring(response: 0.28, dampingFraction: 0.72), value: isFocused)
+                .focusAnimation(value: isFocused)
         }
     }
 
@@ -430,7 +430,7 @@ struct tvOSNowPlayingControls: View {
             .frame(height: 64)
             .background(isFocused ? Color.white : Color.clear, in: Capsule())
             .background(.ultraThinMaterial, in: Capsule())
-            .animation(.spring(response: 0.28, dampingFraction: 0.72), value: isFocused)
+            .focusAnimation(value: isFocused)
         }
     }
 
@@ -455,7 +455,7 @@ struct tvOSNowPlayingControls: View {
                     .offset(x: isPlaying ? 0 : 3)
             }
             .shadow(color: .white.opacity(isFocused ? 0.55 : 0), radius: 18, x: 0, y: 0)
-            .animation(.spring(response: 0.28, dampingFraction: 0.72), value: isFocused)
+            .focusAnimation(value: isFocused)
         }
     }
 
