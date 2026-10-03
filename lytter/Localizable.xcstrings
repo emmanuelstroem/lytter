@@ -179,6 +179,50 @@
         }
       }
     },
+    "After 1 Minute": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Efter 1 minut"
+          }
+        }
+      }
+    },
+    "After 2 Minutes": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Efter 2 minutter"
+          }
+        }
+      }
+    },
+    "After 30 Seconds": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Efter 30 sekunder"
+          }
+        }
+      }
+    },
+    "After 5 Minutes": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Efter 5 minutter"
+          }
+        }
+      }
+    },
     "AirPlay": {
       "extractionState": "manual",
       "localizations": {
@@ -198,6 +242,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Tilgængelige kanaler"
+          }
+        }
+      }
+    },
+    "Browse Categories": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gennemse kategorier"
           }
         }
       }
@@ -264,6 +319,39 @@
           "stringUnit": {
             "state": "translated",
             "value": "Vælg variant"
+          }
+        }
+      }
+    },
+    "Clear": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ryd"
+          }
+        }
+      }
+    },
+    "Clear Recently Played": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ryd senest afspillet"
+          }
+        }
+      }
+    },
+    "Clear Recently Played?": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ryd senest afspillet?"
           }
         }
       }
@@ -423,6 +511,17 @@
         }
       }
     },
+    "Every station you have pinned will be removed from Favourites.": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alle de kanaler, du har gemt, fjernes fra Favoritter."
+          }
+        }
+      }
+    },
     "Failed to decode response": {
       "extractionState": "manual",
       "localizations": {
@@ -441,6 +540,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Favoritter"
+          }
+        }
+      }
+    },
+    "Forget Region": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Glem region"
           }
         }
       }
@@ -500,6 +610,17 @@
         }
       },
       "shouldTranslate": false
+    },
+    "Listening": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lytning"
+          }
+        }
+      }
     },
     "Live": {
       "extractionState": "manual",
@@ -567,6 +688,28 @@
         }
       },
       "shouldTranslate": false
+    },
+    "National Stations": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Landsdækkende kanaler"
+          }
+        }
+      }
+    },
+    "Never": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aldrig"
+          }
+        }
+      }
     },
     "No Channel": {
       "extractionState": "manual",
@@ -641,6 +784,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ingen sendeplan"
+          }
+        }
+      }
+    },
+    "Not Chosen": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ikke valgt"
           }
         }
       }
@@ -767,6 +921,17 @@
         }
       }
     },
+    "Play a station by asking Siri, or from the Shortcuts app.": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Afspil en kanal ved at spørge Siri eller fra appen Genveje."
+          }
+        }
+      }
+    },
     "Playback fades out before it stops.": {
       "extractionState": "manual",
       "localizations": {
@@ -856,6 +1021,72 @@
         }
       }
     },
+    "Recently Searched": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Senest søgt"
+          }
+        }
+      }
+    },
+    "Region": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Region"
+          }
+        }
+      }
+    },
+    "Regional Stations": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Regionale kanaler"
+          }
+        }
+      }
+    },
+    "Remembered when you choose a district on P4 or P5, and listed first on every regional station.": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Huskes, når du vælger et distrikt på P4 eller P5, og vises først på alle regionale kanaler."
+          }
+        }
+      }
+    },
+    "Remove All Favourites": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fjern alle favoritter"
+          }
+        }
+      }
+    },
+    "Remove All Favourites?": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fjern alle favoritter?"
+          }
+        }
+      }
+    },
     "Remove from Favourites": {
       "extractionState": "manual",
       "localizations": {
@@ -896,6 +1127,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "Sendeplan"
+          }
+        }
+      }
+    },
+    "Screen Off": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sluk skærmen"
+          }
+        }
+      }
+    },
+    "Screen off": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Skærmen er slukket"
           }
         }
       }
@@ -944,6 +1197,17 @@
         }
       }
     },
+    "Settings": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Indstillinger"
+          }
+        }
+      }
+    },
     "Share": {
       "extractionState": "manual",
       "localizations": {
@@ -973,6 +1237,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Integration med Genveje"
+          }
+        }
+      }
+    },
+    "Show Images": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vis billeder"
           }
         }
       }
@@ -1050,6 +1325,58 @@
           "stringUnit": {
             "state": "translated",
             "value": "Sleep-timer"
+          }
+        }
+      }
+    },
+    "Station · %lld districts": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Kanal · %lld distrikt"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Kanal · %lld distrikter"
+                }
+              }
+            }
+          }
+        },
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Station · %lld district"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Station · %lld districts"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Stations, regions and programmes": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kanaler, regioner og programmer"
           }
         }
       }
@@ -1197,6 +1524,17 @@
         }
       }
     },
+    "Turns the screen back on.": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tænder skærmen igen."
+          }
+        }
+      }
+    },
     "Unexpected server response (%lld).": {
       "extractionState": "manual",
       "localizations": {
@@ -1204,6 +1542,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Uventet svar fra serveren (%lld)."
+          }
+        }
+      }
+    },
+    "Version": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Version"
           }
         }
       }
@@ -1226,6 +1575,39 @@
           "stringUnit": {
             "state": "translated",
             "value": "Talekommandoer"
+          }
+        }
+      }
+    },
+    "When off, stations show their colour and name instead of programme artwork, which uses less data on a slow connection.": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Når det er slået fra, viser kanalerne deres farve og navn i stedet for programbilleder. Det bruger mindre data på en langsom forbindelse."
+          }
+        }
+      }
+    },
+    "While something is playing, the screen goes black after this long without a press. The sound carries on, and the next press only brings the screen back.": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mens der spiller noget, bliver skærmen sort efter så lang tid uden et tryk. Lyden fortsætter, og det næste tryk tænder kun skærmen igen."
+          }
+        }
+      }
+    },
+    "While something is playing, the screen goes black after this long without a touch. The sound carries on, and the next touch only brings the screen back.": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mens der spiller noget, bliver skærmen sort efter så lang tid uden berøring. Lyden fortsætter, og den næste berøring tænder kun skærmen igen."
           }
         }
       }

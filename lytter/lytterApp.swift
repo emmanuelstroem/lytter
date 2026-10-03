@@ -24,6 +24,7 @@ struct lytterApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .modifier(PreferencesEnvironment(preferences: serviceManager.userPreferences))
                 .environmentObject(serviceManager)
                 .environmentObject(deepLinkHandler)
                 #if os(iOS) || os(macOS)
@@ -54,5 +55,12 @@ struct lytterApp: App {
                     #endif
                 }
         }
+
+        #if os(macOS)
+        Settings {
+            macOSSettingsView(preferences: serviceManager.userPreferences)
+                .modifier(PreferencesEnvironment(preferences: serviceManager.userPreferences))
+        }
+        #endif
     }
 }

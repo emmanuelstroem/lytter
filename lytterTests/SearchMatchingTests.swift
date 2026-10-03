@@ -83,6 +83,41 @@ struct SearchMatchingTests {
         #expect(results(for: "orientering", nowPlaying: onAir) == ["P1"])
     }
 
+    // MARK: - What a result is
+
+    /// What the Search tab lists: the station when its name matched, otherwise only the
+    /// variants that did.
+    private func listed(for query: String,
+                        nowPlaying: @escaping (DRChannel) -> String? = { _ in nil }) -> [String] {
+        GroupedChannel.grouped(from: Self.live.map(channel))
+            .compactMap { $0.searchResult(for: query, nowPlaying: nowPlaying) }
+            .map(\.displayTitle)
+    }
+
+    @Test func aStationNameListsTheStation() {
+        #expect(listed(for: "P4") == ["P4"])
+    }
+
+    /// Searching for a region is asking for that region's channels; listing P4 and P5 would
+    /// only ask which district again.
+    @Test func aDistrictNameListsTheDistrictsNotTheStations() {
+        #expect(listed(for: "Fyn") == ["P4 - Fyn", "P5 - Fyn"])
+    }
+
+    @Test func aProgrammeOnOneDistrictListsThatDistrict() {
+        let onAir: (DRChannel) -> String? = { $0.title == "P4 Syd" ? "Morgenhyrderne" : nil }
+
+        #expect(listed(for: "morgenhyrderne", nowPlaying: onAir) == ["P4 - Syd"])
+    }
+
+    @Test func aStationWithoutDistrictsIsListedAsItself() {
+        #expect(listed(for: "P6") == ["P6"])
+    }
+
+    @Test func nothingTypedListsEveryStation() {
+        #expect(listed(for: "  ") == ["P1", "P2", "P3", "P4", "P5", "P6", "P8"])
+    }
+
     // MARK: - Negative control
 
     @Test func somethingNobodyBroadcastsFindsNothing() {

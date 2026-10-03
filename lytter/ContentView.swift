@@ -33,13 +33,14 @@ struct ContentView: View {
                         iOSRadioView(serviceManager: serviceManager, selectionState: selectionState)
                     }
                     Tab("Search", systemImage: "magnifyingglass", value: 2, role: .search) {
-                        SearchView(serviceManager: serviceManager, selectionState: selectionState)
+                        SearchView(serviceManager: serviceManager, selectionState: selectionState,
+                                   preferences: serviceManager.userPreferences)
                     }
-                    Tab("Shortcuts", systemImage: "mic.circle", value: 3) {
-                        ShortcutsView()
-                            #if os(iOS) || os(macOS)
-                            .environmentObject(siriShortcutsService)
-                            #endif
+                    // Siri & Shortcuts is inside Settings now, rather than a tab of its own.
+                    // Value 3 was Shortcuts; a restored selection lands on Settings, which
+                    // is where Shortcuts went.
+                    Tab("Settings", systemImage: "gearshape", value: 3) {
+                        iOSSettingsView(preferences: serviceManager.userPreferences)
                     }
                 }
                 .tabBarMinimizeBehavior(.onScrollDown)
@@ -68,21 +69,19 @@ struct ContentView: View {
                         }
                     
                     // Search Tab
-                    SearchView(serviceManager: serviceManager, selectionState: selectionState)
+                    SearchView(serviceManager: serviceManager, selectionState: selectionState,
+                               preferences: serviceManager.userPreferences)
                         .tabItem {
                             Image(systemName: "magnifyingglass")
                             Text("Search")
                         }
                     
-                    // Shortcuts Tab
-                    #if os(iOS) || os(macOS)
-                    ShortcutsView()
-                        .environmentObject(siriShortcutsService)
+                    // Settings Tab
+                    iOSSettingsView(preferences: serviceManager.userPreferences)
                         .tabItem {
-                            Image(systemName: "mic.circle")
-                            Text("Shortcuts")
+                            Image(systemName: "gearshape")
+                            Text("Settings")
                         }
-                    #endif
                 }
                 .accentColor(.purple)
                 
@@ -93,6 +92,8 @@ struct ContentView: View {
                     .frame(alignment: .bottom)
             }
         }
+        // Screen Off (F43): watches this window for interaction while playing.
+        .background(ScreenOffInstaller(serviceManager: serviceManager))
         // Deep links resolve here, not per-screen.
         //
         // The same .onChange used to be copy-pasted onto HomeView, SearchView and
@@ -125,6 +126,7 @@ struct ContentView: View {
         )
         .environmentObject(serviceManager)
         .environmentObject(selectionState)
+        .background(ScreenOffInstaller(serviceManager: serviceManager))
         .onOpenURL { url in
             deepLinkHandler.handleDeepLink(url)
         }

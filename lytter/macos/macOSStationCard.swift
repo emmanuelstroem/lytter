@@ -124,7 +124,8 @@ struct macOSStationCard: View {
                          maxPixelSize: ImageCacheService.thumbnailMaxPixelSize) { image in
             image.resizable().aspectRatio(contentMode: .fill)
         } placeholder: {
-            Rectangle().fill(Color(nsColor: .tertiarySystemFill))
+            // The caption already names the station.
+            StationArtworkPlaceholder(channel: channel, showsName: false)
         }
         .frame(width: metrics.width, height: metrics.height)
         .clipped()

@@ -1567,6 +1567,9 @@ class DRServiceManager: ObservableObject {
     /// Warms the artwork the channel lists show. Only the primary image per episode, at
     /// thumbnail size, four downloads at a time — see `preloadPrimaryImages`.
     private func preloadChannelImages(from schedules: [DREpisode]) async {
+        // Show Images off is a request for less data; fetching every picture anyway would
+        // spend it on images nothing draws.
+        guard userPreferences.showsArtwork else { return }
         imageCache.preloadPrimaryImages(from: schedules)
     }
     

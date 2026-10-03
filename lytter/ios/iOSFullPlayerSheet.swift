@@ -23,12 +23,7 @@ struct iOSFullPlayerSheet: View {
     }
     
     private var channelColor: Color {
-        guard let currentChannel = currentChannel else { return .purple }
-        let hash = abs(currentChannel.id.hashValue)
-        let hue = Double(hash % 360) / 360.0
-        let saturation = 0.7 + Double(hash % 20) / 100.0
-        let brightness = 0.8 + Double(hash % 20) / 100.0
-        return Color(hue: hue, saturation: saturation, brightness: brightness)
+        currentChannel?.stationColor ?? .purple
     }
     
     private var channelIcon: String {

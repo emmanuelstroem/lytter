@@ -114,7 +114,7 @@ struct DistrictSelectionSheet: View {
                          maxPixelSize: ImageCacheService.thumbnailMaxPixelSize) { image in
             image.resizable().aspectRatio(contentMode: .fill)
         } placeholder: {
-            Rectangle().fill(Color(.tertiarySystemFill))
+            StationArtworkPlaceholder(channel: channel)
         }
         .frame(width: 44, height: 44)
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))

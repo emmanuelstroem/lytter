@@ -21,6 +21,9 @@ class UserPreferencesService: ObservableObject {
         static let favouriteChannelIDs = "favouriteChannelIDs"
         static let recentlyPlayedChannelIDs = "recentlyPlayedChannelIDs"
         static let preferredDistrictName = "preferredDistrictName"
+        static let showsArtwork = "showsArtwork"
+        static let screenOffDelaySeconds = "screenOffDelaySeconds"
+        static let recentSearchChannelIDs = "recentSearchChannelIDs"
     }
     
     // MARK: - Published Properties
@@ -43,6 +46,18 @@ class UserPreferencesService: ObservableObject {
     /// asked for it once per station is the thing this removes.
     @Published private(set) var preferredDistrict: District?
 
+    /// Whether programme artwork is shown (F43). Off, every picture is replaced by the
+    /// station's colour and name, and the catalogue's images are not preloaded.
+    @Published private(set) var showsArtwork = true
+
+    /// How long the app waits, while playing, before blacking out the screen (F43).
+    @Published private(set) var screenOffDelay = ScreenOffDelay.default
+
+    /// Stations chosen from a search, newest first — what Search lists before anything has
+    /// been typed. Ids only, for the same reason as `recentlyPlayed`, whose type it borrows:
+    /// both are a short recency list with no duplicates.
+    @Published private(set) var recentSearches = RecentlyPlayed()
+
     init() {
         loadLastPlayedChannel()
         favourites = Favourites(
@@ -51,8 +66,69 @@ class UserPreferencesService: ObservableObject {
             channelIDs: userDefaults.stringArray(forKey: Keys.recentlyPlayedChannelIDs) ?? [])
         // The name is stored and the id derived, rather than the other way round: an id is
         // not showable, and a name that no longer matches any channel is at least readable.
+        // An empty name is no region: it reads as one, with nothing to show and something
+        // to forget.
         preferredDistrict = userDefaults.string(forKey: Keys.preferredDistrictName)
-            .map(District.init(name:))
+            .flatMap { $0.isEmpty ? nil : District(name: $0) }
+        // bool(forKey:) and integer(forKey:) rather than a cast: they also read the strings
+        // a launch argument stores ("-showsArtwork NO"), which `as? Bool` does not.
+        showsArtwork = userDefaults.object(forKey: Keys.showsArtwork) == nil
+            || userDefaults.bool(forKey: Keys.showsArtwork)
+        screenOffDelay = userDefaults.object(forKey: Keys.screenOffDelaySeconds) == nil
+            ? Self.defaultScreenOffDelay
+            : ScreenOffDelay(rawValue: userDefaults.integer(forKey: Keys.screenOffDelaySeconds))
+                ?? Self.defaultScreenOffDelay
+        recentSearches = RecentlyPlayed(
+            channelIDs: userDefaults.stringArray(forKey: Keys.recentSearchChannelIDs) ?? [])
+    }
+
+    /// The delay before anything has been chosen. Never, under UI tests: a test that sits
+    /// still for half a minute while something plays would otherwise find a black screen.
+    /// A test of the blackout itself sets one with `-screenOffDelaySeconds`.
+    private static var defaultScreenOffDelay: ScreenOffDelay {
+        #if DEBUG
+        if UITestFixtures.isActive { return .never }
+        #endif
+        return .default
+    }
+
+    // MARK: - Settings
+
+    func setShowsArtwork(_ shows: Bool) {
+        showsArtwork = shows
+        userDefaults.set(shows, forKey: Keys.showsArtwork)
+    }
+
+    func setScreenOffDelay(_ delay: ScreenOffDelay) {
+        screenOffDelay = delay
+        userDefaults.set(delay.rawValue, forKey: Keys.screenOffDelaySeconds)
+    }
+
+    /// Unpins every channel. Settings asks first; this does not.
+    func removeAllFavourites() {
+        favourites = Favourites()
+        userDefaults.removeObject(forKey: Keys.favouriteChannelIDs)
+    }
+
+    /// Forgets the listening history. `lastPlayedChannel` stays: it is what the mini player
+    /// shows at launch, not a list anyone reads.
+    func clearRecentlyPlayed() {
+        recentlyPlayed = RecentlyPlayed()
+        userDefaults.removeObject(forKey: Keys.recentlyPlayedChannelIDs)
+    }
+
+    // MARK: - Recent searches
+
+    func recordSearch(of channelID: String) {
+        var updated = recentSearches
+        updated.record(channelID)
+        recentSearches = updated
+        userDefaults.set(updated.channelIDs, forKey: Keys.recentSearchChannelIDs)
+    }
+
+    func clearRecentSearches() {
+        recentSearches = RecentlyPlayed()
+        userDefaults.removeObject(forKey: Keys.recentSearchChannelIDs)
     }
 
     // MARK: - Favourites

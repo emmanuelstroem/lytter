@@ -224,12 +224,7 @@ struct tvOSNowPlayingArtworkCard: View {
         CachedAsyncImage(url: artworkURL) { image in
             image.resizable().aspectRatio(contentMode: .fill)
         } placeholder: {
-            ZStack {
-                Color.white.opacity(0.08)
-                Image(systemName: "dot.radiowaves.left.and.right")
-                    .font(.system(size: 72))
-                    .foregroundStyle(.white.opacity(0.3))
-            }
+            StationArtworkPlaceholder(channel: channel)
         }
         .frame(width: 400, height: 400)
         .clipped()
@@ -528,12 +523,7 @@ struct tvOSNowPlayingInfoSheet: View {
                 CachedAsyncImage(url: artworkURL) { image in
                     image.resizable().aspectRatio(contentMode: .fill)
                 } placeholder: {
-                    ZStack {
-                        Color.white.opacity(0.07)
-                        Image(systemName: "dot.radiowaves.left.and.right")
-                            .font(.system(size: 44))
-                            .foregroundStyle(.white.opacity(0.25))
-                    }
+                    StationArtworkPlaceholder(channel: channel)
                 }
                 .frame(width: 340, height: 340)
                 // Dim layer — sits on the image, below the pill

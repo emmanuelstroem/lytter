@@ -41,7 +41,7 @@ struct macOSPlayerBar: View {
                                  maxPixelSize: ImageCacheService.thumbnailMaxPixelSize) { image in
                     image.resizable().aspectRatio(contentMode: .fill)
                 } placeholder: {
-                    Rectangle().fill(Color(nsColor: .tertiarySystemFill))
+                    StationArtworkPlaceholder(channel: channel)
                 }
                 .frame(width: 40, height: 40)
                 .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
