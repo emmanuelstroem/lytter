@@ -395,9 +395,14 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
       was the coalescing map, and `InFlightTasks` protects exactly that.
       The app's source now builds with **no Swift warnings** on either platform; the two
       that remain are the `AppIcon.icon` asset ones tracked as F23.
-- [ ] **S10 remains open.** These were the concrete warnings, not the whole job. Full Swift 6
-      still means auditing `@unchecked Sendable` (which `InFlightTasks` now uses, with the
-      lock as its justification), the observable services, and `SWIFT_VERSION = 5.0`.
+- [x] ~~**S10 remains open.**~~ Done. `SWIFT_VERSION` is 6.0 in all eight configurations
+      (#24, recorded under S10 below). The escapes from the checker are two, and each says
+      why in the code: `InFlightTasks` is `@unchecked Sendable` because its lock is held
+      only inside synchronous methods, and `DRDate`'s formatter is `nonisolated(unsafe)`
+      because `ISO8601DateFormatter` is documented thread-safe. The observable services are
+      main-actor by the project's default isolation; whether that default is the right
+      one is a design question, tracked separately as S15. The build has stayed
+      warning-free since S16.
 - [x] ~~**F31. The lock-screen artwork handler crashed the app.**~~ Done in #25 — and it
       was **introduced by #24**, the Swift 6 migration. `MPMediaItemArtwork`'s request
       handler was written inline in a main-actor method, so under
@@ -440,6 +445,7 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
 - [ ] **F33. Favourite shows, not just channels.** Store series ids and surface a
       favourited programme with when it is next on. Needs the per-channel schedule snapshot
       that #14 wired up. Deliberately deferred: favourites are channels for now.
+      Checked 2026-10-04: not started; favourites are still channels only.
 - [x] ~~**F34. tvOS: the sidebar opens expanded on every launch.**~~ Done. tvOS shows a
       `.sidebarAdaptable` sidebar expanded at launch and folds it away only once focus is
       in the content, which the system did some seconds later. There is no API to start it
@@ -576,6 +582,7 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
       the bug) and checks it is the gradient. The Mac unit tests run again, all 199; the app
       was launched and stayed up, but not looked at — this machine gives no screen capture.
 - [ ] **F14. Add a README.** Nineteen commits and no entry point for a reader.
+      Checked 2026-10-04: not started; there is still no README.
 
 ### P2 — expansion
 
@@ -616,14 +623,25 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
         <lytter.app.xcent>`) before testing intents in the simulator.
 - [ ] **F16. On-demand playback.** Wire up `fetchScheduleSnapshot` and
       `isAvailableOnDemand` for catch-up listening.
+      Checked 2026-10-04: not started. The schedule snapshot is used, for the schedule
+      sheet and to show what is heard behind live, but `isAvailableOnDemand` is decoded
+      and never read.
 - [x] ~~**F17. Schedule / EPG view.**~~ Done in #14, reached from the full player's list
       button. Note the original entry was wrong about the source: `/schedules/all/now`
       only carries what is on air *now*, so the rest of the day comes from
       `/schedules/snapshot/{slug}` — which `DRNetworkService` had implemented all along
       and nothing had ever called. It decodes into the existing models unchanged.
 - [ ] **F18. Widgets + Live Activity** for the currently playing channel.
+      Checked 2026-10-04: not started; no widget extension, no WidgetKit or ActivityKit.
 - [ ] **F19. iPhone Duo support.** See [IPHONE-DUO.md](IPHONE-DUO.md).
-- [ ] **F20. macOS is unimplemented, not broken.** **Step 1 done** — the shared layer
+      Checked 2026-10-04: not started beyond those notes.
+- [x] ~~**F20. macOS is unimplemented, not broken.**~~ Done. Step 2 landed as `e311164`: a
+      `NavigationSplitView` styled like Music.app (sidebar of Home, Radio and Search, a
+      player bar docked along the bottom), and `ContentView` now has its macOS case. Since
+      then: Settings on every platform (#53), the search field at the top of the sidebar
+      (#61), the card's playing marker (#58), and the app opening at all (#62, F46). The
+      original entry follows.
+      **Step 1 done** — the shared layer
       compiles for macOS (`CODE_SIGNING_ALLOWED=NO`; a separate, unrelated expired signing
       certificate on this machine blocks a *signed* build). `PlatformImage`/`PlatformColor`
       typealiases in `PlatformTypes.swift` cover `UIImage`/`UIColor`; every
@@ -641,6 +659,7 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
       2. *Build a macOS UI.* From nothing — no view is shared with it. This should follow
          the sectioned home (F32) rather than precede it, or it gets built twice.
 - [ ] **F21. CarPlay.** A live-radio app without CarPlay is leaving its best use case unserved.
+      Checked 2026-10-04: not started; no CarPlay entitlement or templates.
 - [x] ~~**F22. Move the iOS deep-link handler up to `ContentView`.**~~ Done in #17. The
       `.onChange(of: shouldNavigateToChannel)` was copy-pasted onto `HomeView`,
       `SearchView` and `iOSRadioView`, so a link arriving while the **Shortcuts** tab was
@@ -717,11 +736,13 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
       #24: `subscriptionKey` is now an immutable value read from `DRSubscriptionKey` in
       Info.plist rather than a mutable `static var` in source, so an xcconfig can supply it
       without anyone editing a Swift file. It had to change — a mutable global is rejected
-      outright under Swift 6 — and nothing had ever assigned it.* Remaining:
-      `DRAPIConfig.subscriptionKey` is a `static var` in `DRModels.swift` waiting for an
-      Azure APIM key. If a key is ever assigned there it is committed to git and shipped in
-      the binary. Move it to a gitignored `.xcconfig` (or, better, proxy the API server-side)
-      and add a secret-scanning hook now.
+      outright under Swift 6 — and nothing had ever assigned it.*
+      Checked 2026-10-04: the source half is done. `DRAPIConfig.subscriptionKey` is a
+      `nonisolated static let` read from `DRSubscriptionKey` in Info.plist, nothing in the
+      repository sets that key, and the API works without one. Remaining: a key placed in
+      Info.plist or the project would still be committed to git and shipped in the binary.
+      Supply it from a gitignored `.xcconfig` (or, better, proxy the API server-side), and
+      add a secret-scanning hook. Neither exists yet.
 - [x] ~~**S2. Remove unused entitlements.**~~ Done in #9. Grepped first and found no
       push, CloudKit or app-group code anywhere. Removed `aps-environment` (a *development*
       APNS entitlement), the iCloud/CloudKit container, the app group, and the
@@ -760,6 +781,8 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
       is keyed by URL alone, since it stores the original bytes.
 - [ ] **S8. Harden ATS explicitly.** All endpoints are HTTPS today, but set
       `NSAllowsArbitraryLoads = false` explicitly and consider pinning `api.dr.dk`.
+      Checked 2026-10-04: not started. Neither Info.plist has `NSAppTransportSecurity`, so
+      ATS is at its secure default but not stated, and nothing is pinned.
 - [x] ~~**S9. Remove the force-unwrapped URLs.**~~ Done in #18. There were four, not one,
       and two of them interpolate a channel slug that comes from the API — a slug with a
       space would have crashed the app rather than failing a request. Those percent-encode
@@ -808,9 +831,11 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
       otherwise — including `InFlightTasks`, whose whole purpose is to be touched from
       several tasks. Its lock is then belt-and-braces rather than load-bearing. Worth
       deciding deliberately which types are nonisolated, rather than inheriting it.
+      Checked 2026-10-04: not started. `InFlightTasks` is still main-actor by default.
 - [ ] **S11. Document the DR API posture.** The app consumes an undocumented public API,
       hardcodes 24 DR stream URLs, and displays DR-supplied artwork and trademarks. Confirm
       terms of use and attribution requirements before submitting to the App Store.
+      Checked 2026-10-04: not started.
 - [x] ~~**S12. Privacy manifest (`PrivacyInfo.xcprivacy`).**~~ Done in #9. Declares no
       tracking and no collected data, plus the two required-reason APIs actually used:
       `UserDefaults` (`CA92.1`, last played channel) and file timestamps (`DDA9.1`,
@@ -837,6 +862,8 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
       icons were being iterated, are most of the 30 MB that remains. They are real shipped
       assets, so the fix is not deletion — it is checking whether the tvOS layered images
       need to be that large, and not re-committing regenerated variants.
+      Checked 2026-10-04: not started. The Top Shelf images are still 4.3 MB (wide @2x),
+      3.5 MB, 1.2 MB and 0.9 MB, and the packed history is 58.7 MB.
 - [x] ~~**P1. Collapse to one `DRServiceManager`.**~~ Done in #5 — this entry was simply
       never ticked. Verified on current `main`: one live instance in `lytterApp`, and every
       other `DRServiceManager()` is inside a `#Preview`.
@@ -936,9 +963,12 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
         is in front or playing; before, it was refetched only every 5 minutes while playing,
         so Home kept showing what was on when it opened.
       Covered by `DiskCacheTests` and `ScheduleFreshnessTests`.
-- [ ] **P14. Share the cache with the Top Shelf extension** via the already-declared
+- [ ] **P14. Share the cache with the Top Shelf extension** via the
       `group.com.eopio.lytter` app group, so the extension stops making its own cold network
       call on every Top Shelf refresh.
+      Checked 2026-10-04: not started, and the app group is no longer declared. S2 removed it
+      as unused, and `lytter.entitlements` says to add it back with this change.
+      `TopShelfNetworkService` still fetches on its own.
 - [x] ~~**P15. Make channel ordering deterministic.**~~ Done in #18, and smaller than
       recorded: `loadChannels` and `loadDiskCache` both already sort by title afterwards.
       The one that actually surfaced was `Array.uniqued()`, which was `Array(Set(self))` —
@@ -949,6 +979,9 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
 - [ ] **P16. Move disk-cache encoding off the hot path.** `DRLocalCache.save` JSON-encodes
       the entire schedule array after every successful fetch. Debounce it, and write via a
       background-priority task.
+      Checked 2026-10-04: not started. `save` still encodes and writes synchronously, on the
+      main actor, from the fetch's completion. The payload is small today (25 episodes,
+      one per channel), so this is cheap, but it is still on the main actor.
 
 ---
 
