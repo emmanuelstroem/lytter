@@ -1001,6 +1001,11 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
       moved into the top row: HeadBoard re-asks every 600 s, and the extension logged
       "using the app's cache, 41 s old", then "12 s old" on the redraw the app's save
       requested. iOS and macOS carry the entitlement but do not read the group.
+      Measured against `main` on the same simulator, five refreshes each: `main` made one
+      request per refresh (55 KB) and HeadBoard's fetch took 157–169 ms; now none, and
+      105–109 ms. The time is measured on a Mac whose round trip to DR is 60–150 ms, so on
+      an Apple TV the difference should be larger; offline, the old extension could wait
+      out its 60 s timeout before showing the bundled channels.
 - [x] ~~**P15. Make channel ordering deterministic.**~~ Done in #18, and smaller than
       recorded: `loadChannels` and `loadDiskCache` both already sort by title afterwards.
       The one that actually surfaced was `Array.uniqued()`, which was `Array(Set(self))` —
