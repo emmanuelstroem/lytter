@@ -197,6 +197,34 @@ enum DRDate {
     }
 }
 
+/// One of DR's timestamps, parsed once when it is made or decoded.
+///
+/// The parsed dates are read from view bodies and per-second checks — whether a programme
+/// is on air, which track is being heard — and parsing took ~25 µs each time, which was
+/// most of what a programme lookup cost. Encodes as the bare string DR sent, so the disk
+/// cache keeps its format.
+struct DRTimestamp: Codable, Equatable {
+    let string: String
+    let date: Date?
+
+    init(_ string: String) {
+        self.string = string
+        self.date = DRDate.parse(string)
+    }
+
+    init(from decoder: Decoder) throws {
+        self.init(try decoder.singleValueContainer().decode(String.self))
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+        try container.encode(string)
+    }
+
+    /// The date follows from the string.
+    static func == (lhs: DRTimestamp, rhs: DRTimestamp) -> Bool { lhs.string == rhs.string }
+}
+
 struct DRTrackRole: Codable, Equatable {
     let artistUrn: String
     let role: String
@@ -208,7 +236,7 @@ struct DRTrackRole: Codable, Equatable {
 struct DRTrack: Identifiable, Codable, Equatable {
     let type: String
     let durationMilliseconds: Int
-    let playedTime: String
+    private let played: DRTimestamp
     let musicUrl: String
     let trackUrn: String
     let classical: Bool
@@ -216,9 +244,29 @@ struct DRTrack: Identifiable, Codable, Equatable {
     let title: String
     let description: String
     
+    private enum CodingKeys: String, CodingKey {
+        case type, durationMilliseconds, played = "playedTime", musicUrl, trackUrn, classical,
+             roles, title, description
+    }
+
+    init(type: String, durationMilliseconds: Int, playedTime: String, musicUrl: String,
+         trackUrn: String, classical: Bool, roles: [DRTrackRole]?, title: String,
+         description: String) {
+        self.type = type
+        self.durationMilliseconds = durationMilliseconds
+        self.played = DRTimestamp(playedTime)
+        self.musicUrl = musicUrl
+        self.trackUrn = trackUrn
+        self.classical = classical
+        self.roles = roles
+        self.title = title
+        self.description = description
+    }
+
     var id: String { trackUrn }
-    
-    var playedDate: Date? { DRDate.parse(playedTime) }
+
+    var playedTime: String { played.string }
+    var playedDate: Date? { played.date }
     
     var duration: TimeInterval {
         return TimeInterval(durationMilliseconds / 1000)
@@ -254,8 +302,8 @@ struct DREpisode: Identifiable, Codable, Equatable {
     let durationMilliseconds: Int
     let categories: [String]?
     let productionNumber: String?
-    let startTime: String
-    let endTime: String
+    private let start: DRTimestamp
+    private let end: DRTimestamp
     let presentationUrl: String?
     let order: Int
     let previousId: String?
@@ -274,7 +322,47 @@ struct DREpisode: Identifiable, Codable, Equatable {
     let imageAssets: [DRImageAsset]? // Made optional to handle missing image assets
     let episodeNumber: Int? // Made optional based on API analysis
     let seasonNumber: Int? // Made optional based on API analysis
-    
+
+    private enum CodingKeys: String, CodingKey {
+        case type, learnId, durationMilliseconds, categories, productionNumber,
+             start = "startTime", end = "endTime", presentationUrl, order, previousId, nextId,
+             series, channel, audioAssets, isAvailableOnDemand, hasVideo, explicitContent, id,
+             slug, title, description, imageAssets, episodeNumber, seasonNumber
+    }
+
+    init(type: String, learnId: String, durationMilliseconds: Int, categories: [String]?,
+         productionNumber: String?, startTime: String, endTime: String,
+         presentationUrl: String?, order: Int, previousId: String?, nextId: String?,
+         series: DRSeries?, channel: DRChannel, audioAssets: [DRAudioAsset]?,
+         isAvailableOnDemand: Bool, hasVideo: Bool?, explicitContent: Bool?, id: String,
+         slug: String, title: String, description: String?, imageAssets: [DRImageAsset]?,
+         episodeNumber: Int?, seasonNumber: Int?) {
+        self.type = type
+        self.learnId = learnId
+        self.durationMilliseconds = durationMilliseconds
+        self.categories = categories
+        self.productionNumber = productionNumber
+        self.start = DRTimestamp(startTime)
+        self.end = DRTimestamp(endTime)
+        self.presentationUrl = presentationUrl
+        self.order = order
+        self.previousId = previousId
+        self.nextId = nextId
+        self.series = series
+        self.channel = channel
+        self.audioAssets = audioAssets
+        self.isAvailableOnDemand = isAvailableOnDemand
+        self.hasVideo = hasVideo
+        self.explicitContent = explicitContent
+        self.id = id
+        self.slug = slug
+        self.title = title
+        self.description = description
+        self.imageAssets = imageAssets
+        self.episodeNumber = episodeNumber
+        self.seasonNumber = seasonNumber
+    }
+
     /// Identifies this *broadcast*, as opposed to the episode being broadcast.
     ///
     /// `id` is an episode URN, and a channel airs the same episode more than once a day:
@@ -315,9 +403,10 @@ struct DREpisode: Identifiable, Codable, Equatable {
         return max(Int(end.timeIntervalSince(date) / 60), 0)
     }
 
-    var startDate: Date? { DRDate.parse(startTime) }
-    
-    var endDate: Date? { DRDate.parse(endTime) }
+    var startTime: String { start.string }
+    var endTime: String { end.string }
+    var startDate: Date? { start.date }
+    var endDate: Date? { end.date }
     
     var duration: TimeInterval {
         return TimeInterval(durationMilliseconds / 1000)
