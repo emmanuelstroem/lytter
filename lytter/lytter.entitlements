@@ -18,6 +18,11 @@
 	<key>com.apple.developer.siri</key>
 	<true/>
 
+	<!-- SharePlay. Without it the system never hands the app a group session: the
+	     activity could be offered on a call, and whoever accepted it heard nothing. -->
+	<key>com.apple.developer.group-session</key>
+	<true/>
+
 	<!-- macOS only, harmless elsewhere: App Sandbox is opt-in on macOS, unlike iOS/tvOS
 	     where the OS sandboxes every app regardless. Without it the process ran with no
 	     sandbox profile of its own, which is what the Console line

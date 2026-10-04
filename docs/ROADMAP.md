@@ -581,6 +581,22 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
       `async` hop: a `sync` from the main thread runs on the main thread and passed against
       the bug) and checks it is the gradient. The Mac unit tests run again, all 199; the app
       was launched and stayed up, but not looked at — this machine gives no screen capture.
+- [x] ~~**F47. SharePlay could be offered and never received.**~~ Done. tvOS activated an
+      activity and nothing in the app ever asked for the sessions activation creates, so
+      whoever accepted "listen together" heard nothing. Nor could it have: the app had no
+      `com.apple.developer.group-session` entitlement, and the activity called itself
+      `.watchTogether`. Now, in `shared/shareplay/SharePlay.swift` and on all three
+      platforms: `SharePlayCoordinator` joins sessions and hands the session's channel to
+      the deep-link path, waiting for the catalogue first, so each platform's existing
+      resolve-and-navigate does the rest. Once a listener has caught up with the session,
+      their channel changes move everyone (`SharePlayFollow`); joining while playing
+      something else does not drag the session along. Pause stays personal — it is live
+      radio. iOS and macOS share a `SharedChannel` carrying a
+      `GroupActivityTransferRepresentation`, which puts SharePlay in the share sheet as in
+      Music: the full player's share button on iOS, a new share button in the Mac's player
+      bar. tvOS keeps its button, shown only while `GroupStateObserver` says there is a
+      call to share into. Covered by `SharePlayTests`. A call cannot be placed in a
+      simulator, so a session has not been seen end to end; that needs two devices.
 - [ ] **F14. Add a README.** Nineteen commits and no entry point for a reader.
       Checked 2026-10-04: not started; there is still no README.
 

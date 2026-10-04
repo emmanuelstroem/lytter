@@ -9,7 +9,7 @@ import os
 import UIKit
 #endif
 import CoreImage
-#if canImport(GroupActivities)
+#if os(tvOS)
 import GroupActivities
 #endif
 
@@ -321,6 +321,7 @@ struct tvOSNowPlayingControls: View {
     @Binding var showingScheduleSheet: Bool
     let channel: DRChannel
     @FocusState private var focused: ControlButton?
+    @StateObject private var groupState = GroupStateObserver()
 
     enum ControlButton: Hashable { case info, back, play, forward, shareplay, schedule, live }
 
@@ -369,13 +370,20 @@ struct tvOSNowPlayingControls: View {
                 .accessibilityLabel("Skip forward 15 seconds")
             }
 
-            Button {
-                if let ch = serviceManager.playingChannel { startSharePlay(for: ch) }
-            } label: {
-                IconCircleLabel(systemImage: "shareplay", size: 64, iconSize: 28)
+            // Only while there is a FaceTime call to share into, as Apple's guidance
+            // asks: with none, the button could do nothing at all.
+            if groupState.isEligibleForGroupSession {
+                Button {
+                    if let ch = serviceManager.playingChannel {
+                        Task { await SharePlayCoordinator.start(ch) }
+                    }
+                } label: {
+                    IconCircleLabel(systemImage: "shareplay", size: 64, iconSize: 28)
+                }
+                .buttonStyle(tvOSMusicCardButtonStyle())
+                .focused($focused, equals: .shareplay)
+                .accessibilityLabel("SharePlay")
             }
-            .buttonStyle(tvOSMusicCardButtonStyle())
-            .focused($focused, equals: .shareplay)
 
             // What else is on. iOS has had this from the full player since the list button
             // was wired up; the television could not ask at all.
@@ -463,22 +471,6 @@ struct tvOSNowPlayingControls: View {
             .shadow(color: .white.opacity(isFocused ? 0.55 : 0), radius: 18, x: 0, y: 0)
             .focusAnimation(value: isFocused)
         }
-    }
-
-    private func startSharePlay(for channel: DRChannel) {
-        #if canImport(GroupActivities)
-        if #available(tvOS 15.0, *) {
-            let activity = RadioShareActivity(channelId: channel.id, channelTitle: channel.title)
-            Task {
-                do {
-                    _ = try await activity.activate()
-                } catch {
-                    Log.playback.error(
-                        "SharePlay activation failed: \(error.localizedDescription, privacy: .public)")
-                }
-            }
-        }
-        #endif
     }
 }
 
@@ -612,29 +604,6 @@ struct tvOSNowPlayingInfoSheet: View {
         .clipShape(RoundedRectangle(cornerRadius: 36, style: .continuous))
         .shadow(color: .black.opacity(0.6), radius: 80, x: 0, y: 40)
         .padding(60)
-    }
-}
-#endif
-
-#if canImport(GroupActivities)
-/// The SharePlay activity for listening together.
-///
-/// Declared here rather than inside `startSharePlay`, and `nonisolated`: nested in a
-/// main-actor method its `GroupActivity` conformance was main-actor isolated, and
-/// `activate()` is awaited from a concurrent task. Swift 6 rejects that — an isolated
-/// conformance cannot cross into a concurrent context.
-@available(tvOS 15.0, *)
-nonisolated struct RadioShareActivity: GroupActivity {
-    static let activityIdentifier = "com.eopio.lytter.shareplay.radio"
-
-    let channelId: String
-    let channelTitle: String
-
-    var metadata: GroupActivityMetadata {
-        var metadata = GroupActivityMetadata()
-        metadata.title = channelTitle
-        metadata.type = .watchTogether
-        return metadata
     }
 }
 #endif
