@@ -17,6 +17,15 @@
     <array>
         <string>INMediaCategoryRadio</string>
     </array>
+    <!-- S8: ATS stated rather than inherited. Every host is HTTPS (api, asset and www.dr.dk,
+         streams on live-icy.dr.dk and Akamai), so no exception is needed. Not pinned: DR's certificates
+         are short-lived Let's Encrypt leaves under rotating intermediates, and a stale pin
+         takes the whole app off the air. ATSPolicyTests holds this to exactly one key. -->
+    <key>NSAppTransportSecurity</key>
+    <dict>
+        <key>NSAllowsArbitraryLoads</key>
+        <false/>
+    </dict>
     <key>CFBundleURLTypes</key>
     <array>
         <dict>

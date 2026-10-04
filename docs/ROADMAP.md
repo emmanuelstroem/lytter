@@ -802,10 +802,23 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
       `NSString.hash` is seeded per process, so the disk cache never hit after a relaunch
       and every image was downloaded again. Memory is keyed by URL *and* decode size; disk
       is keyed by URL alone, since it stores the original bytes.
-- [ ] **S8. Harden ATS explicitly.** All endpoints are HTTPS today, but set
-      `NSAllowsArbitraryLoads = false` explicitly and consider pinning `api.dr.dk`.
-      Checked 2026-10-04: not started. Neither Info.plist has `NSAppTransportSecurity`, so
-      ATS is at its secure default but not stated, and nothing is pinned.
+- [x] ~~**S8. Harden ATS explicitly.**~~ Done in #72. Both Info.plists — the app and the
+      Top Shelf extension — now carry `NSAppTransportSecurity` with
+      `NSAllowsArbitraryLoads = false` and nothing else. Behaviour is unchanged (that is
+      the default); the point is that the policy is written down and guarded.
+      `ATSPolicyTests` compares the dictionary *exactly*, in the built app and in both
+      source plists, so an exception domain or a media carve-out cannot slip in beside the
+      explicit `false` without the test being changed on purpose.
+      **Not pinned, deliberately.** Checked 2026-10-04: `api.dr.dk`, `asset.dr.dk`,
+      `www.dr.dk` and the stream host all serve short-lived Let's Encrypt leaves (expiring
+      Nov–Dec 2026) under the YR1/YE2 intermediates, which Let's Encrypt rotates. A leaf or
+      intermediate pin would take the app off the air at DR's next renewal with no way to
+      fix it short of an App Store release; a root pin adds almost nothing over the system
+      trust store. Streams also come from `drliveradio2.akamaized.net`, outside DR's
+      control, so pinning `api.dr.dk` would not have covered playback anyway. The data is
+      public radio with no account or user data, which does not justify that risk.
+      Original entry: all endpoints are HTTPS today, but set `NSAllowsArbitraryLoads =
+      false` explicitly and consider pinning `api.dr.dk`.
 - [x] ~~**S9. Remove the force-unwrapped URLs.**~~ Done in #18. There were four, not one,
       and two of them interpolate a channel slug that comes from the API — a slug with a
       space would have crashed the app rather than failing a request. Those percent-encode
