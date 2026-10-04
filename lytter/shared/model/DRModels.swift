@@ -66,7 +66,7 @@ struct DRAPIConfig {
 }
 
 // MARK: - Channel Models
-struct DRChannel: Identifiable, Codable, Equatable, Hashable {
+nonisolated struct DRChannel: Identifiable, Codable, Equatable, Hashable {
     let id: String
     let title: String
     let slug: String
@@ -145,7 +145,7 @@ struct DRChannel: Identifiable, Codable, Equatable, Hashable {
 }
 
 // MARK: - Series Models
-struct DRSeries: Codable, Equatable {
+nonisolated struct DRSeries: Codable, Equatable {
     let id: String
     let title: String
     let slug: String
@@ -162,7 +162,7 @@ struct DRSeries: Codable, Equatable {
 }
 
 // MARK: - Audio Asset Models
-struct DRAudioAsset: Codable, Equatable {
+nonisolated struct DRAudioAsset: Codable, Equatable {
     let type: String
     let target: String
     let isStreamLive: Bool?
@@ -172,7 +172,7 @@ struct DRAudioAsset: Codable, Equatable {
 }
 
 // MARK: - Image Asset Models
-struct DRImageAsset: Codable, Equatable {
+nonisolated struct DRImageAsset: Codable, Equatable {
     let id: String
     let target: String
     let ratio: String
@@ -206,7 +206,7 @@ enum DRDate {
 /// is on air, which track is being heard — and parsing took ~25 µs each time, which was
 /// most of what a programme lookup cost. Encodes as the bare string DR sent, so the disk
 /// cache keeps its format.
-struct DRTimestamp: Codable, Equatable {
+nonisolated struct DRTimestamp: Codable, Equatable {
     let string: String
     let date: Date?
 
@@ -299,7 +299,7 @@ struct DRTrack: Identifiable, Codable, Equatable {
 }
 
 // MARK: - Episode/Program Models
-struct DREpisode: Identifiable, Codable, Equatable {
+nonisolated struct DREpisode: Identifiable, Codable, Equatable {
     let type: String
     let learnId: String
     let durationMilliseconds: Int
@@ -700,6 +700,11 @@ struct DRIndexPointsResponse: Codable, Equatable {
 /// rather than fetching the schedule itself (P14). That makes its format a contract with
 /// `TopShelfSharedCache`, which decodes the parts it needs: `version`, `savedAt`, and each
 /// schedule's `channel`, `title` and `imageAssets`.
+///
+/// Saving is off the main actor (P16). Every successful fetch saves, and the whole snapshot
+/// was encoded and written on the main actor from the fetch's completion; now a save waits
+/// briefly, gives way to any save that follows it, and encodes and writes at background
+/// priority. The models it writes are `nonisolated` so that they can be encoded there.
 final class DRLocalCache {
     static let shared = DRLocalCache()
 
@@ -712,15 +717,22 @@ final class DRLocalCache {
     static let maxAge: TimeInterval = 7 * 24 * 60 * 60
 
     /// What is written: the schedules, and when and under which version they were saved.
-    struct Snapshot: Codable {
+    nonisolated struct Snapshot: Codable {
         let version: Int
         let savedAt: Date
         let schedules: [DREpisode]
     }
 
+    /// How long a save waits before writing. Fetches can land in quick succession — the
+    /// launch fetch, a retry, the network coming back — and only the last needs writing.
+    static let writeDelay: Duration = .seconds(1)
+
     private let fileURL: URL?
-    private let encoder = JSONEncoder()
+    private let writeDelay: Duration
     private let decoder = JSONDecoder()
+
+    /// The save waiting to be written, which the next save replaces.
+    private var pendingWrite: Task<Void, Never>?
 
     /// Shared with the Top Shelf extension, which declares the same group and file name.
     static let appGroup = "group.com.eopio.lytter"
@@ -741,8 +753,9 @@ final class DRLocalCache {
     }
 
     /// For tests, which point it at a file of their own.
-    init(fileURL: URL?) {
+    init(fileURL: URL?, writeDelay: Duration = DRLocalCache.writeDelay) {
         self.fileURL = fileURL
+        self.writeDelay = writeDelay
     }
 
     #if os(tvOS)
@@ -774,9 +787,27 @@ final class DRLocalCache {
     #endif
 
     /// Persist schedules to disk. Call only after a successful API response.
-    func save(_ schedules: [DREpisode], at date: Date = Date()) {
+    ///
+    /// Returns at once. The write happens after `writeDelay`, at background priority, unless
+    /// another save replaces it first; the task returned finishes when it has, which only
+    /// tests need to wait for.
+    @discardableResult
+    func save(_ schedules: [DREpisode], at date: Date = Date()) -> Task<Void, Never> {
+        pendingWrite?.cancel()
         let snapshot = Snapshot(version: Self.schemaVersion, savedAt: date, schedules: schedules)
-        guard let url = fileURL, let data = try? encoder.encode(snapshot) else { return }
+        let url = fileURL
+        let delay = writeDelay
+        let write = Task.detached(priority: .background) {
+            try? await Task.sleep(for: delay)
+            guard !Task.isCancelled else { return }
+            Self.write(snapshot, to: url)
+        }
+        pendingWrite = write
+        return write
+    }
+
+    private nonisolated static func write(_ snapshot: Snapshot, to url: URL?) {
+        guard let url, let data = try? JSONEncoder().encode(snapshot) else { return }
         try? data.write(to: url, options: .atomic)
         #if os(tvOS)
         // The Top Shelf is drawn from this file now, so ask the system to draw it again.

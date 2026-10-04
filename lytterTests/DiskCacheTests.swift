@@ -16,7 +16,7 @@ struct DiskCacheTests {
         .appendingPathComponent("lytter-cache-test-\(UUID().uuidString).json")
     private let saved = Date(timeIntervalSince1970: 1_790_000_000)
 
-    private var cache: DRLocalCache { DRLocalCache(fileURL: url) }
+    private var cache: DRLocalCache { DRLocalCache(fileURL: url, writeDelay: .zero) }
 
     private func programme(_ id: String, imageAssets: [DRImageAsset]? = nil) -> DREpisode {
         DREpisode(type: "Episode", learnId: id, durationMilliseconds: 0, categories: nil,
@@ -30,9 +30,9 @@ struct DiskCacheTests {
                   imageAssets: imageAssets, episodeNumber: nil, seasonNumber: nil)
     }
 
-    @Test func whatIsSavedComesBack() {
+    @Test func whatIsSavedComesBack() async {
         defer { try? FileManager.default.removeItem(at: url) }
-        cache.save([programme("a"), programme("b")], at: saved)
+        await cache.save([programme("a"), programme("b")], at: saved).value
 
         #expect(cache.load(now: saved.addingTimeInterval(60)).map(\.id) == ["a", "b"])
     }
@@ -59,12 +59,30 @@ struct DiskCacheTests {
         #expect(cache.load(now: saved).isEmpty)
     }
 
-    @Test func aSnapshotPastItsMaximumAgeIsDiscarded() {
+    @Test func aSnapshotPastItsMaximumAgeIsDiscarded() async {
         defer { try? FileManager.default.removeItem(at: url) }
-        cache.save([programme("a")], at: saved)
+        await cache.save([programme("a")], at: saved).value
 
         #expect(!cache.load(now: saved.addingTimeInterval(DRLocalCache.maxAge - 60)).isEmpty)
         #expect(cache.load(now: saved.addingTimeInterval(DRLocalCache.maxAge + 60)).isEmpty)
+    }
+
+    // MARK: Saving waits, and gives way to the next save (P16)
+
+    /// Back-to-back fetches each save; only the last is written, and not before `save` has
+    /// returned to its caller on the main actor.
+    @Test func aSaveThatIsReplacedIsNeverWritten() async {
+        defer { try? FileManager.default.removeItem(at: url) }
+        let cache = DRLocalCache(fileURL: url, writeDelay: .milliseconds(500))
+
+        let first = cache.save([programme("first")], at: saved)
+        #expect(!FileManager.default.fileExists(atPath: url.path))
+        let second = cache.save([programme("second")], at: saved)
+
+        await first.value
+        #expect(!FileManager.default.fileExists(atPath: url.path))
+        await second.value
+        #expect(cache.load(now: saved).map(\.id) == ["second"])
     }
 
     @Test func anUnreadableFileIsEmptyNotACrash() throws {
@@ -92,11 +110,11 @@ struct DiskCacheTests {
         let schedules: [Item]
     }
 
-    @Test func theTopShelfExtensionCanReadWhatIsSaved() throws {
+    @Test func theTopShelfExtensionCanReadWhatIsSaved() async throws {
         defer { try? FileManager.default.removeItem(at: url) }
         let art = DRImageAsset(id: "urn:dr:asset:1", target: "SquareImage", ratio: "1:1",
                                format: "image/jpeg", blurHash: nil)
-        cache.save([programme("a", imageAssets: [art])], at: saved)
+        await cache.save([programme("a", imageAssets: [art])], at: saved).value
 
         // The extension's decoder is a plain JSONDecoder, as the cache's encoder is plain.
         let view = try JSONDecoder().decode(TopShelfView.self, from: Data(contentsOf: url))
