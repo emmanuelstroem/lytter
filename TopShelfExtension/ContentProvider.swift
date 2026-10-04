@@ -12,6 +12,7 @@ import os
 #if os(tvOS)
 class ContentProvider: TVTopShelfContentProvider {
     private let networkService = TopShelfNetworkService()
+    private let sharedCache = TopShelfSharedCache()
 
     override func loadTopShelfContent() async -> (any TVTopShelfContent)? {
         // Create dynamic content with live channel data and images
@@ -31,8 +32,7 @@ class ContentProvider: TVTopShelfContentProvider {
     
     private func createRadioItems() async -> [TVTopShelfSectionedItem] {
         do {
-            // Fetch live channel data
-            let episodes = try await networkService.fetchChannelsWithImages()
+            let episodes = try await fetchEpisodes()
             
             // Group channels and consolidate districts
             let consolidatedChannels = consolidateChannelsByName(episodes)
@@ -71,6 +71,27 @@ class ContentProvider: TVTopShelfContentProvider {
         }
     }
     
+    /// The app's cached schedule while it is recent, and DR's only when it is not. If DR
+    /// cannot be reached, an older snapshot still lists the real channels, which beats the
+    /// bundled five.
+    private func fetchEpisodes() async throws -> [TopShelfEpisode] {
+        let now = Date()
+        let snapshot = sharedCache.load(now: now)
+        if let snapshot, snapshot.age(at: now) <= TopShelfSharedCache.freshFor {
+            TopShelfLog.provider.info(
+                "using the app's cache, \(Int(snapshot.age(at: now)), privacy: .public) s old")
+            return snapshot.schedules.map { $0.toEpisode() }
+        }
+        do {
+            return try await networkService.fetchChannelsWithImages()
+        } catch {
+            guard let snapshot else { throw error }
+            TopShelfLog.provider.error(
+                "live fetch failed, using the app's older cache: \(error.localizedDescription, privacy: .public)")
+            return snapshot.schedules.map { $0.toEpisode() }
+        }
+    }
+
     private func consolidateChannelsByName(_ episodes: [TopShelfEpisode]) -> [TopShelfEpisode] {
         var consolidatedChannels: [String: TopShelfEpisode] = [:]
         

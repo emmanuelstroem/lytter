@@ -770,8 +770,8 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
       push, CloudKit or app-group code anywhere. Removed `aps-environment` (a *development*
       APNS entitlement), the iCloud/CloudKit container, the app group, and the
       `remote-notification` background mode. `com.apple.developer.siri` stays — the Siri
-      shortcuts are real. (Since F15 it is for SiriKit's media intent, "Play P3".) The app group should come back when the Top Shelf extension
-      actually shares the cached schedule (P14), not before.
+      shortcuts are real. (Since F15 it is for SiriKit's media intent, "Play P3".) The app group came back with P14, when the Top Shelf extension
+      began reading the cached schedule.
 - [x] ~~**S3. Fix the extension deployment target.**~~ Done in #7: `TopShelfExtension`
       lowered from `TVOS_DEPLOYMENT_TARGET = 26.0` to `17.6` to match the host app. Verified
       in the built product — both `lytter.app` and `TopShelfExtension.appex` now report
@@ -986,12 +986,21 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
         is in front or playing; before, it was refetched only every 5 minutes while playing,
         so Home kept showing what was on when it opened.
       Covered by `DiskCacheTests` and `ScheduleFreshnessTests`.
-- [ ] **P14. Share the cache with the Top Shelf extension** via the
-      `group.com.eopio.lytter` app group, so the extension stops making its own cold network
-      call on every Top Shelf refresh.
-      Checked 2026-10-04: not started, and the app group is no longer declared. S2 removed it
-      as unused, and `lytter.entitlements` says to add it back with this change.
-      `TopShelfNetworkService` still fetches on its own.
+- [x] ~~**P14. Share the cache with the Top Shelf extension**~~ Done. The
+      `group.com.eopio.lytter` app group is back, in `lytter.entitlements` and a new
+      `TopShelfExtension.entitlements`. On tvOS, `DRLocalCache` now writes its snapshot to
+      the group container's `Library/Caches` (moving the file an earlier version left in the
+      app's own caches, once) and calls `TVTopShelfContentProvider.topShelfContentDidChange()`
+      after each save. The extension's new `TopShelfSharedCache` decodes the same file —
+      `/schedules/all/now` is exactly what both were fetching — and uses it without a request
+      while it is under an hour old; past that it fetches as before, and if DR cannot be
+      reached it falls back to any snapshot within the cache's seven days before the five
+      bundled channels. The extension cannot see `DRLocalCache`, so the group, file name,
+      schema version and maximum age are duplicated; `DiskCacheTests` pins them and decodes
+      a saved file the way the extension does. Verified on the tvOS simulator with lytter
+      moved into the top row: HeadBoard re-asks every 600 s, and the extension logged
+      "using the app's cache, 41 s old", then "12 s old" on the redraw the app's save
+      requested. iOS and macOS carry the entitlement but do not read the group.
 - [x] ~~**P15. Make channel ordering deterministic.**~~ Done in #18, and smaller than
       recorded: `loadChannels` and `loadDiskCache` both already sort by title afterwards.
       The one that actually surfaced was `Array.uniqued()`, which was `Array(Set(self))` —

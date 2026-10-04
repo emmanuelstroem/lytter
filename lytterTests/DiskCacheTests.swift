@@ -18,7 +18,7 @@ struct DiskCacheTests {
 
     private var cache: DRLocalCache { DRLocalCache(fileURL: url) }
 
-    private func programme(_ id: String) -> DREpisode {
+    private func programme(_ id: String, imageAssets: [DRImageAsset]? = nil) -> DREpisode {
         DREpisode(type: "Episode", learnId: id, durationMilliseconds: 0, categories: nil,
                   productionNumber: nil, startTime: "2026-10-02T22:03:00+00:00",
                   endTime: "2026-10-03T00:00:00+00:00", presentationUrl: nil,
@@ -27,7 +27,7 @@ struct DiskCacheTests {
                                      presentationUrl: nil),
                   audioAssets: nil, isAvailableOnDemand: false, hasVideo: false,
                   explicitContent: false, id: id, slug: id, title: id, description: nil,
-                  imageAssets: nil, episodeNumber: nil, seasonNumber: nil)
+                  imageAssets: imageAssets, episodeNumber: nil, seasonNumber: nil)
     }
 
     @Test func whatIsSavedComesBack() {
@@ -72,5 +72,47 @@ struct DiskCacheTests {
         try Data("not json".utf8).write(to: url)
 
         #expect(cache.load().isEmpty)
+    }
+
+    // MARK: The Top Shelf extension reads this file (P14)
+
+    /// What `TopShelfSharedCache` in the extension decodes, copied here because the test
+    /// target cannot see that target's types. If the cache's format changes under it, the
+    /// shelf silently falls back to fetching, so the shape is pinned here instead.
+    private struct TopShelfView: Decodable {
+        struct Item: Decodable {
+            struct Channel: Decodable { let id, title, slug, type: String }
+            struct Image: Decodable { let id, target, ratio, format: String }
+            let channel: Channel
+            let title: String?
+            let imageAssets: [Image]?
+        }
+        let version: Int
+        let savedAt: Date
+        let schedules: [Item]
+    }
+
+    @Test func theTopShelfExtensionCanReadWhatIsSaved() throws {
+        defer { try? FileManager.default.removeItem(at: url) }
+        let art = DRImageAsset(id: "urn:dr:asset:1", target: "SquareImage", ratio: "1:1",
+                               format: "image/jpeg", blurHash: nil)
+        cache.save([programme("a", imageAssets: [art])], at: saved)
+
+        // The extension's decoder is a plain JSONDecoder, as the cache's encoder is plain.
+        let view = try JSONDecoder().decode(TopShelfView.self, from: Data(contentsOf: url))
+
+        #expect(view.version == 1)
+        #expect(view.savedAt == saved)
+        #expect(view.schedules.map(\.channel.slug) == ["p1"])
+        #expect(view.schedules.first?.title == "a")
+        #expect(view.schedules.first?.imageAssets?.map(\.id) == ["urn:dr:asset:1"])
+    }
+
+    /// The extension duplicates these; a change here without one there breaks the shelf.
+    @Test func whatTheExtensionDuplicatesIsUnchanged() {
+        #expect(DRLocalCache.appGroup == "group.com.eopio.lytter")
+        #expect(DRLocalCache.fileName == "dr_schedules_cache.json")
+        #expect(DRLocalCache.schemaVersion == 1)
+        #expect(DRLocalCache.maxAge == 7 * 24 * 60 * 60)
     }
 }

@@ -8,10 +8,16 @@
 	         a *development* push entitlement, with no push registration anywhere
 	       com.apple.developer.icloud-* (container iCloud.Lytter, CloudKit)
 	         no CloudKit code; the SwiftData container it was presumably meant for
-	         has been removed
-	       com.apple.security.application-groups (group.com.eopio.lytter)
-	         unread by both the app and the Top Shelf extension. Re-add it when the
-	         extension actually shares the cached schedule — see docs/ROADMAP.md. -->
+	         has been removed -->
+
+	<!-- Shared with the Top Shelf extension (P14): on tvOS the schedule cache is written
+	     into this group's container, and the extension draws the Top Shelf from it rather
+	     than fetching the schedule itself. Only the tvOS app reads it; the file is shared
+	     across platforms, so the others carry it unused. -->
+	<key>com.apple.security.application-groups</key>
+	<array>
+		<string>group.com.eopio.lytter</string>
+	</array>
 
 	<!-- SiriKit's media intent, the name-free "Play P3" (F15). App Intents do not need
 	     it; INPlayMediaIntent and INPreferences authorisation do. -->

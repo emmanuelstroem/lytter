@@ -9,6 +9,9 @@ import Foundation
 import SwiftUI
 import Combine
 import os
+#if os(tvOS)
+import TVServices
+#endif
 
 // MARK: - iOS DR Models
 
@@ -692,6 +695,11 @@ struct DRIndexPointsResponse: Codable, Equatable {
 /// that the old file could not decode emptied it without a word: the next offline launch
 /// showed "You're offline" with nothing behind it, as if nothing had ever been cached. And it
 /// had no age, so a snapshot from last week was loaded as readily as one from a minute ago.
+///
+/// On tvOS it lives in the app group's container, where the Top Shelf extension reads it
+/// rather than fetching the schedule itself (P14). That makes its format a contract with
+/// `TopShelfSharedCache`, which decodes the parts it needs: `version`, `savedAt`, and each
+/// schedule's `channel`, `title` and `imageAssets`.
 final class DRLocalCache {
     static let shared = DRLocalCache()
 
@@ -714,11 +722,22 @@ final class DRLocalCache {
     private let encoder = JSONEncoder()
     private let decoder = JSONDecoder()
 
+    /// Shared with the Top Shelf extension, which declares the same group and file name.
+    static let appGroup = "group.com.eopio.lytter"
+    static let fileName = "dr_schedules_cache.json"
+
     private convenience init() {
-        self.init(fileURL: FileManager.default
+        let ownCaches = FileManager.default
             .urls(for: .cachesDirectory, in: .userDomainMask)
             .first?
-            .appendingPathComponent("dr_schedules_cache.json"))
+            .appendingPathComponent(Self.fileName)
+        #if os(tvOS)
+        let shared = Self.sharedFileURL()
+        if let shared, let ownCaches { Self.move(ownCaches, to: shared) }
+        self.init(fileURL: shared ?? ownCaches)
+        #else
+        self.init(fileURL: ownCaches)
+        #endif
     }
 
     /// For tests, which point it at a file of their own.
@@ -726,11 +745,43 @@ final class DRLocalCache {
         self.fileURL = fileURL
     }
 
+    #if os(tvOS)
+    /// The group container's `Library/Caches`: on tvOS only caches may be written, and the
+    /// system may purge them, which costs no more than a fetch. Nil if the group is not in
+    /// the entitlements, and the cache then stays in the app's own caches as before.
+    private static func sharedFileURL() -> URL? {
+        guard let container = FileManager.default
+            .containerURL(forSecurityApplicationGroupIdentifier: appGroup) else {
+            Log.network.warning("app group unavailable; Top Shelf will fetch for itself")
+            return nil
+        }
+        let caches = container.appendingPathComponent("Library/Caches", isDirectory: true)
+        try? FileManager.default.createDirectory(at: caches, withIntermediateDirectories: true)
+        return caches.appendingPathComponent(fileName)
+    }
+
+    /// Brings the file an earlier version saved in the app's own caches across, once, so
+    /// the update does not cost the offline launch its cache.
+    private static func move(_ legacy: URL, to shared: URL) {
+        let files = FileManager.default
+        guard files.fileExists(atPath: legacy.path) else { return }
+        if files.fileExists(atPath: shared.path) {
+            try? files.removeItem(at: legacy)
+        } else {
+            try? files.moveItem(at: legacy, to: shared)
+        }
+    }
+    #endif
+
     /// Persist schedules to disk. Call only after a successful API response.
     func save(_ schedules: [DREpisode], at date: Date = Date()) {
         let snapshot = Snapshot(version: Self.schemaVersion, savedAt: date, schedules: schedules)
         guard let url = fileURL, let data = try? encoder.encode(snapshot) else { return }
         try? data.write(to: url, options: .atomic)
+        #if os(tvOS)
+        // The Top Shelf is drawn from this file now, so ask the system to draw it again.
+        TVTopShelfContentProvider.topShelfContentDidChange()
+        #endif
     }
 
     /// The cached schedules, or an empty array if there are none worth using.
