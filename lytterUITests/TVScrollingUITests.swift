@@ -71,6 +71,25 @@ final class TVScrollingUITests: XCTestCase {
         XCTAssertTrue(isOnScreen(focused), "the last station has focus but is off screen")
     }
 
+    /// Once something is typed, results are shelves, as in Music. "P" names every station,
+    /// so the Stations shelf runs off the screen, and pressing right has to reach its end.
+    @MainActor
+    func testSearchResultShelfScrollsSideways() throws {
+        launch()
+        openSection("Search")
+        app.typeText("P")
+        shot("search-typed")
+
+        XCTAssertTrue(app.staticTexts["Stations"].waitForExistence(timeout: 5),
+                      "typing did not show the results shelves")
+        XCTAssertTrue(moveFocus(.down, until: { $0.label.hasPrefix("P1") }, maxPresses: 8),
+                      "could not move from the keyboard to the results; focus is on \(focusedLabel)")
+        XCTAssertTrue(moveFocus(.right, until: { $0.label.hasPrefix("P8") }, maxPresses: 10),
+                      "pressing right never reached the last result; focus is on \(focusedLabel)")
+        XCTAssertTrue(isOnScreen(focused), "the last result has focus but is off screen")
+        shot("search-shelf-end")
+    }
+
     /// Search lists every station under the keyboard. Moving down into the results and on
     /// to the last row has to bring that row into view.
     @MainActor

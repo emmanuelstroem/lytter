@@ -545,6 +545,23 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
       `macOSStationCard.marksPlayingBesideName`, and
       `StationCardTests.everyNameFitsAMacCard` measures whichever layout it picks — the
       known-issue wrapper is gone.
+- [x] ~~**F45. Search lists every station, and finds districts and programmes.**~~ Done.
+      One answer for all three platforms, `StationSearch`. Before anything is typed: every
+      station once, P4 and P5 as stations rather than ten districts each — on the phone under
+      Recently Searched, in place of the browse categories, which a list of every station made
+      redundant. Once something is typed, every word has to be found, in any order and
+      ignoring case and accents: in a name anywhere ("jylland" finds Nordjylland and
+      Østjylland), in what is on air — title, series, description, categories — from the
+      start of a word. A station's name gives the station; a district's gives that channel,
+      to play; a programme on every district at once gives the station. Names rank before
+      programmes. Laid out as Music does on each: rows on the phone; on the television a
+      grid, then a shelf per kind (Stations, On Air Now); on the Mac the field at the top of
+      the sidebar, opening Search as you type, and the same sections as grids. Only the
+      programme on air now is searched — upcoming ones would mean fetching every channel's
+      schedule. Covered by `StationSearchTests`,
+      `SettingsAndSearchUITests.testSearchOpensOnEveryStation` and
+      `TVScrollingUITests.testSearchResultShelfScrollsSideways`. Checked running on iPhone
+      and Apple TV; the Mac only built, not looked at.
 - [ ] **F14. Add a README.** Nineteen commits and no entry point for a reader.
 
 ### P2 — expansion

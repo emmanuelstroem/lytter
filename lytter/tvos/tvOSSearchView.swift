@@ -17,24 +17,16 @@ struct tvOSSearchView: View {
 
     @State private var query = ""
 
-    /// One entry per station, not one per district.
-    ///
-    /// P4 is ten channels and one station. Listing all ten filled the grid with the same
-    /// artwork under the same name, ten times over, and buried every other station below it.
-    ///
-    /// The grouping does not cost reach: `matches` looks *inside* the group — at each
-    /// variant's display name and slug as well as the station's — so "København" still finds
-    /// P4 and P5, and "Bornholm" still finds them. It also matches what is on air, so
-    /// "orientering" finds P1 while that programme is running, which is closer to how
-    /// someone actually looks for live radio.
-    private var results: [GroupedChannel] {
-        GroupedChannel.grouped(from: serviceManager.availableChannels)
-            .filter { group in
-                group.matches(query, nowPlaying: { channel in
-                    serviceManager.getCurrentProgram(for: channel)?.programmeName
-                })
-            }
+    /// Every station once before anything is typed — P4 is one card, not ten — and after,
+    /// whatever answers: a station, a single district named by the words, or a channel by
+    /// what is on air there (`StationSearch`).
+    private var results: [SearchHit] {
+        StationSearch.results(for: query, in: serviceManager.availableChannels) { channel in
+            serviceManager.getCurrentProgram(for: channel)?.searchableText ?? []
+        }
     }
+
+    private var isSearching: Bool { !StationSearch.terms(query).isEmpty }
 
     private let columns = Array(
         repeating: GridItem(.flexible(minimum: 300), spacing: 40),
@@ -56,33 +48,51 @@ struct tvOSSearchView: View {
                         .padding(.top, 40)
 
                     CatalogueStateView(serviceManager: serviceManager) {
+                        let results = results
                         if results.isEmpty {
                             ContentUnavailableView.search(text: query)
                                 .padding(.top, 120)
+                        } else if isSearching {
+                            resultShelves(results)
                         } else {
-                            LazyVGrid(columns: columns, spacing: 48) {
-                                ForEach(results) { group in
-                                    tvOSStationCard(
-                                        group: group,
-                                        serviceManager: serviceManager,
-                                        onSelect: play
-                                    )
-                                }
-                            }
-                            // Focus lifts a card; without room the grid clips it.
-                            .padding(.horizontal, 60)
-                            .padding(.vertical, 40)
+                            allStations(results.map(\.group))
                         }
                     }
             }
             .background(Color.black.ignoresSafeArea())
-            .searchable(text: $query, prompt: Text("Channels, districts, programmes"))
+            .searchable(text: $query, prompt: Text("Stations, regions and programmes"))
             }
         }
         .background(Color.black.ignoresSafeArea())
         .onAppear {
             if serviceManager.availableChannels.isEmpty { serviceManager.loadChannels() }
         }
+    }
+
+    /// Before a search: every station, as a grid.
+    private func allStations(_ groups: [GroupedChannel]) -> some View {
+        LazyVGrid(columns: columns, spacing: 48) {
+            ForEach(groups) { group in
+                tvOSStationCard(group: group, serviceManager: serviceManager, onSelect: play)
+            }
+        }
+        // Focus lifts a card; without room the grid clips it.
+        .padding(.horizontal, 60)
+        .padding(.vertical, 40)
+    }
+
+    /// Results as Music lists them on the television: a shelf for each kind, the stations
+    /// and channels the words named first, then those found by what is on air.
+    private func resultShelves(_ results: [SearchHit]) -> some View {
+        LazyVStack(alignment: .leading, spacing: 24) {
+            tvOSChannelShelf(title: String(localized: "Stations"),
+                             groups: results.filter { $0.match != .programme }.map(\.group),
+                             serviceManager: serviceManager, onSelect: play)
+            tvOSChannelShelf(title: String(localized: "On Air Now"),
+                             groups: results.filter { $0.match == .programme }.map(\.group),
+                             serviceManager: serviceManager, onSelect: play)
+        }
+        .padding(.vertical, 20)
     }
 
     private func play(_ channel: DRChannel) {
