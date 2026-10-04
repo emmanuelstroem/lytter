@@ -11,10 +11,10 @@ import SwiftUI
 // MARK: - Search View
 /// The Search tab, laid out the way Music's is.
 ///
-/// Before anything is typed: the stations you last chose from a search, then categories
-/// to browse. Once something is typed: a plain list of results, one row each, with a small
-/// picture, the name, and what kind of thing it is — not the grid of cards it used to be,
-/// which was the Radio tab again with a search field on top.
+/// Before anything is typed: the stations you last chose from a search, then every station,
+/// once each — P4 and P5 as stations, not ten districts apiece. Once something is typed: a
+/// plain list of results, one row each, with a small picture, the name, and what it is —
+/// which can be a single district, when that is what the words named (`StationSearch`).
 ///
 /// The tab is declared with `role: .search`, so `.searchable` gets the system's
 /// presentation: the field in the tab bar, and the keyboard up as the tab opens.
@@ -26,16 +26,13 @@ struct SearchView: View {
     @State private var query = ""
 
     private var isSearching: Bool {
-        !query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        !StationSearch.terms(query).isEmpty
     }
 
-    private var results: [GroupedChannel] {
-        GroupedChannel.grouped(from: serviceManager.availableChannels)
-            .compactMap { group in
-                group.searchResult(for: query) { channel in
-                    serviceManager.getCurrentProgram(for: channel)?.cleanTitle()
-                }
-            }
+    private var results: [SearchHit] {
+        StationSearch.results(for: query, in: serviceManager.availableChannels) { channel in
+            serviceManager.getCurrentProgram(for: channel)?.searchableText ?? []
+        }
     }
 
     var body: some View {
@@ -45,15 +42,11 @@ struct SearchView: View {
                     resultsList
                 } else {
                     SearchBrowseView(serviceManager: serviceManager, preferences: preferences,
-                                     onPlay: play)
+                                     onPlay: { play($0, fromSearch: false) })
                 }
             }
             .navigationTitle("Search")
             .navigationBarTitleDisplayMode(.large)
-            .navigationDestination(for: SearchCategory.self) { category in
-                SearchCategoryList(category: category, serviceManager: serviceManager,
-                                   preferences: preferences, onPlay: play)
-            }
             .searchable(text: $query, prompt: "Stations, regions and programmes")
         }
         .onAppear {
@@ -65,6 +58,7 @@ struct SearchView: View {
 
     @ViewBuilder
     private var resultsList: some View {
+        let results = results
         if results.isEmpty {
             ContentUnavailableView.search(text: query)
         } else {
@@ -72,8 +66,9 @@ struct SearchView: View {
                 ConnectionBanner(serviceManager: serviceManager)
                     .listRowSeparator(.hidden)
 
-                ForEach(results) { group in
-                    StationSearchRow(group: group, serviceManager: serviceManager,
+                ForEach(results) { hit in
+                    StationSearchRow(group: hit.group, match: hit.match,
+                                     serviceManager: serviceManager,
                                      onPlay: { play($0, fromSearch: true) })
                 }
             }
@@ -89,70 +84,9 @@ struct SearchView: View {
         serviceManager.playChannel(channel)
         selectionState.selectChannel(channel, showSheet: false)
     }
-
-    private func play(_ channel: DRChannel) {
-        play(channel, fromSearch: false)
-    }
 }
 
 // MARK: - Browse
-
-/// A way into the catalogue other than typing, as Music's Browse Categories are.
-enum SearchCategory: String, Hashable, CaseIterable, Identifiable {
-    case favourites
-    case recentlyPlayed
-    case national
-    case regional
-
-    var id: String { rawValue }
-
-    var title: String {
-        switch self {
-        case .favourites: String(localized: "Favourites")
-        case .recentlyPlayed: String(localized: "Recently Played")
-        case .national: String(localized: "National Stations")
-        case .regional: String(localized: "Regional Stations")
-        }
-    }
-
-    var systemImage: String {
-        switch self {
-        case .favourites: "star.fill"
-        case .recentlyPlayed: "clock.fill"
-        case .national: "antenna.radiowaves.left.and.right"
-        case .regional: "map.fill"
-        }
-    }
-
-    var colours: [Color] {
-        switch self {
-        case .favourites: [.yellow, .orange]
-        case .recentlyPlayed: [.teal, .blue]
-        case .national: [.purple, .indigo]
-        case .regional: [.green, .teal]
-        }
-    }
-
-    /// What the category lists, as rows. National stations are stations; regional ones
-    /// are listed district by district, since choosing one is the point of going there.
-    func groups(from channels: [DRChannel], preferences: UserPreferencesService) -> [GroupedChannel] {
-        let stations = GroupedChannel.grouped(from: channels)
-        switch self {
-        case .favourites:
-            return preferences.favourites.resolve(in: channels).map { GroupedChannel(channels: [$0]) }
-        case .recentlyPlayed:
-            return preferences.recentlyPlayed.resolve(in: channels).map { GroupedChannel(channels: [$0]) }
-        case .national:
-            return stations.filter { !$0.hasMultipleDistricts }
-        case .regional:
-            return stations.filter(\.hasMultipleDistricts)
-                .flatMap { group in
-                    group.channels(regionFirst: preferences.preferredDistrict)
-                        .map { GroupedChannel(channels: [$0]) }
-                }
-        }
-    }
-}
 
 /// What Search shows before anything is typed.
 private struct SearchBrowseView: View {
@@ -164,120 +98,51 @@ private struct SearchBrowseView: View {
         preferences.recentSearches.resolve(in: serviceManager.availableChannels)
     }
 
-    /// Favourites and Recently Played only once they have something in them: a tile that
-    /// opens onto an empty list is a dead end.
-    private var categories: [SearchCategory] {
-        SearchCategory.allCases.filter { category in
-            switch category {
-            case .favourites: !preferences.favourites.channelIDs.isEmpty
-            case .recentlyPlayed: !preferences.recentlyPlayed.isEmpty
-            case .national, .regional: true
-            }
-        }
+    private var stations: [GroupedChannel] {
+        GroupedChannel.grouped(from: serviceManager.availableChannels)
     }
 
-    /// A scroll view rather than a `List`: a list puts a disclosure chevron beside every
-    /// tile that navigates, and Music's grid has none.
+    /// A scroll view of sections rather than a `List`, for Music's large section headings;
+    /// a plain list's headers are small and pinned.
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 24) {
+            LazyVStack(alignment: .leading, spacing: 24) {
                 ConnectionBanner(serviceManager: serviceManager)
 
                 if !recentSearches.isEmpty {
-                    VStack(alignment: .leading, spacing: 4) {
-                        HStack(alignment: .firstTextBaseline) {
-                            Text("Recently Searched")
-                                .font(.title2.weight(.bold))
-                                .foregroundStyle(Color.primary)
-                                .accessibilityAddTraits(.isHeader)
-                            Spacer()
-                            Button("Clear") { preferences.clearRecentSearches() }
-                        }
-
-                        ForEach(recentSearches) { channel in
-                            StationSearchRow(group: GroupedChannel(channels: [channel]),
-                                             serviceManager: serviceManager,
-                                             onPlay: onPlay)
-                                .padding(.vertical, 6)
-                            // Inset to the text, as a list's separators are.
-                            Divider().padding(.leading, 60)
-                        }
+                    section("Recently Searched",
+                            groups: recentSearches.map { GroupedChannel(channels: [$0]) }) {
+                        Button("Clear") { preferences.clearRecentSearches() }
                     }
                 }
 
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Browse Categories")
-                        .font(.title2.weight(.bold))
-                        .foregroundStyle(Color.primary)
-                        .accessibilityAddTraits(.isHeader)
-
-                    LazyVGrid(columns: [GridItem(.flexible(), spacing: 12),
-                                        GridItem(.flexible(), spacing: 12)],
-                              spacing: 12) {
-                        ForEach(categories) { category in
-                            NavigationLink(value: category) {
-                                SearchCategoryTile(category: category)
-                            }
-                            .buttonStyle(.plain)
-                        }
-                    }
-                }
+                section("All Stations", groups: stations) { EmptyView() }
             }
             .padding(.horizontal, 16)
             .padding(.bottom, 100) // Space for the mini player
         }
         .scrollDismissesKeyboard(.immediately)
     }
-}
 
-/// One category: colour, symbol and name, as Music draws its genres.
-private struct SearchCategoryTile: View {
-    let category: SearchCategory
-
-    var body: some View {
-        LinearGradient(colors: category.colours, startPoint: .topLeading, endPoint: .bottomTrailing)
-            .aspectRatio(16 / 10, contentMode: .fit)
-            .overlay(alignment: .topTrailing) {
-                Image(systemName: category.systemImage)
-                    .font(.system(size: 34, weight: .semibold))
-                    .foregroundStyle(Color.white.opacity(0.35))
-                    .padding(12)
+    private func section(_ title: LocalizedStringKey, groups: [GroupedChannel],
+                         @ViewBuilder accessory: () -> some View) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(alignment: .firstTextBaseline) {
+                Text(title)
+                    .font(.title2.weight(.bold))
+                    .foregroundStyle(Color.primary)
+                    .accessibilityAddTraits(.isHeader)
+                Spacer()
+                accessory()
             }
-            .overlay(alignment: .bottomLeading) {
-                Text(category.title)
-                    .font(.headline)
-                    .foregroundStyle(Color.white)
-                    .multilineTextAlignment(.leading)
-                    .padding(12)
-            }
-            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-            // One element, named for the category; the link around it is the button.
-            .accessibilityElement(children: .ignore)
-            .accessibilityLabel(Text(verbatim: category.title))
-    }
-}
 
-/// A category's stations, pushed from its tile.
-private struct SearchCategoryList: View {
-    let category: SearchCategory
-    @ObservedObject var serviceManager: DRServiceManager
-    @ObservedObject var preferences: UserPreferencesService
-    let onPlay: (DRChannel) -> Void
-
-    var body: some View {
-        let groups = category.groups(from: serviceManager.availableChannels, preferences: preferences)
-        List(groups) { group in
-            StationSearchRow(group: group, serviceManager: serviceManager, onPlay: onPlay)
-        }
-        .listStyle(.plain)
-        .contentMargins(.bottom, 100, for: .scrollContent)
-        .overlay {
-            if groups.isEmpty {
-                ContentUnavailableView(category.title, systemImage: category.systemImage)
+            ForEach(groups) { group in
+                StationSearchRow(group: group, serviceManager: serviceManager, onPlay: onPlay)
+                    .padding(.vertical, 6)
+                // Inset to the text, as a list's separators are.
+                Divider().padding(.leading, 60)
             }
         }
-        .navigationTitle(category.title)
-        .navigationBarTitleDisplayMode(.large)
     }
 }
 
@@ -289,6 +154,9 @@ private struct SearchCategoryList: View {
 /// and says so with a chevron; anything else plays.
 struct StationSearchRow: View {
     let group: GroupedChannel
+    /// Why it is listed. Found by what is on air, the row says what that is, even for a
+    /// station that opens the picker.
+    var match: SearchMatch = .station
     @ObservedObject var serviceManager: DRServiceManager
     let onPlay: (DRChannel) -> Void
 
@@ -299,9 +167,9 @@ struct StationSearchRow: View {
     private var opensPicker: Bool { group.hasMultipleDistricts }
 
     /// "Station · 10 districts" for a station that opens the picker; what is on now for one
-    /// that plays.
+    /// that plays, or for anything found by what is on.
     private var subtitle: String {
-        if opensPicker {
+        if opensPicker && match != .programme {
             return String(localized: "Station · \(group.channels.count) districts")
         }
         return serviceManager.getCurrentProgram(for: channel)?.programmeName

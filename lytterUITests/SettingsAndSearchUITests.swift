@@ -56,21 +56,19 @@ final class SettingsAndSearchUITests: XCTestCase {
 
     // MARK: - Search
 
-    /// Before anything is typed, Search offers categories; Favourites is one only when
-    /// there are favourites.
+    /// Before anything is typed, Search lists every station once: P4 as a station, not
+    /// its ten districts.
     @MainActor
-    func testSearchOpensOnCategories() throws {
-        launch(favourites: ["p1"])
+    func testSearchOpensOnEveryStation() throws {
+        launch()
         app.tabBars.buttons["Search"].tap()
 
-        XCTAssertTrue(app.staticTexts["Browse Categories"].waitForExistence(timeout: 5),
-                      "Search does not open on its categories")
-        XCTAssertTrue(app.buttons["Favourites"].exists, "no Favourites category")
+        XCTAssertTrue(app.staticTexts["All Stations"].waitForExistence(timeout: 5),
+                      "Search does not open on every station")
+        XCTAssertTrue(row("P1").exists, "P1 is not listed")
+        XCTAssertTrue(row("P4").exists, "P4 is not listed as a station")
+        XCTAssertFalse(row("P4 - Fyn").exists, "P4's districts are listed one by one")
         shot("search-browse")
-
-        app.buttons["Regional Stations"].tap()
-        XCTAssertTrue(row("P4 - Fyn").waitForExistence(timeout: 5),
-                      "Regional Stations does not list the districts")
     }
 
     /// A district name finds the districts, as channels — not P4 and P5 as stations to

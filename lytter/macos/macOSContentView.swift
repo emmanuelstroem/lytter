@@ -17,6 +17,9 @@ struct macOSContentView: View {
     @ObservedObject var deepLinkHandler: DeepLinkHandler
 
     @State private var section: macOSSection? = .home
+    /// Held here, not by Search: the field is at the top of the sidebar, as in Music, and
+    /// typing into it from anywhere opens Search.
+    @State private var query = ""
 
     var body: some View {
         NavigationSplitView {
@@ -33,10 +36,15 @@ struct macOSContentView: View {
                 case .radio:
                     macOSRadioView(serviceManager: serviceManager, onSelect: play)
                 case .search:
-                    macOSSearchView(serviceManager: serviceManager, onSelect: play)
+                    macOSSearchView(serviceManager: serviceManager, query: query, onSelect: play)
                 }
             }
             .navigationTitle((section ?? .home).title)
+        }
+        .searchable(text: $query, placement: .sidebar,
+                    prompt: Text("Stations, regions and programmes"))
+        .onChange(of: query) { _, query in
+            if !query.isEmpty { section = .search }
         }
         .safeAreaInset(edge: .bottom, spacing: 0) {
             macOSPlayerBar(serviceManager: serviceManager, selectionState: selectionState)
