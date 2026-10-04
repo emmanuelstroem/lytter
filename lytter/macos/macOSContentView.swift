@@ -66,7 +66,7 @@ struct macOSContentView: View {
     }
 
     /// Shared with iOS in spirit, not in code: `ContentView.resolveDeepLink` is
-    /// `#if os(iOS)`, tied to `@SceneStorage`'s tab index, which the sidebar has no
+    /// `#if os(iOS)`, tied to the tab bar's selection, which the sidebar has no
     /// equivalent of. Same resolution, same retry-until-the-catalogue-loads rule.
     private func resolveDeepLink() {
         guard let identifier = deepLinkHandler.pendingChannelId else { return }
