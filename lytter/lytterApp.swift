@@ -15,6 +15,8 @@ struct lytterApp: App {
     /// preload of every image in the schedule.
     @StateObject private var serviceManager = DRServiceManager.shared
     @StateObject private var deepLinkHandler = DeepLinkHandler()
+    /// Joins SharePlay sessions and keeps this device on the session's channel.
+    @StateObject private var sharePlay = SharePlayCoordinator()
     @Environment(\.scenePhase) private var scenePhase
 
     #if os(iOS) || os(tvOS)
@@ -41,6 +43,12 @@ struct lytterApp: App {
                 #endif
                 .onOpenURL { url in
                     deepLinkHandler.handleDeepLink(url)
+                }
+                // Without this nothing receives the session an invitation creates, and
+                // whoever accepted it hears nothing.
+                .task {
+                    await sharePlay.observeSessions(serviceManager: serviceManager,
+                                                    deepLinkHandler: deepLinkHandler)
                 }
                 .onChange(of: scenePhase) { _, phase in
                     serviceManager.setAppActive(phase == .active)

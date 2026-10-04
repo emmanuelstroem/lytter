@@ -96,22 +96,19 @@ struct PlayerInfoView: View {
 
             // A share button, not a menu. The menu had exactly one live item —
             // this same ShareLink — so it cost a tap for nothing.
+            //
+            // It shares a `SharedChannel`, which carries a SharePlay activity as well as
+            // the text: that is what puts SharePlay at the top of the share sheet, as in
+            // Music.
             #if os(iOS) || os(macOS)
-            ShareLink(
-                item: shareText,
-                preview: SharePreview(
-                    title,
-                    image: shareImage != nil ? Image(platformImage: shareImage!) : Image(systemName: "music.note")
-                )
-            ) {
-                Image(systemName: "square.and.arrow.up.circle.fill")
-                    .font(.title2.weight(.medium))
-                    .foregroundStyle(Color.primary)
-                    .symbolRenderingMode(.hierarchical)
-                    // 44pt is the minimum comfortable target in the HIG.
-                    .frame(minWidth: 44, minHeight: 44)
+            if let channel {
+                ShareLink(
+                    item: SharedChannel(activity: RadioShareActivity(channel: channel),
+                                        text: shareText),
+                    preview: sharePreview
+                ) { shareLabel }
+                .accessibilityLabel("Share")
             }
-            .accessibilityLabel("Share")
             #endif
         }
         .padding(.horizontal, 20)
@@ -120,6 +117,24 @@ struct PlayerInfoView: View {
         }
     }
     
+    #if os(iOS) || os(macOS)
+    private var sharePreview: SharePreview<Image, Never> {
+        SharePreview(
+            title,
+            image: shareImage.map { Image(platformImage: $0) } ?? Image(systemName: "music.note")
+        )
+    }
+
+    private var shareLabel: some View {
+        Image(systemName: "square.and.arrow.up.circle.fill")
+            .font(.title2.weight(.medium))
+            .foregroundStyle(Color.primary)
+            .symbolRenderingMode(.hierarchical)
+            // 44pt is the minimum comfortable target in the HIG.
+            .frame(minWidth: 44, minHeight: 44)
+    }
+    #endif
+
     private func loadShareImage() {
         guard let artworkURL = channelArtworkURL else { return }
         

@@ -23,6 +23,7 @@ struct macOSPlayerBar: View {
                 Spacer(minLength: 12)
                 transport
                 Spacer(minLength: 12)
+                share
                 AirPlayButtonView(size: 20, tint: .secondaryLabel)
             }
             .padding(.horizontal, 16)
@@ -85,6 +86,28 @@ struct macOSPlayerBar: View {
             Text("Nothing Playing")
                 .font(.system(size: 12))
                 .foregroundStyle(.secondary)
+        }
+    }
+
+    /// Share, with SharePlay in its menu — the way Music offers it on the Mac. The bar,
+    /// because it is the one place on the Mac that is always in view while something plays.
+    @ViewBuilder
+    private var share: some View {
+        if let channel = serviceManager.playingChannel {
+            ShareLink(
+                item: SharedChannel(
+                    activity: RadioShareActivity(channel: channel),
+                    text: "\(channel.qualifiedName)\n\(DeepLinkHandler.generateDeepLinkString(for: channel))"),
+                preview: SharePreview(channel.qualifiedName)
+            ) {
+                Image(systemName: "square.and.arrow.up")
+                    .font(.system(size: 15))
+                    .frame(width: 28, height: 28)
+            }
+            .buttonStyle(.plain)
+            .foregroundStyle(Color.secondary)
+            .help("Share")
+            .accessibilityLabel("Share")
         }
     }
 

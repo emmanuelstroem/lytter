@@ -1318,6 +1318,17 @@
         }
       }
     },
+    "SharePlay": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SharePlay"
+          }
+        }
+      }
+    },
     "Shortcuts": {
       "extractionState": "manual",
       "localizations": {
