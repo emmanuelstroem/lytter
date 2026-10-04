@@ -1013,12 +1013,26 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
       It is order-preserving now. `GroupedChannel.init` also sorts, since it takes its id
       and name from `channels.first` and `Dictionary(grouping:)` does not define that
       order.
-- [ ] **P16. Move disk-cache encoding off the hot path.** `DRLocalCache.save` JSON-encodes
-      the entire schedule array after every successful fetch. Debounce it, and write via a
-      background-priority task.
-      Checked 2026-10-04: not started. `save` still encodes and writes synchronously, on the
-      main actor, from the fetch's completion. The payload is small today (25 episodes,
-      one per channel), so this is cheap, but it is still on the main actor.
+- [x] ~~**P16. Move disk-cache encoding off the hot path.**~~ Done. `DRLocalCache.save`
+      now returns at once: it cancels any save still waiting, and a detached
+      background-priority task sleeps for `writeDelay` (1 s), then encodes the snapshot and
+      writes it — and on tvOS asks the Top Shelf to redraw — off the main actor. Back-to-back
+      fetches (launch, a retry, the network coming back) write once. For the encode to run
+      there, the types the snapshot holds — `DREpisode`, `DRChannel`, `DRSeries`,
+      `DRAudioAsset`, `DRImageAsset`, `DRTimestamp` and the `Snapshot` itself — are
+      `nonisolated` against the project's main-actor default. `save` returns its task so
+      `DiskCacheTests` can wait for the write; `aSaveThatIsReplacedIsNeverWritten` covers the
+      debounce, and fails with the cancel removed. Verified on the tvOS simulator: from no
+      cache file, launch wrote the group container's snapshot (25 schedules) and Home showed
+      the channels. The cost of the delay: a fetch the app is killed within a second of
+      finishing is not cached, and the next launch shows the one before.
+      Measured against `main` on the tvOS simulator, Release builds, eight launches each,
+      alternated, timing the `save` call in `fetchCatalogue` on live data (25 schedules,
+      54 KB): `main` held the main actor for a median 1.29 ms (1.0–3.8 ms); now 5.7 µs
+      (4.5–6.5 µs), about 225× less. The encode and write still cost a median 5.8 ms
+      (3.4–6.7 ms), now off the main thread at background priority, which is why it takes
+      longer than it did on the main actor. On an Apple TV both main-actor figures should be
+      higher; the debounce did not come into it, since a launch fetches once.
 
 ---
 
