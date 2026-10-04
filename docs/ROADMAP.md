@@ -874,8 +874,9 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
       Measured on the iPhone 17 simulator (Debug), against the live schedule: 25 channels,
       **one** episode each — `/schedules/all/now`, not the 50–70 assumed above. The lookup
       went from 8.8 µs to 0.16 µs; `liveProgram(for:)` from 60 µs to 50 µs. What is left is
-      date parsing: `isPlaying` parses `startTime` and `endTime` on every call, ~25 µs each.
-      Parsing once at decode is the next win, and a larger one than this.
+      date parsing: `isPlaying` parsed `startTime` and `endTime` on every call, ~25 µs each.
+      Now parsed once, when made or decoded (`DRTimestamp`, below P7); `liveProgram(for:)`
+      went from 50 µs to 0.6 µs.
 - [x] ~~**P7. Hoist the `ISO8601DateFormatter`s.**~~ Done. `startDate`, `endDate` and
       `playedDate` each allocated a new formatter on every access, inside filters over
       whole arrays — and picking the track being heard now runs every second while paused
@@ -883,6 +884,11 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
       (`nonisolated(unsafe)`: `ISO8601DateFormatter` is documented thread-safe, which
       Swift cannot see). About 3x faster per parse (20,000: 2.6 s → 0.93 s). Covered by
       `DRDateTests`.
+      Then parsed only once: `DRTimestamp` holds DR's string and its date, parsed when the
+      programme or track is made or decoded, and encodes as the bare string, so DR's JSON
+      and the disk cache are unchanged. `startDate`, `endDate` and `playedDate` are now
+      reads. Measured as for P6: `liveProgram(for:)` 50 µs → 0.6 µs,
+      `getCurrentProgram(for:)` 51 µs → 0.9 µs. Covered by `DRTimestampTests`.
 - [x] ~~**P8. Make polling cancellable.**~~ Done in #12, and the bug was worse than
       recorded. `getCurrentTrack` scheduled the next poll, which called `getCurrentTrack`
       again — a self-perpetuating `asyncAfter` chain with no handle, guarded only by
