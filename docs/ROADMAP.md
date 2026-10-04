@@ -564,6 +564,17 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
       `SettingsAndSearchUITests.testSearchOpensOnEveryStation` and
       `TVScrollingUITests.testSearchResultShelfScrollsSideways`. Checked running on iPhone
       and Apple TV; the Mac only built, not looked at.
+- [x] ~~**F46. The Mac app crashed as it opened.**~~ Done. The same fault as F31, on the
+      other platform: the fallback now-playing artwork was an `NSImage` with a drawing
+      handler, which runs whenever the image is rendered — and MediaPlayer renders it on its
+      own queue, turning it into JPEG data. The handler was main-actor isolated by the
+      project's default, Swift's isolation check trapped there, and the app died before its
+      window appeared. It took the unit-test host down with it, which read as "the test
+      runner crashed before establishing connection". It is now drawn at once into a bitmap,
+      as iOS's renderer always did. `DefaultArtworkTests` renders it from another queue (an
+      `async` hop: a `sync` from the main thread runs on the main thread and passed against
+      the bug) and checks it is the gradient. The Mac unit tests run again, all 199; the app
+      was launched and stayed up, but not looked at — this machine gives no screen capture.
 - [ ] **F14. Add a README.** Nineteen commits and no entry point for a reader.
 
 ### P2 — expansion

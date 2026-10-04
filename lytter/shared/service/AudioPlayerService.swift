@@ -507,18 +507,36 @@ class AudioPlayerService: NSObject, ObservableObject {
         }
     }
     #elseif os(macOS)
-    /// A plain gradient square. Matching the iOS glyph-and-gradient exactly needs AppKit's
-    /// differently-shaped symbol-tinting API, and there is no macOS screen yet to see this
-    /// on — a solid, correct placeholder now, refined when the macOS player is built rather
-    /// than guessed at ahead of it.
-    private func defaultArtworkImage() -> PlatformImage {
-        let size = NSSize(width: 300, height: 300)
-        return NSImage(size: size, flipped: false) { rect in
-            let gradient = NSGradient(starting: .systemBlue, ending: .systemPurple)
-            gradient?.draw(in: rect, angle: -45)
-            return true
+    /// A plain gradient square, drawn now, into a bitmap.
+    ///
+    /// Not `NSImage(size:flipped:drawingHandler:)`. That draws later, whenever the image is
+    /// rendered — and MediaPlayer renders now-playing artwork on its own queue. The handler,
+    /// main-actor isolated by the project's default, then failed Swift's isolation check
+    /// there and the app trapped as it opened, before a window appeared. iOS's renderer
+    /// draws eagerly, which is why it never did.
+    static func defaultArtworkImage() -> PlatformImage {
+        let pixels = 300
+        let size = NSSize(width: pixels, height: pixels)
+        guard let bitmap = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: pixels,
+                                            pixelsHigh: pixels, bitsPerSample: 8,
+                                            samplesPerPixel: 4, hasAlpha: true, isPlanar: false,
+                                            colorSpaceName: .deviceRGB, bytesPerRow: 0,
+                                            bitsPerPixel: 0),
+              let context = NSGraphicsContext(bitmapImageRep: bitmap) else {
+            return NSImage(size: size)
         }
+        NSGraphicsContext.saveGraphicsState()
+        NSGraphicsContext.current = context
+        NSGradient(starting: .systemBlue, ending: .systemPurple)?
+            .draw(in: NSRect(origin: .zero, size: size), angle: -45)
+        NSGraphicsContext.restoreGraphicsState()
+
+        let image = NSImage(size: size)
+        image.addRepresentation(bitmap)
+        return image
     }
+
+    private func defaultArtworkImage() -> PlatformImage { Self.defaultArtworkImage() }
     #endif
     
     private func updateSkipCommandsEnabled() {
