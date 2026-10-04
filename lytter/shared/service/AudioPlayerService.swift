@@ -30,6 +30,12 @@ class AudioPlayerService: NSObject, ObservableObject {
     /// Keeps canSeek/isBehindLive current. Belongs to one AVPlayer, so it is removed
     /// before that player is replaced.
     private var timeObserver: (player: AVPlayer, token: Any)?
+    /// Keeps them current while paused, which the time observer does not: AVPlayer calls it
+    /// during playback and on jumps, not at rate 0. Paused, live moves on and the position
+    /// does not, so how far behind live playback is grows by a second every second — and
+    /// without this it stood still, and the track and programme shown carried on with the
+    /// wall clock as though nothing had been paused.
+    private var pausedTicker: Task<Void, Never>?
     
     @Published var isPlaying = false
     @Published var duration: TimeInterval = 0
@@ -670,6 +676,7 @@ class AudioPlayerService: NSObject, ObservableObject {
         isPlaying = false
         wantsPlayback = false
         pausedAt = Date()
+        startPausedTicker()
 
         if !resumable {
             interruption.playbackSettledDeliberately()
@@ -723,6 +730,7 @@ class AudioPlayerService: NSObject, ObservableObject {
         }
         pausedAt = nil
         wantsPlayback = true
+        stopPausedTicker()
 
             // Session activation is off the main thread: setActive(true) can block, and
             // AVAudioSession warns when it is called there. play() waits for it, since
@@ -945,7 +953,24 @@ class AudioPlayerService: NSObject, ObservableObject {
             owner.removeTimeObserver(token)
         }
         timeObserver = nil
+        stopPausedTicker()
         liveEdgeSample = nil
+    }
+
+    private func startPausedTicker() {
+        pausedTicker?.cancel()
+        pausedTicker = Task { [weak self] in
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(1))
+                guard !Task.isCancelled else { return }
+                self?.refreshSeekState()
+            }
+        }
+    }
+
+    private func stopPausedTicker() {
+        pausedTicker?.cancel()
+        pausedTicker = nil
     }
     
     func setVolume(_ volume: Float) {

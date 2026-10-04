@@ -115,7 +115,8 @@ struct iOSFullPlayerSheet: View {
                         )
                         
                         PlayerProgressView(
-                            programme: serviceManager.getCurrentProgram(for: currentChannel)
+                            programme: serviceManager.getCurrentProgram(for: currentChannel),
+                            secondsBehindLive: serviceManager.secondsBehindLive
                         )
                         .padding(.horizontal, 20)
                         
