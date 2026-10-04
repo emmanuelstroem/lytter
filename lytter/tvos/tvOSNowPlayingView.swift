@@ -136,7 +136,13 @@ struct tvOSNowPlayingView: View {
         if let programme = serviceManager.getCurrentProgram(for: channel),
            let start = programme.startDate,
            let end = programme.endDate {
-            TimelineView(.periodic(from: .now, by: 30)) { context in
+            // Anchored to the programme's start rather than `.now`, so every redraw asks
+            // for the same schedule; and measured at the moment being heard, since
+            // `getCurrentProgram` picks the programme for that moment. That moment is read
+            // when drawn: `context.date` is the last tick, up to 30 s old, and against a
+            // current offset it slid the bar backwards between ticks while paused.
+            TimelineView(.periodic(from: start, by: 30)) { _ in
+                let heard = Date.now.addingTimeInterval(-serviceManager.secondsBehindLive)
                 VStack(alignment: .leading, spacing: 12) {
                     GeometryReader { proxy in
                         ZStack(alignment: .leading) {
@@ -144,7 +150,7 @@ struct tvOSNowPlayingView: View {
                             Capsule()
                                 .fill(.white)
                                 .frame(width: proxy.size.width
-                                       * (programme.progress(at: context.date) ?? 0))
+                                       * (programme.progress(at: heard) ?? 0))
                         }
                     }
                     .frame(height: 8)

@@ -16,6 +16,11 @@ import SwiftUI
 /// how long until the next thing starts. The schedule supplies both ends.
 struct PlayerProgressView: View {
     let programme: DREpisode?
+    /// How far behind live playback is. `programme` is the one being heard, so progress is
+    /// measured at the moment being heard too: against the wall clock, a rewind across a
+    /// boundary showed the earlier programme pinned at its end, and a pause kept the bar
+    /// moving.
+    var secondsBehindLive: TimeInterval = 0
 
     var body: some View {
         if let programme,
@@ -23,18 +28,25 @@ struct PlayerProgressView: View {
            let end = programme.endDate,
            end > start {
             // Re-renders on its own schedule. A programme runs for half an hour or more,
-            // so a tick every ten seconds moves the bar by well under a pixel.
-            TimelineView(.periodic(from: .now, by: 10)) { context in
-                content(programme: programme, start: start, end: end, now: context.date)
+            // so a tick every ten seconds moves the bar by well under a pixel. Anchored to
+            // the programme's start rather than `.now`, so every redraw — once a second
+            // while paused — asks for the same schedule.
+            //
+            // The moment is read when drawn rather than taken from `context.date`, which is
+            // the last tick and up to ten seconds old: against an offset that is current, it
+            // slid the bar backwards between ticks while paused, and jumped it forward on each.
+            TimelineView(.periodic(from: start, by: 10)) { _ in
+                content(programme: programme, start: start, end: end,
+                        heard: Date.now.addingTimeInterval(-secondsBehindLive))
             }
         }
         // No schedule for this channel: show nothing rather than an empty bar, which is
         // what the old one amounted to.
     }
 
-    private func content(programme: DREpisode, start: Date, end: Date, now: Date) -> some View {
-        let fraction = programme.progress(at: now) ?? 0
-        let remaining = programme.minutesRemaining(at: now) ?? 0
+    private func content(programme: DREpisode, start: Date, end: Date, heard: Date) -> some View {
+        let fraction = programme.progress(at: heard) ?? 0
+        let remaining = programme.minutesRemaining(at: heard) ?? 0
 
         return VStack(spacing: 6) {
             ProgressView(value: fraction)
