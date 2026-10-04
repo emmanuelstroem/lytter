@@ -50,6 +50,14 @@ struct tvOSHomeView: View {
         Group {
             if #available(tvOS 18.0, *) {
                 TabView(selection: $section) {
+                    // First, at the top of the sidebar, as in the TV and Music apps (F36).
+                    // role: .search so the sidebar gives it the system's search treatment
+                    // rather than listing it as one destination among five.
+                    Tab("Search", systemImage: "magnifyingglass", value: tvOSSection.search,
+                        role: .search) {
+                        tvOSSearchView(serviceManager: serviceManager,
+                                       selectionState: selectionState)
+                    }
                     Tab("Home", systemImage: "house", value: tvOSSection.home) {
                         shelves
                     }
@@ -62,13 +70,6 @@ struct tvOSHomeView: View {
                         value: tvOSSection.nowPlaying) {
                         tvOSNowPlayingView(serviceManager: serviceManager)
                             .onExitCommand { section = .home }
-                    }
-                    // role: .search so the sidebar gives it the system's search treatment
-                    // rather than listing it as one destination among four.
-                    Tab("Search", systemImage: "magnifyingglass", value: tvOSSection.search,
-                        role: .search) {
-                        tvOSSearchView(serviceManager: serviceManager,
-                                       selectionState: selectionState)
                     }
                     // Last, at the bottom of the sidebar, as in the TV app (F37).
                     Tab("Settings", systemImage: "gearshape", value: tvOSSection.settings) {
@@ -100,6 +101,10 @@ struct tvOSHomeView: View {
     /// tvOS 17 has no sidebar style, so it keeps the tab bar it always had.
     private var legacyTabs: some View {
         TabView(selection: $section) {
+            tvOSSearchView(serviceManager: serviceManager, selectionState: selectionState)
+                .tabItem { Label("Search", systemImage: "magnifyingglass") }
+                .tag(tvOSSection.search)
+
             shelves
                 .tabItem { Label("Home", systemImage: "house") }
                 .tag(tvOSSection.home)
@@ -112,10 +117,6 @@ struct tvOSHomeView: View {
                 .onExitCommand { section = .home }
                 .tabItem { Label("Now Playing", systemImage: "play.circle") }
                 .tag(tvOSSection.nowPlaying)
-
-            tvOSSearchView(serviceManager: serviceManager, selectionState: selectionState)
-                .tabItem { Label("Search", systemImage: "magnifyingglass") }
-                .tag(tvOSSection.search)
 
             tvOSSettingsView(preferences: serviceManager.userPreferences)
                 .tabItem { Label("Settings", systemImage: "gearshape") }
@@ -235,10 +236,10 @@ struct tvOSHomeView: View {
 
 /// The app's top-level destinations, and the sidebar's selection.
 enum tvOSSection: String, CaseIterable, Identifiable, Hashable {
+    case search
     case home
     case radio
     case nowPlaying
-    case search
     case settings
 
     var id: String { rawValue }
