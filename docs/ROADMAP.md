@@ -864,10 +864,18 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
 
 ### P1
 
-- [ ] **P6. Index the schedule by channel.** `getCurrentProgram(for:)` filters the full
-      `cachedSchedules` array (~50–70 episodes) on every call, and it is called *from view
-      bodies* — `tvOSChannelCard` for artwork, the now-playing views several times per
-      render. Build `[String: [DREpisode]]` once per refresh.
+- [x] ~~**P6. Index the schedule by channel.**~~ Done. `getCurrentProgram(for:)` filtered
+      the full `cachedSchedules` array (~50–70 episodes) on every call, and it is called
+      *from view bodies* — `tvOSChannelCard` for artwork, the now-playing views several
+      times per render. `cachedSchedules` now rebuilds a `[String: [DREpisode]]` index in
+      its `didSet`, so every place that replaces it keeps the index current, and all four
+      per-channel lookups read from it. Each channel keeps its programmes in schedule
+      order, because the lookups take the first match. Covered by `ScheduleIndexTests`.
+      Measured on the iPhone 17 simulator (Debug), against the live schedule: 25 channels,
+      **one** episode each — `/schedules/all/now`, not the 50–70 assumed above. The lookup
+      went from 8.8 µs to 0.16 µs; `liveProgram(for:)` from 60 µs to 50 µs. What is left is
+      date parsing: `isPlaying` parses `startTime` and `endTime` on every call, ~25 µs each.
+      Parsing once at decode is the next win, and a larger one than this.
 - [x] ~~**P7. Hoist the `ISO8601DateFormatter`s.**~~ Done. `startDate`, `endDate` and
       `playedDate` each allocated a new formatter on every access, inside filters over
       whole arrays — and picking the track being heard now runs every second while paused

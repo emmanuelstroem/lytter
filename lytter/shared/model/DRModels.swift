@@ -717,7 +717,13 @@ class DRServiceManager: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
     
     // Caching properties
-    private var cachedSchedules: [DREpisode] = []
+    private var cachedSchedules: [DREpisode] = [] {
+        didSet { schedulesByChannel = Self.indexByChannel(cachedSchedules) }
+    }
+    /// `cachedSchedules` by channel id, rebuilt whenever it is replaced. The programme
+    /// lookups run from view bodies — every card, several times per now-playing render —
+    /// and each used to filter the whole schedule.
+    private var schedulesByChannel: [String: [DREpisode]] = [:]
     /// What DR last said about stations and districts. See `ChannelDirectory`.
     private var channelDirectory = ChannelDirectory()
     private var lastSchedulesUpdate: Date?
@@ -1067,8 +1073,7 @@ class DRServiceManager: ObservableObject {
         
         // If no stream URL from current program, try to get from any cached program for this channel
         if streamURL == nil {
-            let channelPrograms = cachedSchedules.filter { $0.channel.id == channel.id }
-            streamURL = channelPrograms.first?.streamURL
+            streamURL = getCachedPrograms(for: channel).first?.streamURL
         }
         
         // There is deliberately no hardcoded fallback here. The previous one guessed
@@ -1121,7 +1126,7 @@ class DRServiceManager: ObservableObject {
             return liveProgram(for: channel)
         }
         let date = listeningDate
-        let candidates = cachedSchedules.filter { $0.channel.id == channel.id }
+        let candidates = getCachedPrograms(for: channel)
             + (heardSnapshot.flatMap { $0.channelID == channel.id ? $0.episodes : nil } ?? [])
         return Self.heardProgram(in: candidates, at: date) ?? liveProgram(for: channel)
     }
@@ -1133,7 +1138,7 @@ class DRServiceManager: ObservableObject {
     /// The programme on air now, whatever the listener is hearing. For wall-clock needs:
     /// the stream to start, and when the programme ends for the sleep timer.
     func liveProgram(for channel: DRChannel) -> DREpisode? {
-        Self.liveProgram(in: cachedSchedules.filter { $0.channel.id == channel.id }, at: Date())
+        Self.liveProgram(in: getCachedPrograms(for: channel), at: Date())
     }
 
     /// The programme on air at `date`, or failing that one whose times DR did not give,
@@ -1250,7 +1255,13 @@ class DRServiceManager: ObservableObject {
     }
     
     func getCachedPrograms(for channel: DRChannel) -> [DREpisode] {
-        return cachedSchedules.filter { $0.channel.id == channel.id }
+        schedulesByChannel[channel.id] ?? []
+    }
+
+    /// Groups `schedules` by channel id, each channel's programmes in their original order:
+    /// the lookups take the first match, so the order is part of the answer.
+    static func indexByChannel(_ schedules: [DREpisode]) -> [String: [DREpisode]] {
+        Dictionary(grouping: schedules, by: \.channel.id)
     }
 
     /// Artwork for what is on the channel now, falling back to any cached programme for it.
