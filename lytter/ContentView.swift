@@ -12,7 +12,10 @@ struct ContentView: View {
     /// `DRServiceManager.shared`, handed down by lytterApp — see the note there.
     @EnvironmentObject var serviceManager: DRServiceManager
     @StateObject private var selectionState = SelectionState()
-    @SceneStorage("selectedTab") private var selectedTabIndex = 0
+    /// Always Home at launch. This was `@SceneStorage`, which restored the last tab, so a
+    /// listener who had last searched reopened the app on Search. Home is where what they
+    /// were listening to, their favourites and recents are.
+    @State private var selectedTabIndex = 0
 
     @EnvironmentObject var deepLinkHandler: DeepLinkHandler
     
@@ -33,8 +36,6 @@ struct ContentView: View {
                                    preferences: serviceManager.userPreferences)
                     }
                     // Siri & Shortcuts is inside Settings now, rather than a tab of its own.
-                    // Value 3 was Shortcuts; a restored selection lands on Settings, which
-                    // is where Shortcuts went.
                     Tab("Settings", systemImage: "gearshape", value: 3) {
                         iOSSettingsView(preferences: serviceManager.userPreferences)
                     }

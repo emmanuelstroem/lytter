@@ -117,6 +117,28 @@ final class SettingsAndSearchUITests: XCTestCase {
         XCTAssertTrue(row("P2").exists, "P2 is not among the recent searches")
     }
 
+    // MARK: - Launch
+
+    /// The app opens on Home, whichever tab was showing when it was last left. It used to
+    /// restore the last tab, so a listener who had last searched came back to Search.
+    @MainActor
+    func testLaunchOpensOnHomeNotTheLastTab() throws {
+        launch()
+        app.tabBars.buttons["Search"].tap()
+        XCTAssertTrue(app.staticTexts["All Stations"].waitForExistence(timeout: 5),
+                      "Search did not open")
+
+        // Leave through the home screen, which is when scene state is saved, then come back.
+        XCUIDevice.shared.press(.home)
+        XCTAssertTrue(app.wait(for: .runningBackground, timeout: 5)
+                      || app.wait(for: .runningBackgroundSuspended, timeout: 5))
+        app.terminate()
+        launch()
+
+        XCTAssertTrue(app.tabBars.buttons["Home"].isSelected, "the app did not open on Home")
+        XCTAssertFalse(app.staticTexts["All Stations"].exists, "the app reopened on Search")
+    }
+
     // MARK: - Helpers
 
     @MainActor

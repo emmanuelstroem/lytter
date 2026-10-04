@@ -597,6 +597,13 @@ Four phases. Phase 0 is the "stop the bleeding" set; nothing ships without it.
       bar. tvOS keeps its button, shown only while `GroupStateObserver` says there is a
       call to share into. Covered by `SharePlayTests`. A call cannot be placed in a
       simulator, so a session has not been seen end to end; that needs two devices.
+- [x] ~~**F48. iOS opened on Search rather than Home.**~~ Done. The tab selection was
+      `@SceneStorage`, which restores the last tab, so a listener who had last searched
+      came back to Search — and the UI tests' launch check could not tell, because it
+      waits for a button starting "P1" and Search's rows start that way too. It is plain
+      `@State` now, so the app always opens on Home. Covered by
+      `SettingsAndSearchUITests.testLaunchOpensOnHomeNotTheLastTab`, which leaves through
+      the home screen (when scene state is saved) and relaunches; it failed before the fix.
 - [ ] **F14. Add a README.** Nineteen commits and no entry point for a reader.
       Checked 2026-10-04: not started; there is still no README.
 
