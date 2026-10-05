@@ -63,7 +63,12 @@ xcodebuild test -scheme lytter -destination 'platform=tvOS Simulator,name=Apple 
 shape's filled area, and with none the radio renders as hairline outlines. Two icon systems
 ship — on iOS/macOS 26 the `.icon` wins and the `appiconset` PNGs are only the fallback — so
 fixing one does not fix the other. A build passing proves nothing here; render the `.icon`
-with `ictool` (command in `docs/ROADMAP.md` F40) and look at it, in Default and Dark.
+with `ictool` and look at it, in Default and Dark (`--rendition Dark`). Simulators older
+than iOS 26 show the PNG fallback, so they cannot show this class of bug:
+
+```
+"/Applications/Xcode-beta.app/Contents/Applications/Icon Composer.app/Contents/Executables/ictool" AppIcon.icon --export-image --output-file out.png --platform iOS --rendition Default --width 512 --height 512 --scale 1
+```
 
 **A nested `ObservableObject` does not republish through its owner.** Observe
 `UserPreferencesService` directly rather than reaching it through `DRServiceManager`, or the
