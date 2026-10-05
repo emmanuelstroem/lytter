@@ -112,7 +112,9 @@ the folder adds it to the build automatically — including dead files.
 |---|---|---|
 | `GET /radio/v4/schedules/all/now` | app + Top Shelf | One call returns the current programme for every channel. This is the app's whole catalogue. |
 | `GET /radio/v4/indexpoints/live/{slug}` | app | Currently playing track for one channel. |
-| `GET /radio/v4/schedules/snapshot/{slug}` | — | Implemented in `DRNetworkService` but never called. |
+| `GET /radio/v5/schedules/snapshot/{slug}` | app | The programme before the one on air, and the rest of the day: what a rewind behind live lands in, and the schedule sheets. |
+| `GET /radio/v5/schedules/{slug}/{yyyy-MM-dd}` | app | One whole broadcast day (from about 05:00), merged with the snapshot in the schedule sheets so earlier programmes can be caught up on (F16). |
+| `https://api.dr.dk/radio/v1/assetlinks/…` | app | A recording's audio, from an episode's `audioAssets` where `isStreamLive` is false; redirects to HLS or a progressive file. |
 | `https://asset.dr.dk/drlyd/images/{id}` | app + Top Shelf | Artwork. |
 | `https://live-icy.gss.dr.dk/AAC{CHANNEL}` | app | ICY audio streams. |
 

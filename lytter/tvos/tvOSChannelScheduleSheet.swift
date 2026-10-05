@@ -18,6 +18,10 @@ import SwiftUI
 /// they hold a control, so the schedule sat still however the remote was used. Each row is
 /// `.focusable()` now, with a highlight drawn for the focused one, and `TVScrollingUITests`
 /// drives it with remote presses so it cannot quietly stop scrolling again.
+///
+/// A programme that has finished and that DR has a recording of is a button instead, and
+/// selecting it plays the recording (F16). Both kinds take focus, so the list scrolls the
+/// same over either.
 struct tvOSChannelScheduleSheet: View {
     let channel: DRChannel
     @ObservedObject var serviceManager: DRServiceManager
@@ -70,16 +74,7 @@ struct tvOSChannelScheduleSheet: View {
                         // A day is a few dozen rows.
                         VStack(alignment: .leading, spacing: 4) {
                             ForEach(items, id: \.broadcastID) { episode in
-                                row(for: episode)
-                                    .padding(.horizontal, 20)
-                                    .background(
-                                        // Inset on every side, so it shares no corner with
-                                        // the panel and is not bound to its radius.
-                                        RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                            .fill(.white.opacity(
-                                                focusedRow == episode.broadcastID ? 0.16 : 0))
-                                    )
-                                    .focusable()
+                                focusableRow(for: episode)
                                     .focused($focusedRow, equals: episode.broadcastID)
                                     // One element per row, read as a whole — time, title,
                                     // whether it is on air — rather than piece by piece.
@@ -110,10 +105,36 @@ struct tvOSChannelScheduleSheet: View {
         }
     }
 
+    /// The row with its focus highlight: a button when there is a recording to play,
+    /// otherwise just focusable, so that the list can scroll to it.
+    @ViewBuilder
+    private func focusableRow(for episode: DREpisode) -> some View {
+        let highlighted = row(for: episode)
+            .padding(.horizontal, 20)
+            .background(
+                // Inset on every side, so it shares no corner with the panel and is not
+                // bound to its radius.
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .fill(.white.opacity(focusedRow == episode.broadcastID ? 0.16 : 0))
+            )
+        if episode.isCatchUp(at: Date()) {
+            Button {
+                serviceManager.playOnDemand(episode)
+                dismiss()
+            } label: {
+                highlighted
+            }
+            .buttonStyle(ScheduleRowButtonStyle())
+            .accessibilityHint("Plays the recording")
+        } else {
+            highlighted.focusable()
+        }
+    }
+
     private func load() async {
         isLoading = true
         do {
-            items = try await serviceManager.fetchSchedule(for: channel)
+            items = try await serviceManager.fetchDaySchedule(for: channel)
             failure = nil
         } catch {
             failure = .forFailedRequest(error, isOnline: serviceManager.isOnline)
@@ -125,6 +146,7 @@ struct tvOSChannelScheduleSheet: View {
     /// rows do not shift as the digits change.
     private func row(for episode: DREpisode) -> some View {
         let isOnAir = episode.isCurrentlyPlaying
+        let isPlayingBack = serviceManager.onDemandEpisode?.broadcastID == episode.broadcastID
 
         return HStack(alignment: .firstTextBaseline, spacing: 20) {
             Text(episode.startDate?.formatted(date: .omitted, time: .shortened) ?? "")
@@ -153,9 +175,29 @@ struct tvOSChannelScheduleSheet: View {
                     .font(.caption.weight(.semibold))
                     .labelStyle(.titleAndIcon)
                     .foregroundStyle(Color.accentColor)
+            } else if isPlayingBack {
+                Label("Playing", systemImage: "speaker.wave.2.fill")
+                    .font(.caption.weight(.semibold))
+                    .labelStyle(.titleAndIcon)
+                    .foregroundStyle(Color.accentColor)
+            } else if episode.isCatchUp(at: Date()) {
+                Label("Play", systemImage: "play.circle")
+                    .font(.title3)
+                    .labelStyle(.iconOnly)
+                    .foregroundStyle(Color.secondary)
             }
         }
         .padding(.vertical, 8)
+    }
+}
+
+/// The row draws its own focus highlight, as the read-only rows do; the system button
+/// styles would add a lift and a platter of their own and the two kinds of row would not
+/// match.
+private struct ScheduleRowButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .opacity(configuration.isPressed ? 0.7 : 1)
     }
 }
 #endif

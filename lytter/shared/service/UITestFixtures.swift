@@ -101,7 +101,8 @@ enum UITestFixtures {
     }
 
     /// Today's schedule for one channel: more programmes than the schedule sheet shows at
-    /// once, with the one on air in the middle.
+    /// once, with the one on air in the middle. Every other finished programme has a
+    /// recording, so the sheet carries both kinds of row (F16).
     static func schedule(for slug: String, now: Date = Date()) -> DRScheduleResponse? {
         guard let channel = channels.first(where: { $0.slug == slug }) else { return nil }
         let items = (0..<30).map { index -> DREpisode in
@@ -111,7 +112,8 @@ enum UITestFixtures {
                            start: start,
                            end: start.addingTimeInterval(30 * 60),
                            title: "Fixture-program \(index + 1)",
-                           description: "Beskrivelse af program \(index + 1).")
+                           description: "Beskrivelse af program \(index + 1).",
+                           recorded: index < 15 && index.isMultiple(of: 2))
         }
         return DRScheduleResponse(type: "Schedule", channel: channel, items: items,
                                   scheduleDate: nil)
@@ -148,7 +150,8 @@ enum UITestFixtures {
     private static let formatter = ISO8601DateFormatter()
 
     private static func episode(on channel: DRChannel, index: Int, start: Date, end: Date,
-                                title: String, description: String) -> DREpisode {
+                                title: String, description: String,
+                                recorded: Bool = false) -> DREpisode {
         DREpisode(
             type: "Episode",
             learnId: "",
@@ -165,10 +168,14 @@ enum UITestFixtures {
             channel: channel,
             // Nothing listens on this address, so playback fails at once and quietly —
             // what the tests need is the player on screen, not audio.
-            audioAssets: [DRAudioAsset(type: "Audio", target: "Stream", isStreamLive: true,
-                                       format: "HLS", bitrate: nil,
-                                       url: "http://127.0.0.1:9/fixture.m3u8")],
-            isAvailableOnDemand: false,
+            audioAssets: recorded
+                ? [DRAudioAsset(type: "Audio", target: "Stream", isStreamLive: false,
+                                format: "HLS", bitrate: nil,
+                                url: "http://127.0.0.1:9/fixture-recording.m3u8")]
+                : [DRAudioAsset(type: "Audio", target: "Stream", isStreamLive: true,
+                                format: "HLS", bitrate: nil,
+                                url: "http://127.0.0.1:9/fixture.m3u8")],
+            isAvailableOnDemand: recorded,
             hasVideo: nil,
             explicitContent: nil,
             id: "urn:fixture:episode:\(channel.slug):\(index)",

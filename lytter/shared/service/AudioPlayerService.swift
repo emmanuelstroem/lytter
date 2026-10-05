@@ -50,6 +50,13 @@ class AudioPlayerService: NSObject, ObservableObject {
     @Published private(set) var secondsBehindLive: TimeInterval = 0
     @Published var error: String?
 
+    /// Whether the item is a recording rather than a live stream (F16). A recording's
+    /// seekable range is the whole programme and its end is not "live", so none of the
+    /// live-edge reckoning below applies to it.
+    private(set) var isOnDemand = false
+    /// Where playback is in a recording, in whole seconds. 0 for a live stream.
+    @Published private(set) var position: TimeInterval = 0
+
     /// Whether the listener means audio to be coming out: set by starting or resuming,
     /// cleared by pausing or stopping. Not `isPlaying`, which follows the player and goes
     /// false when a stream fails or stalls on a dead connection — exactly the case where
@@ -361,8 +368,11 @@ class AudioPlayerService: NSObject, ObservableObject {
         }
         updateSkipCommandsEnabled()
 
-        // Continuous seek and scrubbing to a position stay off: the lock screen has no
-        // meaningful position on a live stream to scrub along.
+        // Continuous seek and scrubbing to a position stay off. A live stream has no
+        // meaningful position to scrub along; a recording has one, but the lock screen's
+        // scrubber is easily dragged by accident with the phone in a pocket, and losing
+        // your place in an hour-long programme is worse than having to unlock to move.
+        // The lock screen still shows where the recording is — it just does not move it.
         commandCenter?.seekForwardCommand.isEnabled = false
         commandCenter?.seekBackwardCommand.isEnabled = false
         commandCenter?.changePlaybackPositionCommand.isEnabled = false
@@ -420,7 +430,12 @@ class AudioPlayerService: NSObject, ObservableObject {
         var nowPlayingInfo: [String: Any] = [:]
         
             // Determine what to show as title and artist based on available information
-        if let track = track, track.isPlaying(at: Date().addingTimeInterval(-secondsBehindLive)) {
+        if isOnDemand, let program {
+                // A recording: the programme, from the channel, with no track to show.
+            nowPlayingInfo[MPMediaItemPropertyTitle] = program.cleanTitle()
+            nowPlayingInfo[MPMediaItemPropertyArtist] = channel.title
+            nowPlayingInfo[MPMediaItemPropertyAlbumTitle] = "DR Radio"
+        } else if let track = track, track.isPlaying(at: Date().addingTimeInterval(-secondsBehindLive)) {
                 // Show track info when track is currently playing
             nowPlayingInfo[MPMediaItemPropertyTitle] = "\(channel.title) - \(program?.cleanTitle() ?? "")"
             nowPlayingInfo[MPMediaItemPropertyArtist] = track.displayText
@@ -437,14 +452,19 @@ class AudioPlayerService: NSObject, ObservableObject {
             nowPlayingInfo[MPMediaItemPropertyAlbumTitle] = "Live"
         }
         
-            // Set duration and elapsed time to show "LIVE" in progress bar
-            // Using a small duration to show progress bar with "LIVE" text
-        nowPlayingInfo[MPMediaItemPropertyPlaybackDuration] = 1.0
-        nowPlayingInfo[MPNowPlayingInfoPropertyElapsedPlaybackTime] = 0.5
+        if isOnDemand {
+                // A real position, which the system advances itself from the rate.
+            nowPlayingInfo[MPMediaItemPropertyPlaybackDuration] = onDemandDuration(fallback: program?.duration)
+            nowPlayingInfo[MPNowPlayingInfoPropertyElapsedPlaybackTime] = currentSeconds
+            nowPlayingInfo[MPNowPlayingInfoPropertyIsLiveStream] = false
+        } else {
+                // Set duration and elapsed time to show "LIVE" in progress bar
+                // Using a small duration to show progress bar with "LIVE" text
+            nowPlayingInfo[MPMediaItemPropertyPlaybackDuration] = 1.0
+            nowPlayingInfo[MPNowPlayingInfoPropertyElapsedPlaybackTime] = 0.5
+            nowPlayingInfo[MPNowPlayingInfoPropertyIsLiveStream] = true
+        }
         nowPlayingInfo[MPNowPlayingInfoPropertyDefaultPlaybackRate] = 1.0
-        
-            // Add live indicator
-        nowPlayingInfo[MPNowPlayingInfoPropertyIsLiveStream] = true
         
             // Set playback rate
         nowPlayingInfo[MPNowPlayingInfoPropertyPlaybackRate] = isPlaying ? 1.0 : 0.0
@@ -553,10 +573,31 @@ class AudioPlayerService: NSObject, ObservableObject {
     func updateCommandCenterPlaybackState() {
         var nowPlayingInfo = nowPlayingInfoCenter?.nowPlayingInfo ?? [:]
         nowPlayingInfo[MPNowPlayingInfoPropertyPlaybackRate] = isPlaying ? 1.0 : 0.0
+        if isOnDemand {
+            // The system extrapolates elapsed time from the rate, so it is reset whenever
+            // the rate changes or playback jumps; otherwise the lock screen drifts.
+            nowPlayingInfo[MPNowPlayingInfoPropertyElapsedPlaybackTime] = currentSeconds
+            nowPlayingInfo[MPMediaItemPropertyPlaybackDuration] = onDemandDuration(fallback: nil)
+        }
         nowPlayingInfoCenter?.nowPlayingInfo = nowPlayingInfo
         
             // Skip and seek stay disabled: there is nothing to seek within on a live
             // stream. See configureRemoteCommandTargets.
+    }
+
+    /// The player's position in seconds, or 0 when it has none.
+    private var currentSeconds: TimeInterval {
+        guard let time = player?.currentTime(), time.isValid, time.seconds.isFinite else { return 0 }
+        return max(time.seconds, 0)
+    }
+
+    /// The recording's length: the item's once it has loaded, else `fallback`, else the
+    /// last one known.
+    private func onDemandDuration(fallback: TimeInterval?) -> TimeInterval {
+        if let seconds = player?.currentItem?.duration.seconds, seconds.isFinite, seconds > 0 {
+            return seconds
+        }
+        return fallback ?? (duration.isFinite ? duration : 0)
     }
     
     func clearCommandCenterInfo() {
@@ -570,8 +611,12 @@ class AudioPlayerService: NSObject, ObservableObject {
     
     
     
-    func play(url: URL) {
+    /// Starts `url`. `onDemand` for a recording (F16), which then starts `position`
+    /// seconds in; a live stream always starts at live.
+    func play(url: URL, onDemand: Bool = false, from position: TimeInterval = 0) {
         pausedAt = nil
+        isOnDemand = onDemand
+        self.position = 0
         isLoading = true
         error = nil
         wantsPlayback = true
@@ -623,6 +668,9 @@ class AudioPlayerService: NSObject, ObservableObject {
                     case .readyToPlay:
                         self?.isLoading = false
                         self?.duration = playerItem.duration.seconds
+                        if onDemand, position > 0 {
+                            self?.player?.seek(to: CMTime(seconds: position, preferredTimescale: 600))
+                        }
                         self?.player?.play()
                         self?.isPlaying = true
                             // Update Command Center playback state
@@ -660,6 +708,25 @@ class AudioPlayerService: NSObject, ObservableObject {
                 }
             }
             .store(in: &playerObservations)
+
+            // A recording ends. The player stops by itself; the listener did not ask it to,
+            // but nor do they want it back, so the intent goes — or the connection coming
+            // back would "recover" a finished programme by playing it again.
+        if onDemand {
+            NotificationCenter.default
+                .publisher(for: AVPlayerItem.didPlayToEndTimeNotification, object: playerItem)
+                .receive(on: DispatchQueue.main)
+                .sink { [weak self] _ in
+                    Log.playback.info("on-demand recording finished")
+                    self?.pause()
+                }
+                .store(in: &playerObservations)
+        }
+    }
+
+    /// Plays `url` again: a recording from where it had got to, live at live.
+    private func reload(_ url: URL) {
+        play(url: url, onDemand: isOnDemand, from: isOnDemand ? currentSeconds : 0)
     }
     
     /// Pauses playback.
@@ -722,11 +789,17 @@ class AudioPlayerService: NSObject, ObservableObject {
         // Inside the DVR window, a pause is a time-shift: carry on from where it stopped,
         // and "Live" is there to jump forward. Past the window — or on a stream without
         // one — the position is gone, so reload at live.
-        if let pausedAt, Date().timeIntervalSince(pausedAt) > Self.staleAfter,
+        // A recording has no live window to fall out of; its position keeps.
+        if !isOnDemand, let pausedAt, Date().timeIntervalSince(pausedAt) > Self.staleAfter,
            !positionIsInsideWindow, let url {
             Log.playback.info("resuming after a long pause; reloading the live stream")
             play(url: url)
             return
+        }
+        // Play at the end of a finished recording means hear it again.
+        if isOnDemand, let item = player?.currentItem,
+           item.duration.isNumeric, currentSeconds >= item.duration.seconds - 1 {
+            player?.seek(to: .zero)
         }
         pausedAt = nil
         wantsPlayback = true
@@ -806,7 +879,7 @@ class AudioPlayerService: NSObject, ObservableObject {
         guard wantsPlayback, let player, player.timeControlStatus != .playing,
               let url = (player.currentItem?.asset as? AVURLAsset)?.url else { return false }
         Log.playback.info("connection back with the stream not playing; reloading it")
-        play(url: url)
+        reload(url)
         return true
     }
 
@@ -819,7 +892,7 @@ class AudioPlayerService: NSObject, ObservableObject {
                   player.timeControlStatus != .playing, let url else { return }
             Log.playback.error(
                 "resume did not start audio (status \(player.timeControlStatus.rawValue), waiting: \(player.reasonForWaitingToPlay?.rawValue ?? "none", privacy: .public), error: \(player.currentItem?.error?.localizedDescription ?? "none", privacy: .public)); reloading the stream")
-            self.play(url: url)
+            self.reload(url)
         }
     }
     
@@ -833,6 +906,8 @@ class AudioPlayerService: NSObject, ObservableObject {
         isPlaying = false
         interruption.playbackSettledDeliberately()
         duration = 0
+        isOnDemand = false
+        position = 0
             // Clear Command Center info
         clearCommandCenterInfo()
         
@@ -863,6 +938,12 @@ class AudioPlayerService: NSObject, ObservableObject {
         seek(to: target)
     }
 
+    /// Moves a recording to `seconds` from its start, kept inside it.
+    func seek(toPosition seconds: TimeInterval) {
+        guard isOnDemand, let range = seekableRange else { return }
+        seek(to: min(max(seconds, range.start.seconds), range.end.seconds))
+    }
+
     /// Jumps to the live edge.
     func seekToLive() {
         guard let range = seekableRange else { return }
@@ -873,7 +954,11 @@ class AudioPlayerService: NSObject, ObservableObject {
         let time = CMTime(seconds: seconds, preferredTimescale: 600)
         let tolerance = CMTime(seconds: 1, preferredTimescale: 600)
         player?.seek(to: time, toleranceBefore: tolerance, toleranceAfter: tolerance) { [weak self] _ in
-            DispatchQueue.main.async { self?.refreshSeekState() }
+            DispatchQueue.main.async {
+                self?.refreshSeekState()
+                // The lock screen's elapsed time is only extrapolated; a jump resets it.
+                if self?.isOnDemand == true { self?.updateCommandCenterPlaybackState() }
+            }
         }
     }
 
@@ -913,6 +998,10 @@ class AudioPlayerService: NSObject, ObservableObject {
     }
 
     private func refreshSeekState() {
+        if isOnDemand {
+            refreshOnDemandState()
+            return
+        }
         let range = seekableRange
         let behind: Bool
         if let range, let time = player?.currentTime(), time.isValid {
@@ -934,6 +1023,22 @@ class AudioPlayerService: NSObject, ObservableObject {
             offset = 0
         }
         if secondsBehindLive != offset { secondsBehindLive = offset }
+    }
+
+    /// A recording is always behind live — that is what the Live control is for, and it
+    /// leaves the recording for the channel — but by no measurable distance: the
+    /// behind-live offset picks the heard track and programme, and a recording has one
+    /// programme and no live tracks.
+    private func refreshOnDemandState() {
+        let range = seekableRange
+        if canSeek != (range != nil) {
+            canSeek = range != nil
+            updateSkipCommandsEnabled()
+        }
+        if !isBehindLive { isBehindLive = true }
+        if secondsBehindLive != 0 { secondsBehindLive = 0 }
+        let seconds = currentSeconds.rounded(.down)
+        if position != seconds { position = seconds }
     }
 
     private func addTimeObserver() {
