@@ -934,6 +934,8 @@ class DRServiceManager: ObservableObject {
     private let networkService = DRNetworkService()
     private let imageCache = ImageCacheService.shared
     let userPreferences = UserPreferencesService()
+    /// When favourite shows are on (F33). Views observe it directly.
+    let showSchedule = ShowScheduleService()
     private var cancellables = Set<AnyCancellable>()
     
     // Caching properties
@@ -985,6 +987,14 @@ class DRServiceManager: ObservableObject {
     }
     
     private func setupBindings() {
+        // A show pinned on a channel not fetched today — on a constrained network, where
+        // only favourite shows' channels are — needs today's schedule to say when it is on.
+        // The new value is passed on: @Published publishes before the property changes.
+        userPreferences.$favouriteShows
+            .dropFirst()
+            .sink { [weak self] shows in self?.refreshShowSchedule(favourites: shows) }
+            .store(in: &cancellables)
+
         audioPlayer.$isPlaying
             .assign(to: \.isPlaying, on: self)
             .store(in: &cancellables)
@@ -1127,6 +1137,7 @@ class DRServiceManager: ObservableObject {
             self.retryAttempt = 0
             self.restoreLastPlayedChannel()
             self.refreshCurrentProgram()
+            if self.isAppActive { self.refreshShowSchedule() }
 
             // Persist to disk only after a confirmed successful response — and never
             // fixtures, which would otherwise greet the next ordinary launch.
@@ -1834,7 +1845,37 @@ class DRServiceManager: ObservableObject {
     /// Called by the app as its scene comes and goes.
     func setAppActive(_ active: Bool) {
         isAppActive = active
-        if active { refreshScheduleIfNeeded() }
+        if active {
+            refreshScheduleIfNeeded()
+            refreshShowSchedule()
+        }
+    }
+
+    // MARK: - Favourite shows (F33)
+
+    /// Fetches today's schedule for every channel not yet fetched this broadcast day, and
+    /// folds it into the weekly template. Cheap to call: it does nothing when all is current.
+    /// Returns the refresh, for the background task to wait on.
+    @discardableResult
+    func refreshShowSchedule(inBackground: Bool = false,
+                             favourites: FavouriteShows? = nil) -> Task<Void, Never>? {
+        guard isOnline, !availableChannels.isEmpty else { return nil }
+        return showSchedule.refreshIfDue(
+            channels: availableChannels,
+            favourites: favourites ?? userPreferences.favouriteShows,
+            constrained: networkMonitor.isConstrained,
+            inBackground: inBackground,
+            fetchDay: { [weak self] channel in
+                guard let self else { return [] }
+                return try await self.fetchDaySchedule(for: channel)
+            },
+            onDay: { [weak self] day in self?.userPreferences.updateFavouriteShows(from: day) })
+    }
+
+    /// The catalogue's channel for `slug`: the template stores slugs, and the catalogue's
+    /// copy carries what the channel directory knows.
+    func channel(forSlug slug: String) -> DRChannel? {
+        availableChannels.first { $0.slug == slug }
     }
 
     /// Whether to fetch the schedule again: never fetched, fetched too long ago, or a

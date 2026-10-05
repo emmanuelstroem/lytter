@@ -23,6 +23,7 @@ struct TVScrollingCoverageTests {
     private static let covered: [String: [String]] = [
         "tvOSHomeView.swift": ["testHomeScrollsDownToLowerShelves"],
         "tvOSChannelShelf.swift": ["testShelfScrollsSideways"],
+        "tvOSShowShelf.swift": ["testShowShelfScrollsSideways"],
         "tvOSVariantMenu.swift": ["testDistrictPickerScrolls"],
         "tvOSChannelScheduleSheet.swift": ["testScheduleScrolls"],
         "tvOSScrollingText.swift": ["testInfoDescriptionScrolls"],

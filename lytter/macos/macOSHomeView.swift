@@ -6,9 +6,9 @@
 import SwiftUI
 
 #if os(macOS)
-/// Favourites, Recently Played, one shelf per broadcaster — the same sections as iOS and
-/// tvOS, built from the same `GroupedChannel`, so a Mac agrees with the phone about what a
-/// station is rather than deciding again from scratch.
+/// Favourites, favourite shows, Recently Played, one shelf per broadcaster — the same
+/// sections as iOS and tvOS, built from the same `GroupedChannel`, so a Mac agrees with the
+/// phone about what a station is rather than deciding again from scratch.
 struct macOSHomeView: View {
     @ObservedObject var serviceManager: DRServiceManager
     let onSelect: (DRChannel) -> Void
@@ -26,6 +26,10 @@ struct macOSHomeView: View {
                           groups: singles(serviceManager.userPreferences.favourites
                               .resolve(in: serviceManager.availableChannels)),
                           style: .featured)
+
+                    macOSShowShelf(serviceManager: serviceManager,
+                                   preferences: serviceManager.userPreferences,
+                                   showSchedule: serviceManager.showSchedule)
 
                     shelf(title: String(localized: "Recently Played"),
                           groups: singles(serviceManager.userPreferences.recentlyPlayed

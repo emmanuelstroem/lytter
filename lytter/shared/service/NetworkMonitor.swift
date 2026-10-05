@@ -17,6 +17,10 @@ final class NetworkMonitor {
     private let monitor = NWPathMonitor()
     private let queue = DispatchQueue(label: "lytter.network-monitor", qos: .utility)
 
+    /// Whether the path is constrained — Low Data Mode, on Wi-Fi or cellular. Read by the
+    /// show schedule (F33), which then fetches only what favourite shows need.
+    private(set) var isConstrained = false
+
     /// Starts watching. `onChange` runs on the main actor with the current state at once,
     /// then whenever it changes.
     func start(onChange: @escaping @MainActor (Bool) -> Void) {
@@ -28,9 +32,13 @@ final class NetworkMonitor {
         #endif
         // Explicitly @Sendable: the handler runs on `queue`, and a closure formed here would
         // otherwise be inferred main-actor isolated and trap when called from it.
-        monitor.pathUpdateHandler = { @Sendable path in
+        monitor.pathUpdateHandler = { @Sendable [weak self] path in
             let online = path.status == .satisfied
-            Task { @MainActor in onChange(online) }
+            let constrained = path.isConstrained
+            Task { @MainActor in
+                self?.isConstrained = constrained
+                onChange(online)
+            }
         }
         monitor.start(queue: queue)
     }

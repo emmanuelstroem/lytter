@@ -17,6 +17,7 @@ struct SettingsSections: View {
     @ObservedObject var preferences: UserPreferencesService
 
     @State private var confirmingRemoveFavourites = false
+    @State private var confirmingRemoveShows = false
     @State private var confirmingClearHistory = false
 
     var body: some View {
@@ -85,6 +86,19 @@ struct SettingsSections: View {
                 }
             } message: {
                 Text("Every station you have pinned will be removed from Favourites.")
+            }
+
+            Button("Remove All Favourite Shows", role: .destructive) {
+                confirmingRemoveShows = true
+            }
+            .disabled(preferences.favouriteShows.isEmpty)
+            .confirmationDialog("Remove All Favourite Shows?", isPresented: $confirmingRemoveShows,
+                                titleVisibility: .visible) {
+                Button("Remove All Favourite Shows", role: .destructive) {
+                    preferences.removeAllFavouriteShows()
+                }
+            } message: {
+                Text("Every show you have pinned will be removed from Shows.")
             }
         } header: {
             Text("Listening")

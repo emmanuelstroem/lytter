@@ -1,6 +1,23 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "%@ on %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ på %2$@"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ on %2$@"
+          }
+        }
+      }
+    },
     "%lld districts": {
       "extractionState": "manual",
       "localizations": {
@@ -179,6 +196,17 @@
         }
       }
     },
+    "Add Show to Favourites": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Føj program til favoritter"
+          }
+        }
+      }
+    },
     "Add to Favourites": {
       "extractionState": "manual",
       "localizations": {
@@ -275,6 +303,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Kanaldata blev ikke fundet (404). Prøv igen senere."
+          }
+        }
+      }
+    },
+    "Checking the schedule": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tjekker sendeplanen"
           }
         }
       }
@@ -478,6 +517,17 @@
         }
       }
     },
+    "Earlier today · Listen": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tidligere i dag · Lyt"
+          }
+        }
+      }
+    },
     "End of programme": {
       "extractionState": "manual",
       "localizations": {
@@ -496,6 +546,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Slutter nu"
+          }
+        }
+      }
+    },
+    "Every show you have pinned will be removed from Shows.": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alle de programmer, du har gemt, fjernes fra Programmer."
           }
         }
       }
@@ -799,6 +860,17 @@
         }
       }
     },
+    "Not on again today": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sendes ikke igen i dag"
+          }
+        }
+      }
+    },
     "Nothing Playing": {
       "extractionState": "manual",
       "localizations": {
@@ -905,6 +977,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Genhør"
+          }
+        }
+      }
+    },
+    "On now on %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sendes nu på %@"
           }
         }
       }
@@ -1053,6 +1136,17 @@
         }
       }
     },
+    "Plays the channel it is on": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Afspiller kanalen, det sendes på"
+          }
+        }
+      }
+    },
     "Plays the recording": {
       "extractionState": "manual",
       "localizations": {
@@ -1175,6 +1269,28 @@
         }
       }
     },
+    "Remove All Favourite Shows": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fjern alle favoritprogrammer"
+          }
+        }
+      }
+    },
+    "Remove All Favourite Shows?": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fjern alle favoritprogrammer?"
+          }
+        }
+      }
+    },
     "Remove All Favourites": {
       "extractionState": "manual",
       "localizations": {
@@ -1193,6 +1309,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Fjern alle favoritter?"
+          }
+        }
+      }
+    },
+    "Remove Show from Favourites": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fjern program fra favoritter"
           }
         }
       }
@@ -1406,6 +1533,17 @@
         }
       }
     },
+    "Show Schedule": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vis sendeplan"
+          }
+        }
+      }
+    },
     "Showing what was loaded last. It will update when you're back online.": {
       "extractionState": "manual",
       "localizations": {
@@ -1424,6 +1562,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "Viser det, der sidst blev hentet. Prøver igen automatisk."
+          }
+        }
+      }
+    },
+    "Shows": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Programmer"
+          }
+        }
+      }
+    },
+    "Shows the channel's schedule": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Viser kanalens sendeplan"
           }
         }
       }
@@ -1817,6 +1977,83 @@
           "stringUnit": {
             "state": "translated",
             "value": "Uventet svar fra serveren (%lld)."
+          }
+        }
+      }
+    },
+    "Usually Fridays %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Som regel fredage kl. %@"
+          }
+        }
+      }
+    },
+    "Usually Mondays %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Som regel mandage kl. %@"
+          }
+        }
+      }
+    },
+    "Usually Saturdays %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Som regel lørdage kl. %@"
+          }
+        }
+      }
+    },
+    "Usually Sundays %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Som regel søndage kl. %@"
+          }
+        }
+      }
+    },
+    "Usually Thursdays %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Som regel torsdage kl. %@"
+          }
+        }
+      }
+    },
+    "Usually Tuesdays %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Som regel tirsdage kl. %@"
+          }
+        }
+      }
+    },
+    "Usually Wednesdays %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Som regel onsdage kl. %@"
           }
         }
       }

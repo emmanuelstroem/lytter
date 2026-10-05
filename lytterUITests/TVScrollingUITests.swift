@@ -58,6 +58,25 @@ final class TVScrollingUITests: XCTestCase {
         XCTAssertTrue(isOnScreen(focused), "the last card has focus but is off screen")
     }
 
+    /// Favourite shows are a shelf of their own (F33). With ten pinned the row runs off the
+    /// screen, and pressing right along it has to reach the last show.
+    @MainActor
+    func testShowShelfScrollsSideways() throws {
+        launch(favouriteShows: 10)
+        XCTAssertTrue(app.staticTexts["Shows"].waitForExistence(timeout: 10),
+                      "the Shows shelf did not appear")
+        let lastShow = app.descendants(matching: .any)
+            .matching(NSPredicate(format: "label BEGINSWITH 'Fixture-serie 10'")).firstMatch
+        XCTAssertFalse(isOnScreen(lastShow), "the test needs the last show to start off screen")
+
+        XCTAssertTrue(moveFocus(.up, until: { $0.label.hasPrefix("Fixture-serie") }, maxPresses: 4),
+                      "could not reach the Shows shelf; focus is on \(focusedLabel)")
+        XCTAssertTrue(moveFocus(.right, until: { $0.label.hasPrefix("Fixture-serie 10") }),
+                      "pressing right never reached the last show; focus is on \(focusedLabel)")
+        XCTAssertTrue(isOnScreen(focused), "the last show has focus but is off screen")
+        shot("show-shelf-end")
+    }
+
     // MARK: - Radio and Search
 
     /// Radio is one horizontal row of every station. Pressing right has to reach the last.
@@ -219,8 +238,45 @@ final class TVScrollingUITests: XCTestCase {
         XCTAssertTrue(position.waitForExistence(timeout: 5),
                       "the player did not switch to the recording")
         XCTAssertFalse(rows.firstMatch.exists, "the schedule stayed open")
-        XCTAssertTrue(app.staticTexts["Fixture-program 15"].exists,
+        // By its series, as the player names every programme that has one (F33 gave the
+        // fixtures series; programme 15 is the fifth).
+        XCTAssertTrue(app.staticTexts["Fixture-serie 5"].exists,
                       "the player does not name the recording")
+    }
+
+    /// Holding select on a schedule row offers to pin its show (F33), and the show then has
+    /// a shelf on Home. The row on air is read-only — focusable, not a button — which is
+    /// the kind tvOS gives no context menu unless it is attached to the focused view.
+    @MainActor
+    func testScheduleRowPinsItsShow() throws {
+        launch()
+        openPlayer()
+
+        XCTAssertTrue(moveFocus(.right, until: { $0.label == "Schedule" }),
+                      "could not reach the schedule button; focus is on \(focusedLabel)")
+        press(.select)
+        let rows = app.descendants(matching: .any).matching(identifier: "schedule.row")
+        XCTAssertTrue(rows.firstMatch.waitForExistence(timeout: 5), "the schedule did not open")
+        sleep(1)
+        XCTAssertTrue(focusedLabel.contains("Fixture-program 16"),
+                      "the schedule should open on the programme on air; focus is on \(focusedLabel)")
+
+        XCUIRemote.shared.press(.select, forDuration: 1.5)
+        let pin = app.buttons["Add Show to Favourites"]
+        XCTAssertTrue(pin.waitForExistence(timeout: 5), "holding select offered no way to pin the show")
+        shot("schedule-pin-menu")
+        // The menu opens with its one item focused, in a window of its own where focus is
+        // not reported; select takes it.
+        press(.select)
+
+        // Out of the schedule, then out of Now Playing, which Menu takes back to Home.
+        press(.menu)
+        press(.menu)
+        XCTAssertTrue(app.staticTexts["Shows"].waitForExistence(timeout: 5),
+                      "Home has no Shows shelf after pinning")
+        let show = app.descendants(matching: .any)
+            .matching(NSPredicate(format: "label BEGINSWITH 'Fixture-serie 6'")).firstMatch
+        XCTAssertTrue(show.exists, "the pinned show is not on the Shows shelf")
     }
 
     /// The fixture description is several paragraphs, longer than the info sheet. A click
@@ -259,9 +315,10 @@ final class TVScrollingUITests: XCTestCase {
 
     @MainActor
     private func launch(favourites: [String] = [], recentlyPlayed: [String] = [],
-                        region: String? = nil) {
+                        region: String? = nil, favouriteShows: Int = 0) {
         app = XCUIApplication()
         app.launchEnvironment["LYTTER_UITEST_FIXTURES"] = "1"
+        app.launchEnvironment["LYTTER_UITEST_FAVOURITE_SHOWS"] = String(favouriteShows)
         // The argument domain overrides stored defaults for this launch only, so a test's
         // favourites never become the simulator's.
         app.launchArguments = [

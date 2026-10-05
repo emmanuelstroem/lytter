@@ -79,6 +79,14 @@ struct macOSPlayerBar: View {
                         .font(.system(size: 11))
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
+                        // The Mac has no schedule sheet, so the playing programme is where
+                        // a show is pinned (F33).
+                        .contextMenu {
+                            if let programme = serviceManager.getCurrentProgram(for: channel) {
+                                FavouriteShowButton(episode: programme,
+                                                    preferences: serviceManager.userPreferences)
+                            }
+                        }
                 }
             }
             .frame(maxWidth: 260, alignment: .leading)

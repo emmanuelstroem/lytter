@@ -52,6 +52,12 @@ struct iOSChannelScheduleSheet: View {
                             // several times a day and those repeats share one id.
                             ForEach(items, id: \.broadcastID) { episode in
                                 row(for: episode)
+                                    // Pin the show this programme belongs to (F33).
+                                    .contextMenu {
+                                        FavouriteShowButton(
+                                            episode: episode,
+                                            preferences: serviceManager.userPreferences)
+                                    }
                                     .id(episode.broadcastID)
                                     .listRowBackground(
                                         episode.isCurrentlyPlaying

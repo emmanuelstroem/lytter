@@ -91,6 +91,15 @@ struct PlayerInfoView: View {
                 )
                 .foregroundStyle(Color.secondary)
             }
+            // The programme being heard can be pinned from here as well as from the
+            // schedule (F33): the moment someone thinks "I like this" is while it plays.
+            .contentShape(Rectangle())
+            .contextMenu {
+                if let currentProgram, let serviceManager {
+                    FavouriteShowButton(episode: currentProgram,
+                                        preferences: serviceManager.userPreferences)
+                }
+            }
 
             Spacer(minLength: 0)
 

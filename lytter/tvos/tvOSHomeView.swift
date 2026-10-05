@@ -156,7 +156,7 @@ struct tvOSHomeView: View {
                 ConnectionBanner(serviceManager: serviceManager)
                     .padding(.horizontal, 60)
 
-                ForEach(shelfContents, id: \.title) { shelf in
+                ForEach(Array(shelfContents.enumerated()), id: \.element.title) { index, shelf in
                     tvOSChannelShelf(
                         title: shelf.title,
                         groups: shelf.groups,
@@ -165,10 +165,24 @@ struct tvOSHomeView: View {
                         onSelect: play,
                         focus: $focusedCard
                     )
+                    // Favourite shows (F33) come straight after Favourites, the first shelf.
+                    if index == 0 { showShelf }
                 }
             }
             .padding(.vertical, 32)
         }
+    }
+
+    private var showShelf: some View {
+        tvOSShowShelf(serviceManager: serviceManager,
+                      preferences: serviceManager.userPreferences,
+                      showSchedule: serviceManager.showSchedule,
+                      onPlayLive: play,
+                      onPlayRecording: { episode in
+                          serviceManager.playOnDemand(episode)
+                          section = .nowPlaying
+                      },
+                      focus: $focusedCard)
     }
 
     /// Puts focus on the first card, once, as soon as there is one. Left to the system, focus
@@ -177,6 +191,11 @@ struct tvOSHomeView: View {
     /// some seconds later. The TV and Music apps open on their content, sidebar closed.
     /// The focus tag of the first card on screen, if there is one yet.
     private var firstCardKey: String? {
+        // Favourites first, then favourite shows, which sit between it and the rest.
+        if let favourites = shelfContents.first, favourites.groups.isEmpty,
+           let show = serviceManager.userPreferences.favouriteShows.shows.first {
+            return tvOSShowShelf.focusKey(show)
+        }
         guard let shelf = shelfContents.first(where: { !$0.groups.isEmpty }),
               let group = shelf.groups.first else { return nil }
         return tvOSChannelShelf.focusKey(title: shelf.title, group: group)

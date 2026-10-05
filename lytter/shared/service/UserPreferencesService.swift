@@ -24,6 +24,7 @@ class UserPreferencesService: ObservableObject {
         static let showsArtwork = "showsArtwork"
         static let screenOffDelaySeconds = "screenOffDelaySeconds"
         static let recentSearchChannelIDs = "recentSearchChannelIDs"
+        static let favouriteShows = "favouriteShows"
     }
     
     // MARK: - Published Properties
@@ -34,6 +35,10 @@ class UserPreferencesService: ObservableObject {
     /// catalogue, and persisting a copy would leave stale names on screen after DR renames
     /// something.
     @Published private(set) var favourites = Favourites()
+
+    /// Pinned programmes (F33). Unlike channels, each keeps its title and artwork: a show is
+    /// in the catalogue only while it is on air. Stored as JSON.
+    @Published private(set) var favouriteShows = FavouriteShows()
 
     /// Listening history, newest first. Separate from `lastPlayedChannel`, which keeps a
     /// title and district so the mini player can be populated before the catalogue loads.
@@ -80,6 +85,18 @@ class UserPreferencesService: ObservableObject {
                 ?? Self.defaultScreenOffDelay
         recentSearches = RecentlyPlayed(
             channelIDs: userDefaults.stringArray(forKey: Keys.recentSearchChannelIDs) ?? [])
+        favouriteShows = Self.loadFavouriteShows(from: userDefaults)
+    }
+
+    private static func loadFavouriteShows(from defaults: UserDefaults) -> FavouriteShows {
+        #if DEBUG
+        if let fixtures = UITestFixtures.favouriteShows { return FavouriteShows(shows: fixtures) }
+        #endif
+        guard let data = defaults.data(forKey: Keys.favouriteShows),
+              let shows = try? JSONDecoder().decode([FavouriteShow].self, from: data) else {
+            return FavouriteShows()
+        }
+        return FavouriteShows(shows: shows)
     }
 
     /// The delay before anything has been chosen. Never, under UI tests: a test that sits
@@ -144,6 +161,52 @@ class UserPreferencesService: ObservableObject {
 
     func isFavourite(_ channelID: String) -> Bool {
         favourites.contains(channelID)
+    }
+
+    // MARK: - Favourite shows
+
+    @discardableResult
+    func toggleFavouriteShow(_ show: FavouriteShow) -> Bool {
+        var updated = favouriteShows
+        let isNowFavourite = updated.toggle(show)
+        setFavouriteShows(updated)
+        return isNowFavourite
+    }
+
+    func removeFavouriteShow(_ seriesID: String) {
+        var updated = favouriteShows
+        updated.remove(seriesID)
+        setFavouriteShows(updated)
+    }
+
+    func isFavouriteShow(_ seriesID: String) -> Bool {
+        favouriteShows.contains(seriesID)
+    }
+
+    /// Unpins every show. Settings asks first; this does not.
+    func removeAllFavouriteShows() {
+        favouriteShows = FavouriteShows()
+        userDefaults.removeObject(forKey: Keys.favouriteShows)
+    }
+
+    /// Brings pinned shows up to date with a schedule just fetched: a new title, new
+    /// artwork, another channel. Writes only if something changed.
+    func updateFavouriteShows(from episodes: [DREpisode]) {
+        var updated = favouriteShows
+        var changed = false
+        for episode in episodes where updated.update(from: episode) { changed = true }
+        if changed { setFavouriteShows(updated) }
+    }
+
+    private func setFavouriteShows(_ shows: FavouriteShows) {
+        favouriteShows = shows
+        #if DEBUG
+        // Fixture shows are the test's, not the simulator's.
+        if UITestFixtures.favouriteShows != nil { return }
+        #endif
+        if let data = try? JSONEncoder().encode(shows.shows) {
+            userDefaults.set(data, forKey: Keys.favouriteShows)
+        }
     }
 
     // MARK: - Region
