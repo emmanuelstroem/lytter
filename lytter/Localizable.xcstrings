@@ -185,6 +185,17 @@
         }
       }
     },
+    "A notification five minutes before a favourite show starts. When the time comes from the weekly pattern rather than today's schedule, it says so.": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En notifikation fem minutter før et favoritprogram starter. Når tiden kommer fra det ugentlige mønster frem for dagens sendeplan, står det i den."
+          }
+        }
+      }
+    },
     "API access forbidden (403). Check your subscription key.": {
       "extractionState": "manual",
       "localizations": {
@@ -904,6 +915,17 @@
         }
       }
     },
+    "Notifications are turned off for Lytter. Turn them on in Settings to be reminded.": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notifikationer er slået fra for Lytter. Slå dem til i Indstillinger for at blive påmindet."
+          }
+        }
+      }
+    },
     "Now Playing": {
       "extractionState": "manual",
       "localizations": {
@@ -988,6 +1010,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Sendes nu på %@"
+          }
+        }
+      }
+    },
+    "Open Notification Settings": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Åbn indstillinger for notifikationer"
           }
         }
       }
@@ -1265,6 +1298,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Huskes, når du vælger et distrikt på P4 eller P5, og vises først på alle regionale kanaler."
+          }
+        }
+      }
+    },
+    "Remind Me When Shows Start": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Påmind mig, når programmer starter"
           }
         }
       }
@@ -1676,6 +1720,23 @@
         }
       }
     },
+    "Starts at %@ on %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Starter kl. %1$@ på %2$@"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Starts at %1$@ on %2$@"
+          }
+        }
+      }
+    },
     "Station": {
       "extractionState": "manual",
       "localizations": {
@@ -2054,6 +2115,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Som regel onsdage kl. %@"
+          }
+        }
+      }
+    },
+    "Usually starts at %@ on %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Starter som regel kl. %1$@ på %2$@"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usually starts at %1$@ on %2$@"
           }
         }
       }

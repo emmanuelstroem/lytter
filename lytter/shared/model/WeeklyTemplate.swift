@@ -180,23 +180,36 @@ nonisolated enum WeeklyTemplate {
     static func nextPredicted(seriesID: String, in slots: [TemplateSlot],
                               realChannels: Set<String>, after now: Date)
         -> (slot: TemplateSlot, start: Date)? {
-        let predicted = slots.filter { $0.seriesID == seriesID && isPredicted($0, at: now) }
-        guard !predicted.isEmpty else { return nil }
-        let today = BroadcastClock.broadcastDayKey(now)
+        // Eight days, so that a slot whose time today has passed — and, on a channel whose
+        // real schedule is known, today's slot — still finds next week's.
+        predictedStarts(seriesID: seriesID, in: slots, realChannels: realChannels, after: now,
+                        days: 8).first
+    }
 
-        var best: (slot: TemplateSlot, start: Date)?
-        for offset in 0...7 {
+    /// Every predicted start of `seriesID` after `now` and within `days`, soonest first —
+    /// what reminders (F51) are scheduled from. Today's slots on a channel in `realChannels`
+    /// are left out, as in `nextPredicted`.
+    static func predictedStarts(seriesID: String, in slots: [TemplateSlot],
+                                realChannels: Set<String>, after now: Date, days: Int = 7)
+        -> [(slot: TemplateSlot, start: Date)] {
+        let predicted = slots.filter { $0.seriesID == seriesID && isPredicted($0, at: now) }
+        guard !predicted.isEmpty else { return [] }
+        let today = BroadcastClock.broadcastDayKey(now)
+        let horizon = now.addingTimeInterval(TimeInterval(days) * 24 * 3600)
+
+        var starts: [(slot: TemplateSlot, start: Date)] = []
+        for offset in 0...days {
             guard let day = BroadcastClock.calendar.date(byAdding: .day, value: offset,
                                                          to: now) else { continue }
             let weekday = BroadcastClock.weekday(day)
             for slot in predicted where slot.weekday == weekday {
                 guard let start = BroadcastClock.date(onDayOf: day, atMinute: slot.startMinute),
-                      start > now else { continue }
+                      start > now, start <= horizon else { continue }
                 if realChannels.contains(slot.channelSlug),
                    BroadcastClock.broadcastDayKey(start) == today { continue }
-                if best == nil || start < best!.start { best = (slot, start) }
+                starts.append((slot, start))
             }
         }
-        return best
+        return starts.sorted { $0.start < $1.start }
     }
 }

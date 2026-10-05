@@ -25,6 +25,7 @@ class UserPreferencesService: ObservableObject {
         static let screenOffDelaySeconds = "screenOffDelaySeconds"
         static let recentSearchChannelIDs = "recentSearchChannelIDs"
         static let favouriteShows = "favouriteShows"
+        static let remindsShows = "remindsShows"
     }
     
     // MARK: - Published Properties
@@ -39,6 +40,10 @@ class UserPreferencesService: ObservableObject {
     /// Pinned programmes (F33). Unlike channels, each keeps its title and artwork: a show is
     /// in the catalogue only while it is on air. Stored as JSON.
     @Published private(set) var favouriteShows = FavouriteShows()
+
+    /// Whether a notification rings a few minutes before a favourite show starts (F51). Off
+    /// until switched on, which is when notification permission is asked for.
+    @Published private(set) var remindsShows = false
 
     /// Listening history, newest first. Separate from `lastPlayedChannel`, which keeps a
     /// title and district so the mini player can be populated before the catalogue loads.
@@ -86,6 +91,7 @@ class UserPreferencesService: ObservableObject {
         recentSearches = RecentlyPlayed(
             channelIDs: userDefaults.stringArray(forKey: Keys.recentSearchChannelIDs) ?? [])
         favouriteShows = Self.loadFavouriteShows(from: userDefaults)
+        remindsShows = userDefaults.bool(forKey: Keys.remindsShows)
     }
 
     private static func loadFavouriteShows(from defaults: UserDefaults) -> FavouriteShows {
@@ -114,6 +120,11 @@ class UserPreferencesService: ObservableObject {
     func setShowsArtwork(_ shows: Bool) {
         showsArtwork = shows
         userDefaults.set(shows, forKey: Keys.showsArtwork)
+    }
+
+    func setRemindsShows(_ reminds: Bool) {
+        remindsShows = reminds
+        userDefaults.set(reminds, forKey: Keys.remindsShows)
     }
 
     func setScreenOffDelay(_ delay: ScreenOffDelay) {

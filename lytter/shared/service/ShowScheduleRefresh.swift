@@ -17,7 +17,8 @@ import BackgroundTasks
 /// (`DRServiceManager.setAppActive`), so a device the system never wakes is still current
 /// as soon as it is opened. The Mac has no `BGTaskScheduler`; while the app runs, an
 /// `NSBackgroundActivityScheduler` asks every hour, and the refresh does nothing until the
-/// day has turned.
+/// day has turned. Each pass ends by scheduling show reminders afresh (F51), so a week of
+/// them is booked even on a device that is opened once a week.
 enum ShowScheduleRefresh {
     static let identifier = "com.eopio.lytter.show-schedule"
 
@@ -46,7 +47,7 @@ enum ShowScheduleRefresh {
         }
         let refresh = manager.refreshShowSchedule(inBackground: true)
         await withTaskCancellationHandler {
-            await refresh?.value
+            await refresh.value
         } onCancel: {
             Task { @MainActor in DRServiceManager.shared.showSchedule.cancelRefresh() }
         }
@@ -66,7 +67,7 @@ enum ShowScheduleRefresh {
         activity.qualityOfService = .utility
         activity.schedule { completion in
             Task { @MainActor in
-                await DRServiceManager.shared.refreshShowSchedule(inBackground: true)?.value
+                await DRServiceManager.shared.refreshShowSchedule(inBackground: true).value
                 completion(.finished)
             }
         }
