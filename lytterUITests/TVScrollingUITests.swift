@@ -160,6 +160,36 @@ final class TVScrollingUITests: XCTestCase {
         XCTAssertTrue(isOnScreen(focused), "the last row has focus but is off screen")
     }
 
+    /// Settings' Region picker (F50) pushes a list of every district plus "Not Chosen".
+    /// Pressing down has to reach the last one with it on screen, and choosing it has to
+    /// come back to Settings showing it.
+    @MainActor
+    func testRegionPickerScrolls() throws {
+        launch(region: "Fyn")
+        openSection("Settings")
+
+        XCTAssertTrue(moveFocus(.down, until: { $0.label.hasPrefix("Region") }, maxPresses: 8),
+                      "could not reach the Region row; focus is on \(focusedLabel)")
+        press(.select)
+        XCTAssertTrue(app.buttons["Østjylland"].waitForExistence(timeout: 5),
+                      "the region list did not open")
+
+        XCTAssertTrue(moveFocus(.down, until: { $0.label.hasPrefix("Østjylland") }, maxPresses: 14),
+                      "pressing down never reached the last district; focus is on \(focusedLabel)")
+        XCTAssertTrue(isOnScreen(focused), "the last district has focus but is off screen")
+        shot("region-list-bottom")
+
+        press(.select)
+        sleep(1)
+        XCTAssertTrue(focused.waitForExistence(timeout: 5), "nothing has focus after choosing")
+        shot("after-choosing")
+        XCTAssertEqual(focusedLabel, "Region",
+                       "choosing should return to the Region row; focus is on \(focusedLabel)")
+        // The focused row is a cell; the choice is the value of the button inside it.
+        let row = focused.buttons["Region"].firstMatch
+        XCTAssertEqual(row.value as? String, "Østjylland", "Settings should show the chosen region")
+    }
+
     // MARK: - District picker
 
     /// The picker is one column of ten districts, taller than its panel. Pressing down has to

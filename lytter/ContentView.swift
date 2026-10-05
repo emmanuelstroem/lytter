@@ -37,7 +37,8 @@ struct ContentView: View {
                     }
                     // Siri & Shortcuts is inside Settings now, rather than a tab of its own.
                     Tab("Settings", systemImage: "gearshape", value: 3) {
-                        iOSSettingsView(preferences: serviceManager.userPreferences)
+                        iOSSettingsView(preferences: serviceManager.userPreferences,
+                                        channels: serviceManager.availableChannels)
                     }
                 }
                 .tabBarMinimizeBehavior(.onScrollDown)
@@ -74,7 +75,8 @@ struct ContentView: View {
                         }
                     
                     // Settings Tab
-                    iOSSettingsView(preferences: serviceManager.userPreferences)
+                    iOSSettingsView(preferences: serviceManager.userPreferences,
+                                    channels: serviceManager.availableChannels)
                         .tabItem {
                             Image(systemName: "gearshape")
                             Text("Settings")

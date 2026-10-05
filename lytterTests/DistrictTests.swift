@@ -108,6 +108,53 @@ struct DistrictTests {
                 == p4.channels.map(\.title))
     }
 
+    // MARK: - Settings' list of regions (F50)
+
+    private func choices(_ titles: [String], keeping remembered: District? = nil) -> [String] {
+        District.choices(in: titles.map(channel), keeping: remembered).map(\.name)
+    }
+
+    /// P4 København and P5 København are one place to live, so one row.
+    @Test func aRegionOnTwoStationsIsListedOnce() {
+        #expect(choices(p4.channels.map(\.title) + p5.channels.map(\.title))
+                == ["Fyn", "København", "Midt & Vest"])
+    }
+
+    /// Choosing it still decides what P4 shows, so it belongs in the list even though P5
+    /// will carry on as before.
+    @Test func aRegionOnlyOneStationHasIsListed() {
+        #expect(choices(["P4 Fyn", "P4 Bornholm", "P5 Fyn"]) == ["Bornholm", "Fyn"])
+    }
+
+    @Test func stationsWithoutDistrictsAddNothing() {
+        #expect(choices(["P1", "P3", "P4 Fyn"]) == ["Fyn"])
+    }
+
+    /// Danish names, in Danish order: Ø after Z, not beside O.
+    @Test func regionsAreInDanishOrder() {
+        #expect(choices(["P4 Østjylland", "P4 Odense", "P4 Ærø", "P4 Århus", "P4 Zealand"])
+                == ["Odense", "Zealand", "Ærø", "Østjylland", "Århus"])
+    }
+
+    /// A stored region DR has stopped broadcasting stays visible and selected, rather than
+    /// Settings claiming nothing is chosen while P4 still opens on it.
+    @Test func aRememberedRegionTheCatalogueLacksIsKept() {
+        #expect(choices(["P4 Fyn"], keeping: District(name: "Bornholm")) == ["Bornholm", "Fyn"])
+    }
+
+    /// A stored name DR has since restyled is the region the catalogue lists — shown once,
+    /// as DR now writes it.
+    @Test func aRememberedRegionTheCatalogueHasIsNotListedTwice() {
+        #expect(choices(["P4 Midt & Vest"], keeping: District(name: "MIDT & VEST"))
+                == ["Midt & Vest"])
+    }
+
+    /// Before the catalogue has loaded the list is empty — but a stored region still shows.
+    @Test func withNoCatalogueOnlyTheRememberedRegionIsListed() {
+        #expect(choices([], keeping: District(name: "Fyn")) == ["Fyn"])
+        #expect(choices([]).isEmpty)
+    }
+
     // MARK: - Channel identifiers
 
     @Test func aChannelWithNoDistrictHasNoRegion() {

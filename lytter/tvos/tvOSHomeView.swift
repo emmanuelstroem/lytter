@@ -73,7 +73,8 @@ struct tvOSHomeView: View {
                     }
                     // Last, at the bottom of the sidebar, as in the TV app (F37).
                     Tab("Settings", systemImage: "gearshape", value: tvOSSection.settings) {
-                        tvOSSettingsView(preferences: serviceManager.userPreferences)
+                        tvOSSettingsView(preferences: serviceManager.userPreferences,
+                                         channels: serviceManager.availableChannels)
                     }
                 }
                 // No `.tabViewSidebarHeader` — the app name above the list would suit it,
@@ -118,7 +119,8 @@ struct tvOSHomeView: View {
                 .tabItem { Label("Now Playing", systemImage: "play.circle") }
                 .tag(tvOSSection.nowPlaying)
 
-            tvOSSettingsView(preferences: serviceManager.userPreferences)
+            tvOSSettingsView(preferences: serviceManager.userPreferences,
+                             channels: serviceManager.availableChannels)
                 .tabItem { Label("Settings", systemImage: "gearshape") }
                 .tag(tvOSSection.settings)
         }

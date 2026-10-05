@@ -15,10 +15,16 @@ import SwiftUI
 /// redraw (see AGENTS.md).
 struct SettingsSections: View {
     @ObservedObject var preferences: UserPreferencesService
+    /// The channels on offer, for the regions they broadcast (F50).
+    let channels: [DRChannel]
 
     @State private var confirmingRemoveFavourites = false
     @State private var confirmingRemoveShows = false
     @State private var confirmingClearHistory = false
+
+    private var regions: [District] {
+        District.choices(in: channels, keeping: preferences.preferredDistrict)
+    }
 
     var body: some View {
         Section {
@@ -52,19 +58,20 @@ struct SettingsSections: View {
         #endif
 
         Section {
-            LabeledContent("Region") {
-                if let region = preferences.preferredDistrict {
-                    Text(verbatim: region.name)
-                } else {
-                    Text("Not Chosen")
+            // Tagged by id, not by `District`: a stored name DR has since restyled is the
+            // same region, but not an equal value, and would leave the picker unselected.
+            Picker("Region", selection: Binding(
+                get: { preferences.preferredDistrict?.id },
+                set: { id in
+                    preferences.rememberDistrict(regions.first { $0.id == id })
+                })) {
+                Text("Not Chosen").tag(String?.none)
+                ForEach(regions) { region in
+                    Text(verbatim: region.name).tag(Optional(region.id))
                 }
             }
-            Button("Forget Region", role: .destructive) {
-                preferences.rememberDistrict(nil)
-            }
-            .disabled(preferences.preferredDistrict == nil)
         } footer: {
-            Text("Remembered when you choose a district on P4 or P5, and listed first on every regional station.")
+            Text("Shown on the P4 and P5 cards, and listed first when you choose a district. A region only one of them broadcasts leaves the other as it was.")
         }
 
         Section {

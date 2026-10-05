@@ -605,17 +605,6 @@
         }
       }
     },
-    "Forget Region": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Glem region"
-          }
-        }
-      }
-    },
     "Hold the Siri button on the remote and say “Play P3”.": {
       "extractionState": "manual",
       "localizations": {
@@ -1291,17 +1280,6 @@
         }
       }
     },
-    "Remembered when you choose a district on P4 or P5, and listed first on every regional station.": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Huskes, når du vælger et distrikt på P4 eller P5, og vises først på alle regionale kanaler."
-          }
-        }
-      }
-    },
     "Remind Me When Shows Start": {
       "extractionState": "manual",
       "localizations": {
@@ -1606,6 +1584,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Viser det, der sidst blev hentet. Prøver igen automatisk."
+          }
+        }
+      }
+    },
+    "Shown on the P4 and P5 cards, and listed first when you choose a district. A region only one of them broadcasts leaves the other as it was.": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vises på P4- og P5-kortene og først, når du vælger et distrikt. En region, som kun den ene sender, ændrer ikke den anden."
           }
         }
       }
