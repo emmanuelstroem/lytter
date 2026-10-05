@@ -48,6 +48,15 @@ final class ShowScheduleService: ObservableObject {
                         channelSlugs: show.channelSlugs, now: now)
     }
 
+    /// The reminders to schedule for `shows` at `now` (F51), from the same airings and
+    /// template the shelf reads.
+    func reminderPlan(for shows: FavouriteShows, now: Date = Date()) -> [PlannedReminder] {
+        guard !shows.isEmpty else { return [] }
+        return ShowReminderPlanner.plan(shows: shows.shows, today: currentToday(now: now),
+                                        slots: store.slots(forSeries: shows.seriesIDs),
+                                        now: now)
+    }
+
     /// Today's schedules that are still today's: a schedule fetched before this morning's
     /// 05:05 belongs to a broadcast day that has ended.
     private func currentToday(now: Date) -> [String: [DREpisode]] {

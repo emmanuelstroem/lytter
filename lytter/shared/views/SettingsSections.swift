@@ -47,6 +47,10 @@ struct SettingsSections: View {
         }
         #endif
 
+        #if os(iOS) || os(macOS)
+        ShowRemindersSection(preferences: preferences)
+        #endif
+
         Section {
             LabeledContent("Region") {
                 if let region = preferences.preferredDistrict {
@@ -105,6 +109,63 @@ struct SettingsSections: View {
         }
     }
 }
+
+#if os(iOS) || os(macOS)
+/// Reminders before favourite shows start (F51). Not on tvOS, which shows no notifications.
+///
+/// Permission is asked when the toggle is first switched on, not at launch. Refused, the
+/// toggle goes back off and the footer says where notifications are turned on.
+private struct ShowRemindersSection: View {
+    @ObservedObject var preferences: UserPreferencesService
+    @Environment(\.openURL) private var openURL
+    @State private var isDenied = false
+
+    var body: some View {
+        Section {
+            Toggle("Remind Me When Shows Start", isOn: Binding(
+                get: { preferences.remindsShows },
+                set: { switchTo($0) }))
+            if isDenied {
+                Button("Open Notification Settings") {
+                    if let url = Self.notificationSettingsURL { openURL(url) }
+                }
+            }
+        } footer: {
+            if isDenied {
+                Text("Notifications are turned off for Lytter. Turn them on in Settings to be reminded.")
+            } else {
+                Text("A notification five minutes before a favourite show starts. When the time comes from the weekly pattern rather than today's schedule, it says so.")
+            }
+        }
+        .task { await refreshDenied() }
+    }
+
+    private func switchTo(_ on: Bool) {
+        guard on else {
+            preferences.setRemindsShows(false)
+            return
+        }
+        preferences.setRemindsShows(true)
+        Task {
+            let granted = await ShowReminderScheduler.requestAuthorization()
+            if !granted { preferences.setRemindsShows(false) }
+            await refreshDenied()
+        }
+    }
+
+    private func refreshDenied() async {
+        isDenied = await ShowReminderScheduler.isDenied()
+    }
+
+    private static var notificationSettingsURL: URL? {
+        #if os(iOS)
+        URL(string: UIApplication.openNotificationSettingsURLString)
+        #else
+        URL(string: "x-apple.systempreferences:com.apple.Notifications-Settings.extension")
+        #endif
+    }
+}
+#endif
 
 extension Bundle {
     /// "1.2 (34)", for the About row.

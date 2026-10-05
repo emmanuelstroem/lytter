@@ -24,6 +24,13 @@ struct lytterApp: App {
     @UIApplicationDelegateAdaptor(LytterAppDelegate.self) private var appDelegate
     #endif
 
+    #if os(iOS) || os(macOS)
+    init() {
+        // Before the first scene, so a reminder tapped to launch the app is not missed (F51).
+        ReminderNotificationDelegate.shared.install()
+    }
+    #endif
+
     var body: some Scene {
         WindowGroup {
             ContentView()
@@ -44,6 +51,14 @@ struct lytterApp: App {
                 .onOpenURL { url in
                     deepLinkHandler.handleDeepLink(url)
                 }
+                #if os(iOS) || os(macOS)
+                // A tapped show reminder plays its channel, the way a link does (F51).
+                .task {
+                    ReminderNotificationDelegate.shared.onOpen = { url in
+                        deepLinkHandler.handleDeepLink(url)
+                    }
+                }
+                #endif
                 // Without this nothing receives the session an invitation creates, and
                 // whoever accepted it hears nothing.
                 .task {

@@ -936,6 +936,10 @@ class DRServiceManager: ObservableObject {
     let userPreferences = UserPreferencesService()
     /// When favourite shows are on (F33). Views observe it directly.
     let showSchedule = ShowScheduleService()
+    #if os(iOS) || os(macOS)
+    /// Reminders before favourite shows start (F51). tvOS shows no notifications but badges.
+    private let showReminders = ShowReminderScheduler()
+    #endif
     private var cancellables = Set<AnyCancellable>()
     
     // Caching properties
@@ -993,6 +997,11 @@ class DRServiceManager: ObservableObject {
         userPreferences.$favouriteShows
             .dropFirst()
             .sink { [weak self] shows in self?.refreshShowSchedule(favourites: shows) }
+            .store(in: &cancellables)
+        // Switching reminders on or off schedules them, or takes them away, at once.
+        userPreferences.$remindsShows
+            .dropFirst()
+            .sink { [weak self] reminds in self?.rescheduleShowReminders(enabled: reminds) }
             .store(in: &cancellables)
 
         audioPlayer.$isPlaying
@@ -1854,11 +1863,21 @@ class DRServiceManager: ObservableObject {
     // MARK: - Favourite shows (F33)
 
     /// Fetches today's schedule for every channel not yet fetched this broadcast day, and
-    /// folds it into the weekly template. Cheap to call: it does nothing when all is current.
-    /// Returns the refresh, for the background task to wait on.
+    /// folds it into the weekly template; then schedules reminders afresh from what is known
+    /// (F51), whether or not anything needed fetching. Cheap to call: it fetches nothing when
+    /// all is current. Returns the whole pass, for the background task to wait on.
     @discardableResult
     func refreshShowSchedule(inBackground: Bool = false,
-                             favourites: FavouriteShows? = nil) -> Task<Void, Never>? {
+                             favourites: FavouriteShows? = nil) -> Task<Void, Never> {
+        let refresh = fetchDueShowSchedules(inBackground: inBackground, favourites: favourites)
+        return Task { [weak self] in
+            await refresh?.value
+            await self?.rescheduleShowReminders().value
+        }
+    }
+
+    private func fetchDueShowSchedules(inBackground: Bool,
+                                       favourites: FavouriteShows?) -> Task<Void, Never>? {
         guard isOnline, !availableChannels.isEmpty else { return nil }
         return showSchedule.refreshIfDue(
             channels: availableChannels,
@@ -1870,6 +1889,30 @@ class DRServiceManager: ObservableObject {
                 return try await self.fetchDaySchedule(for: channel)
             },
             onDay: { [weak self] day in self?.userPreferences.updateFavouriteShows(from: day) })
+    }
+
+    /// Replaces the pending show reminders with the coming week's (F51). `enabled` is the
+    /// setting's new value while it is changing — @Published publishes before it changes.
+    @discardableResult
+    func rescheduleShowReminders(enabled: Bool? = nil) -> Task<Void, Never> {
+        #if os(iOS) || os(macOS)
+        #if DEBUG
+        // UI tests never touch the simulator's real notifications.
+        if UITestFixtures.isActive { return Task {} }
+        #endif
+        let enabled = enabled ?? userPreferences.remindsShows
+        let plan = enabled ? showSchedule.reminderPlan(for: userPreferences.favouriteShows) : []
+        let titles = Dictionary(availableChannels.map { ($0.slug, $0.qualifiedName) },
+                                uniquingKeysWith: { first, _ in first })
+        let reminders = showReminders
+        return Task {
+            await reminders.reschedule(plan, enabled: enabled) { slug in
+                titles[slug] ?? slug.uppercased()
+            }
+        }
+        #else
+        return Task {}
+        #endif
     }
 
     /// The catalogue's channel for `slug`: the template stores slugs, and the catalogue's

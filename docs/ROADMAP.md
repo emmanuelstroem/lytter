@@ -112,33 +112,6 @@ What is left is listed below. Three gaps are not entries of their own:
 
 ### P2 — expansion
 
-- [ ] **F51. Remind me when a favourite show starts.** A Settings toggle, off by default,
-      that notifies a few minutes before a favourite show (F33) goes on air, with a tap
-      that opens the app playing that channel. Depends on F33.
-      - **Local notifications, not push.** Real push needs APNs and a server that knows
-        every device's favourites and polls DR for them; this app has no server and should
-        not grow one for this. `UNUserNotificationCenter` with a calendar trigger does the
-        job. Permission is asked when the toggle is first switched on, not at launch; if it
-        is refused, the toggle explains and links to the app's notification settings.
-      - **What it can promise.** Each pass schedules the coming seven days from F33's
-        weekly schedule — today's real airings plus the slots that have repeated — so a
-        device that runs the app once a week still rings. Passes run with F33's refresh:
-        the 05:05 `BGAppRefreshTask`, launch and returning to the foreground.
-      - **Predicted airings ring too, but say so.** With F33's weekly template, a
-        reminder for a predicted airing (a *Usually* slot) reads *Sorte
-        tal is usually on P1 now*; a real one reads *Sorte tal is on P1 now*. When that
-        day's real schedule is fetched, it is confirmed, moved or removed.
-      - **Replace, do not accumulate.** Each pass removes the app's pending reminders and
-        schedules afresh from today's airings, identified by broadcast id, so a moved
-        programme does not ring twice. Stay well under iOS's 64 pending notifications.
-      - **Platforms.** iOS, iPadOS and macOS. tvOS supports only badges, so the toggle does
-        not appear there. macOS has no `BGTaskScheduler`; schedule on launch and on
-        becoming active, and from `NSBackgroundActivityScheduler` while running.
-      - **Tests.** The scheduling decision as a pure function of airings, now and lead time
-        (unit-tested, with the day boundary); the notification centre behind a protocol so
-        the replace-all pass can be checked without the system. Adds the `fetch`
-        background mode — exercised, unlike the `remote-notification` mode removed earlier.
-
 - [ ] **F18. Widgets + Live Activity** for the currently playing channel.
       Checked 2026-10-04: not started; no widget extension, no WidgetKit or ActivityKit.
 - [ ] **F19. iPhone Duo support.** See [IPHONE-DUO.md](IPHONE-DUO.md).
@@ -200,8 +173,7 @@ F49 (API version from GitHub Pages, and a scheduled check that the API still ans
 
 **Expansion**
 F50 (region in Settings; small, and useful at once) → F18 (widgets, Live Activity)
-→ F21 (CarPlay) → F51 (reminders for favourite shows) → F52 (DR's guide page, if S11
-allows it) → F19 (iPhone Duo).
+→ F21 (CarPlay) → F52 (DR's guide page, if S11 allows it) → F19 (iPhone Duo).
 
 **Housekeeping, whenever it is cheap**
 S15 (default main-actor isolation) → P17 (brand-asset size).
