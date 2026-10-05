@@ -52,6 +52,7 @@ What is left is listed below. Three gaps are not entries of their own:
         2. *Read the guide page* — no credential; one request per day covers every channel
            (≈43 KB gzipped). But it means parsing a Next.js page's embedded JSON, which can
            change without notice, and dr.dk's robots.txt and terms are part of S11 too.
+           Planned below as an optional source, behind S11.
         3. *Lift dr.dk's web key* — no. It is DR's credential for their own site, can be
            rotated at any time (taking the feature down), and is exactly the kind of thing
            S11 has to settle before submission.
@@ -103,6 +104,37 @@ What is left is listed below. Three gaps are not entries of their own:
         - *The cost.* A fresh install predicts nothing for a show until its slot has
           repeated — at least a week, usually two. Until then the shelf shows today's real
           airings only.
+      - **Optional: the next seven days from DR's guide page — only once S11 allows it.**
+        Reading `www.dr.dk/lyd/oversigt/{yyyy-MM-dd}` on the device is technically
+        straightforward and better than the template, but it is reading DR's website rather
+        than their API, so it ships only if S11 finds DR's terms permit it. Until then, the
+        template above is the whole of F33.
+        - *How.* Each date's page embeds the full day for all 25 channels as JSON in
+          `<script id="__NEXT_DATA__">`, at `props.pageProps.schedules`: one entry per
+          channel with `channel`, `items` and `scheduleDate`, in nearly the shape
+          `DRScheduleResponse` already decodes (items carry `hasAudioAssets` rather than
+          `audioAssets`). Find the tag, decode the JSON, never pick at the HTML. Pages
+          exist from seven days back to seven ahead; the next day after that is a 404.
+          `www.dr.dk` is HTTPS and already covered by the ATS note in Info.plist.
+        - *Why it is better.* It is DR's own plan, so it has the one-offs the template
+          gets wrong — next week's *LIGA* on P4, this week's P5 special — and it is useful
+          from the first launch instead of after two weeks. Future days carry series titles
+          but not episode detail, which is all favourites and reminders need.
+        - *Precedence.* Today's real schedule from the API, then the guide page for the
+          days ahead, then the template's repeated slots where the guide has nothing. The
+          template keeps learning from the API either way, so it is ready when the guide
+          is not.
+        - *Cost and courtesy.* About 43 KB compressed per day, so ≈300 KB for the week
+          ahead; fetched once a day, not once per day ahead each day. The pages are sent
+          `cache-control: no-store`, so every request reaches DR's servers: spread each
+          device's fetch over a random point in the half hour after 05:05 rather than every
+          install at once, and skip it in Low Data Mode.
+        - *When it breaks.* The embedded JSON is an implementation detail of DR's Next.js
+          site and can disappear in a redesign with no notice, and only a release could
+          follow it. So a failure to find or decode it is logged and falls back to the
+          template silently — never an error on screen. A unit test decodes a saved page
+          as a fixture, which catches decoding mistakes; it cannot catch DR changing the
+          site.
       Plan:
       1. **Model.** `FavouriteShows`, shaped like `Favourites`: ordered, deduplicated,
          persisted in `UserPreferencesService`. Each entry stores the series id, its title,
@@ -231,6 +263,9 @@ What is left is listed below. Three gaps are not entries of their own:
 - [ ] **S11. Document the DR API posture.** The app consumes an undocumented public API,
       hardcodes 24 DR stream URLs, and displays DR-supplied artwork and trademarks. Confirm
       terms of use and attribution requirements before submitting to the App Store.
+      Also settle whether the app may read the radio guide at `www.dr.dk/lyd/oversigt`
+      for the week ahead (F33's optional source): it is DR's website rather than their
+      API, and that part of F33 waits on the answer.
       Checked 2026-10-04: not started.
 
 ---
