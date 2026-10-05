@@ -24,6 +24,26 @@
     <array>
         <string>INMediaCategoryRadio</string>
     </array>
+    <!-- CarPlay (F21). The CarPlay role only: the phone's window is SwiftUI's WindowGroup,
+         which configures its own scene. Read on iOS alone; tvOS and macOS never create a
+         scene of this role, and the delegate class is compiled only for iOS. -->
+    <key>UIApplicationSceneManifest</key>
+    <dict>
+        <key>UIApplicationSupportsMultipleScenes</key>
+        <true/>
+        <key>UISceneConfigurations</key>
+        <dict>
+            <key>CPTemplateApplicationSceneSessionRoleApplication</key>
+            <array>
+                <dict>
+                    <key>UISceneConfigurationName</key>
+                    <string>CarPlay</string>
+                    <key>UISceneDelegateClassName</key>
+                    <string>$(PRODUCT_MODULE_NAME).CarPlaySceneDelegate</string>
+                </dict>
+            </array>
+        </dict>
+    </dict>
     <!-- S8: ATS stated rather than inherited. Every host is HTTPS (api, asset and www.dr.dk,
          streams on live-icy.dr.dk and Akamai), so no exception is needed. Not pinned: DR's certificates
          are short-lived Let's Encrypt leaves under rotating intermediates, and a stale pin

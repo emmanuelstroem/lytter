@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Removed because nothing in the app used them, and unused entitlements are
+	     an App Review flag:
+	       aps-environment / com.apple.developer.aps-environment
+	         a *development* push entitlement, with no push registration anywhere
+	       com.apple.developer.icloud-* (container iCloud.Lytter, CloudKit)
+	         no CloudKit code; the SwiftData container it was presumably meant for
+	         has been removed -->
+
+	<!-- Shared with the Top Shelf extension (P14): on tvOS the schedule cache is written
+	     into this group's container, and the extension draws the Top Shelf from it rather
+	     than fetching the schedule itself. Only the tvOS app reads it; the file is shared
+	     across platforms, so the others carry it unused. -->
+	<key>com.apple.security.application-groups</key>
+	<array>
+		<string>group.com.eopio.lytter</string>
+	</array>
+
+	<!-- SiriKit's media intent, the name-free "Play P3" (F15). App Intents do not need
+	     it; INPlayMediaIntent and INPreferences authorisation do. -->
+	<key>com.apple.developer.siri</key>
+	<true/>
+
+	<!-- SharePlay. Without it the system never hands the app a group session: the
+	     activity could be offered on a call, and whoever accepted it heard nothing. -->
+	<key>com.apple.developer.group-session</key>
+	<true/>
+
+	<!-- CarPlay, as an audio app (F21). In this file only, the one the iOS Simulator
+	     builds sign with: CarPlay entitlements are granted by Apple on request, and
+	     automatic signing cannot add one Apple has not granted, so in lytter.entitlements
+	     it would break every device build. The simulator's ad-hoc signature takes it as
+	     written, which is all its CarPlay window needs. Once Apple grants it, move this
+	     key into lytter.entitlements and delete this file and the
+	     CODE_SIGN_ENTITLEMENTS[sdk=iphonesimulator*] setting that points here.
+	     Otherwise keep this file identical to lytter.entitlements;
+	     CarPlayConfigurationTests holds the two together. -->
+	<key>com.apple.developer.carplay-audio</key>
+	<true/>
+
+	<!-- macOS only, harmless elsewhere: App Sandbox is opt-in on macOS, unlike iOS/tvOS
+	     where the OS sandboxes every app regardless. Without it the process ran with no
+	     sandbox profile of its own, which is what the Console line
+	     "sandbox profile ... preventing communication with network content filters,
+	     com.apple.nesessionmanager.content-filter" was reporting — macOS's optional
+	     network-content-filtering hook (Screen Time, a parental-control or VPN-style
+	     filter) trying and failing to attach to a process it does not recognise as
+	     sandboxed. It does not block this app's own networking; DR's streams still
+	     played. app-sandbox is also required for eventual Mac App Store distribution,
+	     and network.client is what a sandboxed app needs to open outbound connections
+	     at all — AVPlayer's HLS/ICY streams and every URLSession fetch in DRNetworkService
+	     and ImageCacheService. -->
+	<key>com.apple.security.app-sandbox</key>
+	<true/>
+	<key>com.apple.security.network.client</key>
+	<true/>
+</dict>
+</plist>

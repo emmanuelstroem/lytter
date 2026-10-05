@@ -1,98 +1,60 @@
 {
-  "sourceLanguage": "en",
-  "strings": {
-    "%@ on %@": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%1$@ på %2$@"
+  "sourceLanguage" : "en",
+  "strings" : {
+    "" : {
+
+    },
+    "%@ on %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ på %2$@"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%1$@ on %2$@"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ on %2$@"
           }
         }
       }
     },
-    "%lld districts": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld distrikt"
+    "%lld districts" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld distrikt"
                 }
               },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld distrikter"
-                }
-              }
-            }
-          }
-        },
-        "en": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld district"
-                }
-              },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld districts"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "%lld minutes": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld minut"
-                }
-              },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld minutter"
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld distrikter"
                 }
               }
             }
           }
         },
-        "en": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld minute"
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld district"
                 }
               },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld minutes"
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld districts"
                 }
               }
             }
@@ -100,40 +62,40 @@
         }
       }
     },
-    "%lld minutes remaining": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld minut tilbage"
+    "%lld minutes" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld minut"
                 }
               },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld minutter tilbage"
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld minutter"
                 }
               }
             }
           }
         },
-        "en": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld minute remaining"
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld minute"
                 }
               },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld minutes remaining"
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld minutes"
                 }
               }
             }
@@ -141,1636 +103,1688 @@
         }
       }
     },
-    "15 minutes": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "15 minutter"
+    "%lld minutes remaining" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld minut tilbage"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld minutter tilbage"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld minute remaining"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld minutes remaining"
+                }
+              }
+            }
           }
         }
       }
     },
-    "30 minutes": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "30 minutter"
+    "15 minutes" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "15 minutter"
           }
         }
       }
     },
-    "45 minutes": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "45 minutter"
+    "30 minutes" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "30 minutter"
           }
         }
       }
     },
-    "60 minutes": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "60 minutter"
+    "45 minutes" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "45 minutter"
           }
         }
       }
     },
-    "A notification five minutes before a favourite show starts. When the time comes from the weekly pattern rather than today's schedule, it says so.": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "En notifikation fem minutter før et favoritprogram starter. Når tiden kommer fra det ugentlige mønster frem for dagens sendeplan, står det i den."
+    "60 minutes" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "60 minutter"
           }
         }
       }
     },
-    "API access forbidden (403). Check your subscription key.": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "API-adgang nægtet (403). Kontrollér din abonnementsnøgle."
+    "A notification five minutes before a favourite show starts. When the time comes from the weekly pattern rather than today's schedule, it says so." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En notifikation fem minutter før et favoritprogram starter. Når tiden kommer fra det ugentlige mønster frem for dagens sendeplan, står det i den."
           }
         }
       }
     },
-    "Add Show to Favourites": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Føj program til favoritter"
+    "Add Show to Favourites" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Føj program til favoritter"
           }
         }
       }
     },
-    "Add to Favourites": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Føj til favoritter"
+    "Add to Favourites" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Føj til favoritter"
           }
         }
       }
     },
-    "After 1 Minute": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Efter 1 minut"
+    "After 1 Minute" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Efter 1 minut"
           }
         }
       }
     },
-    "After 2 Minutes": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Efter 2 minutter"
+    "After 2 Minutes" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Efter 2 minutter"
           }
         }
       }
     },
-    "After 30 Seconds": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Efter 30 sekunder"
+    "After 5 Minutes" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Efter 5 minutter"
           }
         }
       }
     },
-    "After 5 Minutes": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Efter 5 minutter"
+    "After 30 Seconds" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Efter 30 sekunder"
           }
         }
       }
     },
-    "AirPlay": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "AirPlay"
+    "AirPlay" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AirPlay"
           }
         }
       },
-      "shouldTranslate": false
+      "shouldTranslate" : false
     },
-    "All Stations": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Alle kanaler"
+    "All Stations" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle kanaler"
           }
         }
       }
     },
-    "Allow Siri to Play Stations": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Lad Siri afspille kanaler"
+    "Allow Siri to Play Stations" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lad Siri afspille kanaler"
           }
         }
       }
     },
-    "Channel data not found (404). Try again later.": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Kanaldata blev ikke fundet (404). Prøv igen senere."
+    "API access forbidden (403). Check your subscription key." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "API-adgang nægtet (403). Kontrollér din abonnementsnøgle."
           }
         }
       }
     },
-    "Checking the schedule": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tjekker sendeplanen"
+    "Channel data not found (404). Try again later." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kanaldata blev ikke fundet (404). Prøv igen senere."
           }
         }
       }
     },
-    "Choose a district": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Vælg et distrikt"
+    "Checking the schedule" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tjekker sendeplanen"
           }
         }
       }
     },
-    "Choose a variant": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Vælg variant"
+    "Choose a district" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vælg et distrikt"
           }
         }
       }
     },
-    "Choose district": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Vælg distrikt"
+    "Choose a variant" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vælg variant"
           }
         }
       }
     },
-    "Clear": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ryd"
+    "Choose district" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vælg distrikt"
           }
         }
       }
     },
-    "Clear Recently Played": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ryd senest afspillet"
+    "Clear" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ryd"
           }
         }
       }
     },
-    "Clear Recently Played?": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ryd senest afspillet?"
+    "Clear Recently Played" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ryd senest afspillet"
           }
         }
       }
     },
-    "Clear search": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ryd søgning"
+    "Clear Recently Played?" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ryd senest afspillet?"
           }
         }
       }
     },
-    "Could not reach the server. Please check your connection.": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Kunne ikke få forbindelse til serveren. Kontrollér din internetforbindelse."
+    "Clear search" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ryd søgning"
           }
         }
       }
     },
-    "Couldn't play %@": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Kunne ikke afspille %@"
+    "Could not reach the server. Please check your connection." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kunne ikke få forbindelse til serveren. Kontrollér din internetforbindelse."
           }
         }
       }
     },
-    "DR": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "DR"
-          }
-        }
-      },
-      "shouldTranslate": false
-    },
-    "DR did not return a schedule for %@.": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "DR returnerede ingen sendeplan for %@."
+    "Couldn't play %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kunne ikke afspille %@"
           }
         }
       }
     },
-    "DR hasn't said what's on %@ right now.": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "DR har ikke oplyst, hvad der sendes på %@ lige nu."
+    "Done" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Færdig"
           }
         }
       }
     },
-    "DR hasn't said when this programme ends.": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "DR har ikke oplyst, hvornår programmet slutter."
-          }
-        }
-      }
-    },
-    "DR isn't answering": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "DR svarer ikke"
-          }
-        }
-      }
-    },
-    "DR server error (%lld). Try again later.": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Serverfejl hos DR (%lld). Prøv igen senere."
-          }
-        }
-      }
-    },
-    "DR's channels will load as soon as you're back online.": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "DR's kanaler hentes, så snart du er online igen."
-          }
-        }
-      }
-    },
-    "Done": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Færdig"
-          }
-        }
-      }
-    },
-    "Duration": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Varighed"
-          }
-        }
-      }
-    },
-    "Earlier today · Listen": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tidligere i dag · Lyt"
-          }
-        }
-      }
-    },
-    "End of programme": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Når programmet slutter"
-          }
-        }
-      }
-    },
-    "Ending now": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Slutter nu"
-          }
-        }
-      }
-    },
-    "Every show you have pinned will be removed from Shows.": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Alle de programmer, du har gemt, fjernes fra Programmer."
-          }
-        }
-      }
-    },
-    "Every station you have pinned will be removed from Favourites.": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Alle de kanaler, du har gemt, fjernes fra Favoritter."
-          }
-        }
-      }
-    },
-    "Failed to decode response": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Svaret kunne ikke afkodes"
-          }
-        }
-      }
-    },
-    "Favourites": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Favoritter"
-          }
-        }
-      }
-    },
-    "Hold the Siri button on the remote and say “Play P3”.": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Hold Siri-knappen på fjernbetjeningen nede, og sig “Spil P3”."
-          }
-        }
-      }
-    },
-    "Home": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Hjem"
-          }
-        }
-      }
-    },
-    "Invalid URL": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ugyldig URL"
-          }
-        }
-      }
-    },
-    "Invalid data received": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ugyldige data modtaget"
-          }
-        }
-      }
-    },
-    "Jump to live": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Gå til live"
-          }
-        }
-      }
-    },
-    "LIVE": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "LIVE"
+    "DR" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "DR"
           }
         }
       },
-      "shouldTranslate": false
+      "shouldTranslate" : false
     },
-    "Listening": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Lytning"
+    "DR did not return a schedule for %@." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "DR returnerede ingen sendeplan for %@."
           }
         }
       }
     },
-    "Live": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Live"
+    "DR hasn't said what's on %@ right now." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "DR har ikke oplyst, hvad der sendes på %@ lige nu."
           }
         }
       }
     },
-    "Live Danish Radio": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Dansk radio live"
+    "DR hasn't said when this programme ends." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "DR har ikke oplyst, hvornår programmet slutter."
           }
         }
       }
     },
-    "Live Now": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sender nu"
+    "DR isn't answering" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "DR svarer ikke"
           }
         }
       }
     },
-    "Live radio programming": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Live radio"
+    "DR server error (%lld). Try again later." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Serverfejl hos DR (%lld). Prøv igen senere."
           }
         }
       }
     },
-    "Loading channels...": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Indlæser kanaler …"
+    "DR's channels will load as soon as you're back online." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "DR's kanaler hentes, så snart du er online igen."
           }
         }
       }
     },
-    "Lyt": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Lyt"
-          }
-        }
-      },
-      "shouldTranslate": false
-    },
-    "Never": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Aldrig"
+    "Duration" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Varighed"
           }
         }
       }
     },
-    "No Channel": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ingen kanal"
+    "Earlier today · Listen" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tidligere i dag · Lyt"
           }
         }
       }
     },
-    "No Channel Playing": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ingen kanal afspilles"
+    "End of programme" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Når programmet slutter"
           }
         }
       }
     },
-    "No channels available": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ingen kanaler tilgængelige"
+    "Ending now" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Slutter nu"
           }
         }
       }
     },
-    "No internet connection": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ingen internetforbindelse"
+    "Every show you have pinned will be removed from Shows." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle de programmer, du har gemt, fjernes fra Programmer."
           }
         }
       }
     },
-    "No program information": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ingen programoplysninger"
+    "Every station you have pinned will be removed from Favourites." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle de kanaler, du har gemt, fjernes fra Favoritter."
           }
         }
       }
     },
-    "No program information available": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ingen programoplysninger tilgængelige"
+    "Failed to decode response" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Svaret kunne ikke afkodes"
           }
         }
       }
     },
-    "No schedule": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ingen sendeplan"
+    "Favourites" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Favoritter"
           }
         }
       }
     },
-    "Not Chosen": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ikke valgt"
+    "Hold the Siri button on the remote and say “Play P3”." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hold Siri-knappen på fjernbetjeningen nede, og sig “Spil P3”."
           }
         }
       }
     },
-    "Not Playing": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Afspiller ikke"
+    "Home" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hjem"
           }
         }
       }
     },
-    "Not on again today": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sendes ikke igen i dag"
+    "Invalid data received" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ugyldige data modtaget"
           }
         }
       }
     },
-    "Nothing Playing": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Intet afspilles"
+    "Invalid URL" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ugyldig URL"
           }
         }
       }
     },
-    "Nothing has been played yet. Ask for a station by name.": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Der er ikke spillet noget endnu. Bed om en kanal ved navn."
+    "Jump to live" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gå til live"
           }
         }
       }
     },
-    "Nothing is playing.": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Der spiller ikke noget."
+    "Listening" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lytning"
           }
         }
       }
     },
-    "Notifications are turned off for Lytter. Turn them on in Settings to be reminded.": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Notifikationer er slået fra for Lytter. Slå dem til i Indstillinger for at blive påmindet."
+    "Live" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Live"
           }
         }
       }
     },
-    "Now Playing": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Afspiller nu"
-          }
-        }
-      }
-    },
-    "Off": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Fra"
-          }
-        }
-      }
-    },
-    "On %@ now: %@, until %@.": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "På %1$@ nu: %2$@, indtil %3$@."
-          }
-        }
-      }
-    },
-    "On %@ now: %@.": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "På %1$@ nu: %2$@."
-          }
-        }
-      }
-    },
-    "On Air Now": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sendes nu"
-          }
-        }
-      }
-    },
-    "On air": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sender nu"
-          }
-        }
-      }
-    },
-    "On demand": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Genhør"
-          }
-        }
-      }
-    },
-    "On now on %@": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sendes nu på %@"
-          }
-        }
-      }
-    },
-    "Open Notification Settings": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Åbn indstillinger for notifikationer"
-          }
-        }
-      }
-    },
-    "Opens the player": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Åbner afspilleren"
-          }
-        }
-      }
-    },
-    "Pause": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pause"
+    "LIVE" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "LIVE"
           }
         }
       },
-      "shouldTranslate": false
+      "shouldTranslate" : false
     },
-    "Paused": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sat på pause"
+    "Live Danish Radio" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dansk radio live"
           }
         }
       }
     },
-    "Pauses the radio.": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sætter radioen på pause."
+    "Live Now" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sender nu"
           }
         }
       }
     },
-    "Play": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Afspil"
+    "Live radio programming" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Live radio"
           }
         }
       }
     },
-    "Play ${station}": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Afspil ${station}"
+    "Loading channels..." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Indlæser kanaler …"
           }
         }
       }
     },
-    "Play %@": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Afspil %@"
-          }
-        }
-      }
-    },
-    "Play Station": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Afspil kanal"
-          }
-        }
-      }
-    },
-    "Playback fades out before it stops.": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Lyden toner ud, før afspilningen stopper."
-          }
-        }
-      }
-    },
-    "Playback resumes when you're back online.": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Afspilningen fortsætter, når du er online igen."
-          }
-        }
-      }
-    },
-    "Playing": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Afspiller"
-          }
-        }
-      }
-    },
-    "Playing %@": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Spiller %@"
-          }
-        }
-      }
-    },
-    "Plays a DR radio station live.": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Afspiller en DR-radiokanal direkte."
-          }
-        }
-      }
-    },
-    "Plays the channel it is on": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Afspiller kanalen, det sendes på"
-          }
-        }
-      }
-    },
-    "Plays the recording": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Afspiller optagelsen"
-          }
-        }
-      }
-    },
-    "Plays the station you last listened to.": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Afspiller den kanal, du sidst lyttede til."
-          }
-        }
-      }
-    },
-    "Plays this channel": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Afspiller denne kanal"
-          }
-        }
-      }
-    },
-    "Position": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Position"
-          }
-        }
-      }
-    },
-    "Programme information": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Programoplysninger"
-          }
-        }
-      }
-    },
-    "Programme progress": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Programforløb"
-          }
-        }
-      }
-    },
-    "Radio": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Radio"
+    "Lyt" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lyt"
           }
         }
       },
-      "shouldTranslate": false
+      "shouldTranslate" : false
     },
-    "Recently Played": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Senest afspillet"
+    "Never" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aldrig"
           }
         }
       }
     },
-    "Recently Searched": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Senest søgt"
+    "No Channel" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ingen kanal"
           }
         }
       }
     },
-    "Region": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Region"
+    "No Channel Playing" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ingen kanal afspilles"
           }
         }
       }
     },
-    "Remind Me When Shows Start": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Påmind mig, når programmer starter"
+    "No channels available" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ingen kanaler tilgængelige"
           }
         }
       }
     },
-    "Remove All Favourite Shows": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Fjern alle favoritprogrammer"
+    "No internet connection" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ingen internetforbindelse"
           }
         }
       }
     },
-    "Remove All Favourite Shows?": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Fjern alle favoritprogrammer?"
+    "No program information" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ingen programoplysninger"
           }
         }
       }
     },
-    "Remove All Favourites": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Fjern alle favoritter"
+    "No program information available" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ingen programoplysninger tilgængelige"
           }
         }
       }
     },
-    "Remove All Favourites?": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Fjern alle favoritter?"
+    "No schedule" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ingen sendeplan"
           }
         }
       }
     },
-    "Remove Show from Favourites": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Fjern program fra favoritter"
+    "Not Chosen" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ikke valgt"
           }
         }
       }
     },
-    "Remove from Favourites": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Fjern fra favoritter"
+    "Not on again today" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sendes ikke igen i dag"
           }
         }
       }
     },
-    "Resume Listening": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Fortsæt lytning"
+    "Not Playing" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afspiller ikke"
           }
         }
       }
     },
-    "Say \"Hey Siri, play %@\"": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sig \"Hey Siri, afspil %@\""
+    "Nothing has been played yet. Ask for a station by name." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der er ikke spillet noget endnu. Bed om en kanal ved navn."
           }
         }
       }
     },
-    "Say \"Hey Siri, play [channel name]\" to start listening to your favorite DR radio channels.": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sig \"Hey Siri, afspil [kanalnavn]\" for at lytte til dine foretrukne DR-kanaler."
+    "Nothing here yet" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Intet her endnu"
           }
         }
       }
     },
-    "Say “Play P3” — Siri learns that Lytter is where you listen to the radio. With the app's name there is more: “Stop Lytter in 30 minutes”, “Stop Lytter after this programme”, “What's on Lytter?”. The same actions are in the Shortcuts app.": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sig “Spil P3” – Siri lærer, at det er i Lytter, du hører radio. Med appens navn kan du mere: “Stop Lytter om 30 minutter”, “Stop Lytter efter dette program”, “Hvad sendes der i Lytter?”. De samme handlinger findes i appen Genveje."
+    "Nothing is playing." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der spiller ikke noget."
           }
         }
       }
     },
-    "Says which programme is on a station now.": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Fortæller, hvilket program der sendes på en kanal lige nu."
+    "Nothing Playing" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Intet afspilles"
           }
         }
       }
     },
-    "Schedule": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sendeplan"
+    "Notifications are turned off for Lytter. Turn them on in Settings to be reminded." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notifikationer er slået fra for Lytter. Slå dem til i Indstillinger for at blive påmindet."
           }
         }
       }
     },
-    "Screen Off": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sluk skærmen"
+    "Now Playing" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afspiller nu"
           }
         }
       }
     },
-    "Screen off": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Skærmen er slukket"
+    "Off" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fra"
           }
         }
       }
     },
-    "Search": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Søg"
+    "On %@ now: %@, until %@." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "På %1$@ nu: %2$@, indtil %3$@."
           }
         }
       }
     },
-    "Search channels...": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Søg efter kanaler …"
+    "On %@ now: %@." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "På %1$@ nu: %2$@."
           }
         }
       }
     },
-    "Select a channel to start listening": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Vælg en kanal for at begynde at lytte"
+    "On air" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sender nu"
           }
         }
       }
     },
-    "Server error": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Serverfejl"
+    "On Air Now" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sendes nu"
           }
         }
       }
     },
-    "Set Sleep Timer": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Indstil sleep-timer"
+    "On demand" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Genhør"
           }
         }
       }
     },
-    "Settings": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Indstillinger"
+    "On now on %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sendes nu på %@"
           }
         }
       }
     },
-    "Share": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Del"
+    "Open Notification Settings" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Åbn indstillinger for notifikationer"
           }
         }
       }
     },
-    "SharePlay": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "SharePlay"
+    "Opens the player" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Åbner afspilleren"
           }
         }
       }
     },
-    "Shortcuts": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Genveje"
+    "Pause" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pause"
+          }
+        }
+      },
+      "shouldTranslate" : false
+    },
+    "Paused" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sat på pause"
           }
         }
       }
     },
-    "Show Images": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Vis billeder"
+    "Pauses the radio." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sætter radioen på pause."
           }
         }
       }
     },
-    "Show Schedule": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Vis sendeplan"
+    "Play" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afspil"
           }
         }
       }
     },
-    "Showing what was loaded last. It will update when you're back online.": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Viser det, der sidst blev hentet. Det opdateres, når du er online igen."
+    "Play %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afspil %@"
           }
         }
       }
     },
-    "Showing what was loaded last. Trying again automatically.": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Viser det, der sidst blev hentet. Prøver igen automatisk."
+    "Play ${station}" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afspil ${station}"
           }
         }
       }
     },
-    "Shown on the P4 and P5 cards, and listed first when you choose a district. A region only one of them broadcasts leaves the other as it was.": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Vises på P4- og P5-kortene og først, når du vælger et distrikt. En region, som kun den ene sender, ændrer ikke den anden."
+    "Play Station" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afspil kanal"
           }
         }
       }
     },
-    "Shows": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Programmer"
+    "Playback fades out before it stops." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lyden toner ud, før afspilningen stopper."
           }
         }
       }
     },
-    "Shows the channel's schedule": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Viser kanalens sendeplan"
+    "Playback resumes when you're back online." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afspilningen fortsætter, når du er online igen."
           }
         }
       }
     },
-    "Siri": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Siri"
+    "Playing" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afspiller"
           }
         }
       }
     },
-    "Siri & Shortcuts": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Siri og Genveje"
+    "Playing %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spiller %@"
           }
         }
       }
     },
-    "Siri can play stations": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Siri kan afspille kanaler"
+    "Plays a DR radio station live." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afspiller en DR-radiokanal direkte."
           }
         }
       }
     },
-    "Siri is turned off for Lytter. Turn it on in the Settings app, under Siri.": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Siri er slået fra for Lytter. Slå det til i appen Indstillinger under Siri."
+    "Plays the channel it is on" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afspiller kanalen, det sendes på"
           }
         }
       }
     },
-    "Skip back 15 seconds": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Spol 15 sekunder tilbage"
+    "Plays the recording" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afspiller optagelsen"
           }
         }
       }
     },
-    "Skip forward 15 seconds": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Spol 15 sekunder frem"
+    "Plays the station you last listened to." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afspiller den kanal, du sidst lyttede til."
           }
         }
       }
     },
-    "Sleep Timer": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sleep-timer"
+    "Plays this channel" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afspiller denne kanal"
           }
         }
       }
     },
-    "Sleep timer": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sleep-timer"
+    "Position" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Position"
           }
         }
       }
     },
-    "Starts at %@ on %@": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Starter kl. %1$@ på %2$@"
+    "Programme information" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Programoplysninger"
+          }
+        }
+      }
+    },
+    "Programme progress" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Programforløb"
+          }
+        }
+      }
+    },
+    "Radio" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Radio"
+          }
+        }
+      },
+      "shouldTranslate" : false
+    },
+    "Recently Played" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Senest afspillet"
+          }
+        }
+      }
+    },
+    "Recently Searched" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Senest søgt"
+          }
+        }
+      }
+    },
+    "Region" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Region"
+          }
+        }
+      }
+    },
+    "Remind Me When Shows Start" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Påmind mig, når programmer starter"
+          }
+        }
+      }
+    },
+    "Remove All Favourite Shows" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fjern alle favoritprogrammer"
+          }
+        }
+      }
+    },
+    "Remove All Favourite Shows?" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fjern alle favoritprogrammer?"
+          }
+        }
+      }
+    },
+    "Remove All Favourites" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fjern alle favoritter"
+          }
+        }
+      }
+    },
+    "Remove All Favourites?" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fjern alle favoritter?"
+          }
+        }
+      }
+    },
+    "Remove from Favourites" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fjern fra favoritter"
+          }
+        }
+      }
+    },
+    "Remove Show from Favourites" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fjern program fra favoritter"
+          }
+        }
+      }
+    },
+    "Resume Listening" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fortsæt lytning"
+          }
+        }
+      }
+    },
+    "Say \"Hey Siri, play [channel name]\" to start listening to your favorite DR radio channels." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sig \"Hey Siri, afspil [kanalnavn]\" for at lytte til dine foretrukne DR-kanaler."
+          }
+        }
+      }
+    },
+    "Say \"Hey Siri, play %@\"" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sig \"Hey Siri, afspil %@\""
+          }
+        }
+      }
+    },
+    "Say “Play P3” — Siri learns that Lytter is where you listen to the radio. With the app's name there is more: “Stop Lytter in 30 minutes”, “Stop Lytter after this programme”, “What's on Lytter?”. The same actions are in the Shortcuts app." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sig “Spil P3” – Siri lærer, at det er i Lytter, du hører radio. Med appens navn kan du mere: “Stop Lytter om 30 minutter”, “Stop Lytter efter dette program”, “Hvad sendes der i Lytter?”. De samme handlinger findes i appen Genveje."
+          }
+        }
+      }
+    },
+    "Says which programme is on a station now." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fortæller, hvilket program der sendes på en kanal lige nu."
+          }
+        }
+      }
+    },
+    "Schedule" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sendeplan"
+          }
+        }
+      }
+    },
+    "Screen off" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skærmen er slukket"
+          }
+        }
+      }
+    },
+    "Screen Off" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sluk skærmen"
+          }
+        }
+      }
+    },
+    "Search" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Søg"
+          }
+        }
+      }
+    },
+    "Search channels..." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Søg efter kanaler …"
+          }
+        }
+      }
+    },
+    "Select a channel to start listening" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vælg en kanal for at begynde at lytte"
+          }
+        }
+      }
+    },
+    "Server error" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Serverfejl"
+          }
+        }
+      }
+    },
+    "Set Sleep Timer" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Indstil sleep-timer"
+          }
+        }
+      }
+    },
+    "Settings" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Indstillinger"
+          }
+        }
+      }
+    },
+    "Share" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Del"
+          }
+        }
+      }
+    },
+    "SharePlay" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "SharePlay"
+          }
+        }
+      }
+    },
+    "Shortcuts" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Genveje"
+          }
+        }
+      }
+    },
+    "Show Images" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vis billeder"
+          }
+        }
+      }
+    },
+    "Show Schedule" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vis sendeplan"
+          }
+        }
+      }
+    },
+    "Showing what was loaded last. It will update when you're back online." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Viser det, der sidst blev hentet. Det opdateres, når du er online igen."
+          }
+        }
+      }
+    },
+    "Showing what was loaded last. Trying again automatically." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Viser det, der sidst blev hentet. Prøver igen automatisk."
+          }
+        }
+      }
+    },
+    "Shown on the P4 and P5 cards, and listed first when you choose a district. A region only one of them broadcasts leaves the other as it was." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vises på P4- og P5-kortene og først, når du vælger et distrikt. En region, som kun den ene sender, ændrer ikke den anden."
+          }
+        }
+      }
+    },
+    "Shows" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Programmer"
+          }
+        }
+      }
+    },
+    "Shows the channel's schedule" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Viser kanalens sendeplan"
+          }
+        }
+      }
+    },
+    "Siri" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Siri"
+          }
+        }
+      }
+    },
+    "Siri & Shortcuts" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Siri og Genveje"
+          }
+        }
+      }
+    },
+    "Siri can play stations" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Siri kan afspille kanaler"
+          }
+        }
+      }
+    },
+    "Siri is turned off for Lytter. Turn it on in the Settings app, under Siri." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Siri er slået fra for Lytter. Slå det til i appen Indstillinger under Siri."
+          }
+        }
+      }
+    },
+    "Skip back 15 seconds" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spol 15 sekunder tilbage"
+          }
+        }
+      }
+    },
+    "Skip forward 15 seconds" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spol 15 sekunder frem"
+          }
+        }
+      }
+    },
+    "Sleep timer" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sleep-timer"
+          }
+        }
+      }
+    },
+    "Sleep Timer" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sleep-timer"
+          }
+        }
+      }
+    },
+    "Starts at %@ on %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Starter kl. %1$@ på %2$@"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Starts at %1$@ on %2$@"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Starts at %1$@ on %2$@"
           }
         }
       }
     },
-    "Station": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Kanal"
+    "Station" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kanal"
           }
         }
       }
     },
-    "Station · %lld districts": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "Kanal · %lld distrikt"
+    "Station · %lld districts" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Kanal · %lld distrikt"
                 }
               },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "Kanal · %lld distrikter"
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Kanal · %lld distrikter"
                 }
               }
             }
           }
         },
-        "en": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "Station · %lld district"
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Station · %lld district"
                 }
               },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "Station · %lld districts"
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Station · %lld districts"
                 }
               }
             }
@@ -1778,441 +1792,452 @@
         }
       }
     },
-    "Stations": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Kanaler"
+    "Stations" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kanaler"
           }
         }
       }
     },
-    "Stations, regions and programmes": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Kanaler, regioner og programmer"
+    "Stations, regions and programmes" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kanaler, regioner og programmer"
           }
         }
       }
     },
-    "Still waiting for DR…": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Venter stadig på DR …"
+    "Still waiting for DR…" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Venter stadig på DR …"
           }
         }
       }
     },
-    "Stop After This Programme": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Stop efter dette program"
+    "Stop After This Programme" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stop efter dette program"
           }
         }
       }
     },
-    "Stop in ${duration}": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Stop om ${duration}"
+    "Stop in ${duration}" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stop om ${duration}"
           }
         }
       }
     },
-    "Stopping": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Stopper"
+    "Stopping" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stopper"
           }
         }
       }
     },
-    "Stopping in %lld minutes": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Stopper om %lld minutter"
+    "Stopping in %lld minutes" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stopper om %lld minutter"
           }
         }
       }
     },
-    "Stopping when this programme ends": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Stopper, når programmet slutter"
+    "Stopping when this programme ends" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stopper, når programmet slutter"
           }
         }
       }
     },
-    "Stops the radio after a while, fading out first.": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Stopper radioen efter et stykke tid og skruer først langsomt ned."
+    "Stops the radio after a while, fading out first." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stopper radioen efter et stykke tid og skruer først langsomt ned."
           }
         }
       }
     },
-    "Stops the radio when the programme on air ends.": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Stopper radioen, når programmet slutter."
+    "Stops the radio when the programme on air ends." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stopper radioen, når programmet slutter."
           }
         }
       }
     },
-    "Tap play to start": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tryk på afspil for at starte"
+    "Tap play to start" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tryk på afspil for at starte"
           }
         }
       }
     },
-    "That station isn't on DR's list right now.": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Den kanal er ikke på DR's liste lige nu."
+    "That station isn't on DR's list right now." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Den kanal er ikke på DR's liste lige nu."
           }
         }
       }
     },
-    "The schedule couldn't be loaded.": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sendeplanen kunne ikke hentes."
+    "The schedule couldn't be loaded." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sendeplanen kunne ikke hentes."
           }
         }
       }
     },
-    "The stream didn't start.": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Streamen startede ikke."
+    "The stream didn't start." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Streamen startede ikke."
           }
         }
       }
     },
-    "The stream didn't start. Press Play to try again.": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Streamen startede ikke. Tryk på Afspil for at prøve igen."
+    "The stream didn't start. Press Play to try again." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Streamen startede ikke. Tryk på Afspil for at prøve igen."
           }
         }
       }
     },
-    "This will automatically start playing %@ when triggered.": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Dette starter automatisk afspilning af %@, når genvejen aktiveres."
+    "This will automatically start playing %@ when triggered." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dette starter automatisk afspilning af %@, når genvejen aktiveres."
           }
         }
       }
     },
-    "Today's schedule": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Dagens sendeplan"
+    "Today's schedule" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dagens sendeplan"
           }
         }
       }
     },
-    "Too many requests. Please wait a moment and retry.": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "For mange forespørgsler. Vent et øjeblik, og prøv igen."
+    "Too many requests. Please wait a moment and retry." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "For mange forespørgsler. Vent et øjeblik, og prøv igen."
           }
         }
       }
     },
-    "Try Again": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Prøv igen"
+    "Try Again" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prøv igen"
           }
         }
       }
     },
-    "Trying again automatically.": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Prøver igen automatisk."
+    "Trying again automatically." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prøver igen automatisk."
           }
         }
       }
     },
-    "Turn off": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Slå fra"
+    "Turn off" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Slå fra"
           }
         }
       }
     },
-    "Turns the screen back on.": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tænder skærmen igen."
+    "Turns the screen back on." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tænder skærmen igen."
           }
         }
       }
     },
-    "Unexpected server response (%lld).": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Uventet svar fra serveren (%lld)."
+    "Unexpected server response (%lld)." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uventet svar fra serveren (%lld)."
           }
         }
       }
     },
-    "Usually Fridays %@": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Som regel fredage kl. %@"
+    "Usually Fridays %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Som regel fredage kl. %@"
           }
         }
       }
     },
-    "Usually Mondays %@": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Som regel mandage kl. %@"
+    "Usually Mondays %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Som regel mandage kl. %@"
           }
         }
       }
     },
-    "Usually Saturdays %@": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Som regel lørdage kl. %@"
+    "Usually Saturdays %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Som regel lørdage kl. %@"
           }
         }
       }
     },
-    "Usually Sundays %@": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Som regel søndage kl. %@"
-          }
-        }
-      }
-    },
-    "Usually Thursdays %@": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Som regel torsdage kl. %@"
-          }
-        }
-      }
-    },
-    "Usually Tuesdays %@": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Som regel tirsdage kl. %@"
-          }
-        }
-      }
-    },
-    "Usually Wednesdays %@": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Som regel onsdage kl. %@"
-          }
-        }
-      }
-    },
-    "Usually starts at %@ on %@": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Starter som regel kl. %1$@ på %2$@"
+    "Usually starts at %@ on %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Starter som regel kl. %1$@ på %2$@"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Usually starts at %1$@ on %2$@"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usually starts at %1$@ on %2$@"
           }
         }
       }
     },
-    "Version": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Version"
+    "Usually Sundays %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Som regel søndage kl. %@"
           }
         }
       }
     },
-    "What's On": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Hvad sendes der"
+    "Usually Thursdays %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Som regel torsdage kl. %@"
           }
         }
       }
     },
-    "What's on ${station}": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Hvad sendes der på ${station}"
+    "Usually Tuesdays %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Som regel tirsdage kl. %@"
           }
         }
       }
     },
-    "When off, stations show their colour and name instead of programme artwork, which uses less data on a slow connection.": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Når det er slået fra, viser kanalerne deres farve og navn i stedet for programbilleder. Det bruger mindre data på en langsom forbindelse."
+    "Usually Wednesdays %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Som regel onsdage kl. %@"
           }
         }
       }
     },
-    "While something is playing, the screen goes black after this long without a press. The sound carries on, and the next press only brings the screen back.": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Mens der spiller noget, bliver skærmen sort efter så lang tid uden et tryk. Lyden fortsætter, og det næste tryk tænder kun skærmen igen."
+    "Version" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Version"
           }
         }
       }
     },
-    "While something is playing, the screen goes black after this long without a touch. The sound carries on, and the next touch only brings the screen back.": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Mens der spiller noget, bliver skærmen sort efter så lang tid uden berøring. Lyden fortsætter, og den næste berøring tænder kun skærmen igen."
+    "What's On" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hvad sendes der"
           }
         }
       }
     },
-    "You're offline": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Du er offline"
+    "What's on ${station}" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hvad sendes der på ${station}"
           }
         }
       }
     },
-    "Your region is listed first, here and on other regional stations.": {
-      "extractionState": "manual",
-      "localizations": {
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Dit distrikt står øverst, her og på andre regionale stationer."
+    "When off, stations show their colour and name instead of programme artwork, which uses less data on a slow connection." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Når det er slået fra, viser kanalerne deres farve og navn i stedet for programbilleder. Det bruger mindre data på en langsom forbindelse."
+          }
+        }
+      }
+    },
+    "While something is playing, the screen goes black after this long without a press. The sound carries on, and the next press only brings the screen back." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mens der spiller noget, bliver skærmen sort efter så lang tid uden et tryk. Lyden fortsætter, og det næste tryk tænder kun skærmen igen."
+          }
+        }
+      }
+    },
+    "While something is playing, the screen goes black after this long without a touch. The sound carries on, and the next touch only brings the screen back." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mens der spiller noget, bliver skærmen sort efter så lang tid uden berøring. Lyden fortsætter, og den næste berøring tænder kun skærmen igen."
+          }
+        }
+      }
+    },
+    "You're offline" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Du er offline"
+          }
+        }
+      }
+    },
+    "Your favourites and the stations you play appear here." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dine favoritter og de kanaler, du lytter til, vises her."
+          }
+        }
+      }
+    },
+    "Your region is listed first, here and on other regional stations." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dit distrikt står øverst, her og på andre regionale stationer."
           }
         }
       }
     }
   },
-  "version": "1.0"
+  "version" : "1.0"
 }

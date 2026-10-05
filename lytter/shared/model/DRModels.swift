@@ -1842,7 +1842,12 @@ class DRServiceManager: ObservableObject {
 
     /// Whether the app is in front. Refreshing is for someone looking or listening: in the
     /// background with nothing playing, there is no one to refresh for.
-    private var isAppActive = true
+    ///
+    /// In front means on either screen. With the phone locked in a cradle, the window is
+    /// in the background while the car's screen lists what is on (F21).
+    private var isAppActive: Bool { isWindowActive || isCarPlayConnected }
+    private var isWindowActive = true
+    private var isCarPlayConnected = false
 
     /// Past this, a refresh is due even if no programme has ended — DR changes its plans.
     private static let scheduleMaxAge: TimeInterval = 10 * 60
@@ -1853,11 +1858,19 @@ class DRServiceManager: ObservableObject {
 
     /// Called by the app as its scene comes and goes.
     func setAppActive(_ active: Bool) {
-        isAppActive = active
-        if active {
-            refreshScheduleIfNeeded()
-            refreshShowSchedule()
-        }
+        isWindowActive = active
+        if active { becameActive() }
+    }
+
+    /// Called by the CarPlay scene as the car connects and disconnects (F21).
+    func setCarPlayConnected(_ connected: Bool) {
+        isCarPlayConnected = connected
+        if connected { becameActive() }
+    }
+
+    private func becameActive() {
+        refreshScheduleIfNeeded()
+        refreshShowSchedule()
     }
 
     // MARK: - Favourite shows (F33)
