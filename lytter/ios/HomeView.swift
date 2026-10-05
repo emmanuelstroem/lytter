@@ -42,7 +42,7 @@ struct HomeView: View {
                             selectionState.selectChannel(channel, showSheet: false)
                         }
 
-                        // Favourites, then history, then one shelf per broadcaster. Each
+                        // Favourites, favourite shows, history, then one shelf per broadcaster. Each
                         // draws nothing when it has nothing, so a first launch shows only
                         // the catalogue rather than two empty headings.
                         ChannelShelf(
@@ -52,6 +52,11 @@ struct HomeView: View {
                             serviceManager: serviceManager,
                             onChannelTap: play
                         )
+
+                        // Favourite shows (F33), under the channels: when each is next on.
+                        ShowShelf(serviceManager: serviceManager,
+                                  preferences: preferences,
+                                  showSchedule: serviceManager.showSchedule)
 
                         ChannelShelf(
                             title: String(localized: "Recently Played"),

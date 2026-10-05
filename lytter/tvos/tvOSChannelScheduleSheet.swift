@@ -76,6 +76,13 @@ struct tvOSChannelScheduleSheet: View {
                             ForEach(items, id: \.broadcastID) { episode in
                                 focusableRow(for: episode)
                                     .focused($focusedRow, equals: episode.broadcastID)
+                                    // Hold select to pin the show (F33). On the focused
+                                    // view, or tvOS has nothing to hang it on.
+                                    .contextMenu {
+                                        FavouriteShowButton(
+                                            episode: episode,
+                                            preferences: serviceManager.userPreferences)
+                                    }
                                     // One element per row, read as a whole — time, title,
                                     // whether it is on air — rather than piece by piece.
                                     .accessibilityElement(children: .combine)

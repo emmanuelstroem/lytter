@@ -3,10 +3,17 @@
 <plist version="1.0">
 <dict>
 	<!-- "remote-notification" was declared with no push registration anywhere in the
-	     app. A background mode the app never exercises is an App Review flag. -->
+	     app. A background mode the app never exercises is an App Review flag. "fetch" is
+	     exercised: the show schedule's daily refresh (F33), a BGAppRefreshTask booked for
+	     05:05 Copenhagen time. -->
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>audio</string>
+		<string>fetch</string>
+	</array>
+	<key>BGTaskSchedulerPermittedIdentifiers</key>
+	<array>
+		<string>com.eopio.lytter.show-schedule</string>
 	</array>
     <!-- SiriKit's media intent, handled in the app (F15): the name-free "Play P3". -->
     <key>INIntentsSupported</key>

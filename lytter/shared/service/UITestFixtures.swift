@@ -113,11 +113,33 @@ enum UITestFixtures {
                            end: start.addingTimeInterval(30 * 60),
                            title: "Fixture-program \(index + 1)",
                            description: "Beskrivelse af program \(index + 1).",
-                           recorded: index < 15 && index.isMultiple(of: 2))
+                           recorded: index < 15 && index.isMultiple(of: 2),
+                           series: index % seriesCount)
         }
         return DRScheduleResponse(type: "Schedule", channel: channel, items: items,
                                   scheduleDate: nil)
     }
+
+    // MARK: - Favourite shows (F33)
+
+    /// How many series the schedule fixture rotates through: each airs three times a day.
+    static let seriesCount = 10
+
+    /// Favourite shows to start with, from `LYTTER_UITEST_FAVOURITE_SHOWS` (a count), in
+    /// place of whatever the simulator has stored — none, when it is not set. Nil outside
+    /// UI tests.
+    static var favouriteShows: [FavouriteShow]? {
+        guard isActive else { return nil }
+        let count = ProcessInfo.processInfo.environment["LYTTER_UITEST_FAVOURITE_SHOWS"]
+            .flatMap(Int.init) ?? 0
+        return (0..<min(count, seriesCount)).map { index in
+            FavouriteShow(seriesID: seriesID(index), title: seriesTitle(index), imageURL: nil,
+                          channelSlugs: ["p1"])
+        }
+    }
+
+    private static func seriesID(_ index: Int) -> String { "urn:fixture:series:\(index)" }
+    private static func seriesTitle(_ index: Int) -> String { "Fixture-serie \(index + 1)" }
 
     // MARK: - Building blocks
 
@@ -151,7 +173,7 @@ enum UITestFixtures {
 
     private static func episode(on channel: DRChannel, index: Int, start: Date, end: Date,
                                 title: String, description: String,
-                                recorded: Bool = false) -> DREpisode {
+                                recorded: Bool = false, series: Int? = nil) -> DREpisode {
         DREpisode(
             type: "Episode",
             learnId: "",
@@ -164,7 +186,11 @@ enum UITestFixtures {
             order: index,
             previousId: nil,
             nextId: nil,
-            series: nil,
+            series: series.map { index in
+                DRSeries(id: seriesID(index), title: seriesTitle(index),
+                         slug: "fixture-serie-\(index + 1)", type: "Series",
+                         isAvailableOnDemand: true, presentationUrl: nil, learnId: "")
+            },
             channel: channel,
             // Nothing listens on this address, so playback fails at once and quietly —
             // what the tests need is the player on screen, not audio.

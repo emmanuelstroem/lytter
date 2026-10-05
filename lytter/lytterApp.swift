@@ -52,7 +52,15 @@ struct lytterApp: App {
                 }
                 .onChange(of: scenePhase) { _, phase in
                     serviceManager.setAppActive(phase == .active)
+                    #if os(iOS) || os(tvOS)
+                    // Booked on the way out, so tomorrow's schedule is fetched even if the
+                    // app is not opened again before then (F33).
+                    if phase == .background { ShowScheduleRefresh.schedule() }
+                    #endif
                 }
+                #if os(macOS)
+                .task { ShowScheduleRefresh.start() }
+                #endif
                 #if os(iOS) || os(macOS)
                 // Shortcuts saved before App Intents (F15) carry a "PlayChannelActivity".
                 // Nothing donates those any more, but a listener's saved ones should keep
@@ -65,6 +73,11 @@ struct lytterApp: App {
                 }
                 #endif
         }
+        #if os(iOS) || os(tvOS)
+        .backgroundTask(.appRefresh(ShowScheduleRefresh.identifier)) {
+            await ShowScheduleRefresh.run()
+        }
+        #endif
 
         #if os(macOS)
         Settings {
