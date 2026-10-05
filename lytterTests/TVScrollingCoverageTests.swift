@@ -29,7 +29,7 @@ struct TVScrollingCoverageTests {
         "tvOSScrollingText.swift": ["testInfoDescriptionScrolls"],
         "tvOSRadioView.swift": ["testRadioShelfScrollsSideways"],
         "tvOSSearchView.swift": ["testSearchResultsScroll", "testSearchResultShelfScrollsSideways"],
-        "tvOSSettingsView.swift": ["testSettingsScrolls"],
+        "tvOSSettingsView.swift": ["testSettingsScrolls", "testRegionPickerScrolls"],
     ]
 
     /// What counts as a scrolling container: SwiftUI's, and UIKit's once it is told to scroll.

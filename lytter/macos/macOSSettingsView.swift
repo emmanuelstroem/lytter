@@ -13,10 +13,11 @@ import SwiftUI
 /// stand as a radio.
 struct macOSSettingsView: View {
     @ObservedObject var preferences: UserPreferencesService
+    let channels: [DRChannel]
 
     var body: some View {
         Form {
-            SettingsSections(preferences: preferences)
+            SettingsSections(preferences: preferences, channels: channels)
         }
         .formStyle(.grouped)
         .frame(width: 460)

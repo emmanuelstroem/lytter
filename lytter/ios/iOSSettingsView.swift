@@ -18,11 +18,12 @@ import SwiftUI
 /// The section says what to say, and links to the app's shortcuts with the system's button.
 struct iOSSettingsView: View {
     @ObservedObject var preferences: UserPreferencesService
+    let channels: [DRChannel]
 
     var body: some View {
         NavigationStack {
             Form {
-                SettingsSections(preferences: preferences)
+                SettingsSections(preferences: preferences, channels: channels)
 
                 Section {
                     SiriAccessRow()
@@ -51,6 +52,6 @@ struct iOSSettingsView: View {
 }
 
 #Preview {
-    iOSSettingsView(preferences: UserPreferencesService())
+    iOSSettingsView(preferences: UserPreferencesService(), channels: [])
 }
 #endif

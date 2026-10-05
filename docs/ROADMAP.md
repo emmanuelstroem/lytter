@@ -93,23 +93,6 @@ What is left is listed below. Three gaps are not entries of their own:
       Preferred over having the app probe the next version itself on a 401, because the
       switch then happens when someone has checked the new version decodes.
 
-- [ ] **F50. Choose the region in Settings.** Settings shows the remembered region and can
-      only forget it; the only way to set one is to pick a district on P4 or P5. A new
-      listener who wants København everywhere has to find a regional station first.
-      Replace the read-only row in `SettingsSections` with a `Picker` of every district,
-      plus "Not Chosen":
-      - **Listed from the catalogue, not hardcoded.** The union of `districtID`s across
-        `availableChannels` (P4's and P5's share an id — that is what `District` is for),
-        named as DR writes them, sorted. DR adds and renames districts.
-      - **One list, not one per station.** A region only P4 has is still a valid choice;
-        P5 then falls back as it does today. Say so in the footer.
-      - **A remembered region the catalogue no longer has** stays selected and readable
-        rather than silently snapping to "Not Chosen".
-      - Same row on iOS, tvOS and macOS, since `SettingsSections` is shared. On tvOS a
-        long picker pushes a list that must scroll under the remote — it needs its entry
-        in `TVScrollingUITests`.
-      - "Forget Region" goes: "Not Chosen" in the picker does the same job.
-
 ### P2 — expansion
 
 - [ ] **F18. Widgets + Live Activity** for the currently playing channel.
@@ -172,8 +155,8 @@ iOS, tvOS and macOS → S1, if DR ever asks for a key.
 F49 (API version from GitHub Pages, and a scheduled check that the API still answers).
 
 **Expansion**
-F50 (region in Settings; small, and useful at once) → F18 (widgets, Live Activity)
-→ F21 (CarPlay) → F52 (DR's guide page, if S11 allows it) → F19 (iPhone Duo).
+F18 (widgets, Live Activity) → F21 (CarPlay) → F52 (DR's guide page, if S11 allows it)
+→ F19 (iPhone Duo).
 
 **Housekeeping, whenever it is cheap**
 S15 (default main-actor isolation) → P17 (brand-asset size).

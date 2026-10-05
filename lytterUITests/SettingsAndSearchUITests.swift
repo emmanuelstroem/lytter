@@ -37,21 +37,38 @@ final class SettingsAndSearchUITests: XCTestCase {
         shot("settings")
     }
 
-    /// The remembered region is shown, and forgetting it forgets it.
+    /// A region can be chosen in Settings, from every district the catalogue lists, and
+    /// "Not Chosen" forgets it (F50). Before, the only way to set one was to find P4.
     @MainActor
-    func testForgetRegion() throws {
+    func testChooseRegion() throws {
         launch(region: "Fyn")
         openSettings()
 
-        XCTAssertTrue(app.staticTexts["Region, Fyn"].waitForExistence(timeout: 5),
-                      "Settings does not show the remembered region")
-        let forget = app.buttons["Forget Region"]
-        scrollUntilHittable(forget)
-        forget.tap()
+        scrollUntilHittable(regionPicker)
+        XCTAssertEqual(regionPicker.label, "Region, Fyn", "Settings does not show the remembered region")
 
-        XCTAssertTrue(app.staticTexts["Region, Not Chosen"].waitForExistence(timeout: 5),
-                      "the region is still shown after Forget Region")
-        XCTAssertFalse(forget.isEnabled, "Forget Region should be off with no region to forget")
+        choose("København")
+        XCTAssertEqual(regionPicker.label, "Region, København", "the chosen region is not shown")
+
+        choose("Not Chosen")
+        XCTAssertEqual(regionPicker.label, "Region, Not Chosen", "Not Chosen did not forget the region")
+    }
+
+    /// Every district is offered, once, though P4 and P5 each broadcast all ten.
+    @MainActor
+    func testRegionPickerListsEachDistrictOnce() throws {
+        launch()
+        openSettings()
+
+        scrollUntilHittable(regionPicker)
+        regionPicker.tap()
+        XCTAssertTrue(app.buttons["Østjylland"].waitForExistence(timeout: 5), "the picker did not open")
+        shot("region-picker")
+        for district in ["Bornholm", "Esbjerg", "Fyn", "København", "Midt & Vest", "Nordjylland",
+                         "Sjælland", "Syd", "Trekanten", "Østjylland"] {
+            XCTAssertEqual(app.buttons.matching(identifier: district).count, 1,
+                           "\(district) should be offered exactly once")
+        }
     }
 
     // MARK: - Search
@@ -140,6 +157,20 @@ final class SettingsAndSearchUITests: XCTestCase {
     }
 
     // MARK: - Helpers
+
+    /// The Region picker, whose label carries the choice: "Region, Fyn".
+    @MainActor
+    private var regionPicker: XCUIElement {
+        app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Region, '")).firstMatch
+    }
+
+    @MainActor
+    private func choose(_ option: String) {
+        regionPicker.tap()
+        let row = app.buttons[option]
+        XCTAssertTrue(row.waitForExistence(timeout: 5), "the picker does not offer \(option)")
+        row.tap()
+    }
 
     @MainActor
     private func launch(favourites: [String] = [], region: String? = nil) {

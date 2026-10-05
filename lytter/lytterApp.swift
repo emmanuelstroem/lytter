@@ -96,7 +96,8 @@ struct lytterApp: App {
 
         #if os(macOS)
         Settings {
-            macOSSettingsView(preferences: serviceManager.userPreferences)
+            macOSSettingsView(preferences: serviceManager.userPreferences,
+                              channels: serviceManager.availableChannels)
                 .modifier(PreferencesEnvironment(preferences: serviceManager.userPreferences))
         }
         #endif
