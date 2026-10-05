@@ -188,6 +188,13 @@ Adaptive rather than fixed-interval: after fetching the current track,
 - `MarqueeText` scrolls long programme/track titles.
 - Siri support is legacy `NSUserActivity` + `INShortcut` donation, surfaced in a
   "Shortcuts" tab. **No AppIntents.**
+- CarPlay (F21): `CarPlaySceneDelegate`, declared in Info.plist for the CarPlay scene
+  role only, so the phone's window stays SwiftUI's. Two tabs (Home: favourites and recent
+  plays; Stations, with P4 and P5 opening their districts) and the system's
+  `CPNowPlayingTemplate`, which reads the same now-playing info and remote commands as
+  the lock screen. What the lists hold is decided by `CarPlayCatalogue`, which is unit
+  tested; the delegate only draws it. The `carplay-audio` entitlement is in
+  `lytter-simulator.entitlements` alone until Apple grants it — see the roadmap.
 
 ### tvOS
 

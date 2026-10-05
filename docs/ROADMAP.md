@@ -8,9 +8,10 @@ _Companion docs: [OVERVIEW-AND-ARCHITECTURE.md](OVERVIEW-AND-ARCHITECTURE.md) ·
 
 ## 1. Where the project stands
 
-Live DR radio on iOS, iPadOS, tvOS and macOS, with Top Shelf, search, favourites, recently
-played, a schedule, a sleep timer, Siri and Shortcuts, SharePlay, Danish localisation and an
-accessibility pass. The build is warning-free under Swift 6 on all three SDKs, with unit
+Live DR radio on iOS, iPadOS, tvOS and macOS, with Top Shelf, CarPlay (in the simulator
+until Apple grants the entitlement; F21), search, favourites, recently played, a schedule,
+a sleep timer, Siri and Shortcuts, SharePlay, Danish localisation and an accessibility
+pass. The build is warning-free under Swift 6 on all three SDKs, with unit
 tests and tvOS UI tests.
 
 What is left is listed below. Three gaps are not entries of their own:
@@ -99,8 +100,17 @@ What is left is listed below. Three gaps are not entries of their own:
       Checked 2026-10-04: not started; no widget extension, no WidgetKit or ActivityKit.
 - [ ] **F19. iPhone Duo support.** See [IPHONE-DUO.md](IPHONE-DUO.md).
       Checked 2026-10-04: not started beyond those notes.
-- [ ] **F21. CarPlay.** A live-radio app without CarPlay is leaving its best use case unserved.
-      Checked 2026-10-04: not started; no CarPlay entitlement or templates.
+- [ ] **F21. CarPlay — ask Apple for the entitlement.** The CarPlay scene is built
+      (2026-10-05): Home (favourites, then recent plays), Stations (P4 and P5 open their
+      districts, the region first) and the system's Now Playing. It runs only in the
+      simulator's CarPlay window (*I/O → External Displays → CarPlay*), because
+      `com.apple.developer.carplay-audio` is granted by Apple on request and automatic
+      signing cannot add it, so it sits in `lytter-simulator.entitlements` alone.
+      Remaining: request it at developer.apple.com/contact/carplay; once granted, move the
+      key into `lytter.entitlements`, delete `lytter-simulator.entitlements` and the
+      `CODE_SIGN_ENTITLEMENTS[sdk=iphonesimulator*]` setting, flip
+      `deviceEntitlementsDoNotClaimCarPlayYet`, and try it in a car or with Apple's CarPlay
+      Simulator app against a phone.
 
 ---
 
