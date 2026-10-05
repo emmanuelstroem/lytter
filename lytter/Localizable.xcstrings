@@ -898,6 +898,17 @@
         }
       }
     },
+    "On demand": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Genhør"
+          }
+        }
+      }
+    },
     "Opens the player": {
       "extractionState": "manual",
       "localizations": {
@@ -1009,6 +1020,17 @@
         }
       }
     },
+    "Playing": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Afspiller"
+          }
+        }
+      }
+    },
     "Playing %@": {
       "extractionState": "manual",
       "localizations": {
@@ -1031,6 +1053,17 @@
         }
       }
     },
+    "Plays the recording": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Afspiller optagelsen"
+          }
+        }
+      }
+    },
     "Plays the station you last listened to.": {
       "extractionState": "manual",
       "localizations": {
@@ -1049,6 +1082,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Afspiller denne kanal"
+          }
+        }
+      }
+    },
+    "Position": {
+      "extractionState": "manual",
+      "localizations": {
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Position"
           }
         }
       }

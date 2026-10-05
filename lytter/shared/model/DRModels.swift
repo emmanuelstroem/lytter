@@ -51,6 +51,9 @@ struct DRAPIConfig {
     // API Endpoints
     nonisolated static let schedulesAllNow = "\(baseURL)/schedules/all/now"
     nonisolated static let scheduleSnapshot = "\(baseURL)/schedules/snapshot"
+    /// A channel's whole broadcast day: `schedules/{slug}/{yyyy-MM-dd}`. The only schedule
+    /// that reaches back past the previous programme, which is what catch-up needs (F16).
+    nonisolated static let schedules = "\(baseURL)/schedules"
     nonisolated static let indexpointsLive = "\(baseURL)/indexpoints/live"
     /// Every station, with its districts listed under it. The only endpoint that says
     /// which channels are districts, and of what.
@@ -475,7 +478,32 @@ nonisolated struct DREpisode: Identifiable, Codable, Equatable {
         // Fallback to first available audio asset
         return audioAssets.first?.url
     }
-    
+
+    /// The recording of this broadcast, for catch-up listening (F16), or nil when DR does
+    /// not offer one.
+    ///
+    /// Never the live stream. A programme on air carries the channel's live assets
+    /// (`isStreamLive`), and `streamURL` falls back to whatever comes first, so it cannot be
+    /// asked. DR sends HLS and several progressive files for a recording; HLS adapts its
+    /// bitrate and starts without downloading the whole file, so it is preferred.
+    var onDemandStreamURL: String? {
+        guard isAvailableOnDemand else { return nil }
+        let recorded = (audioAssets ?? []).filter { $0.isStreamLive != true }
+        return (recorded.first { $0.target == "Stream" && $0.format == "HLS" }
+                ?? recorded.first { $0.target == "Progressive" })?.url
+    }
+
+    /// Whether this broadcast can be listened back to at `date`: it has finished, and DR
+    /// has a recording of it.
+    ///
+    /// Finished, not merely recorded. DR marks repeats as available hours before they air —
+    /// tonight's rerun of this morning's programme already has its file — and a "Play" on a
+    /// row under "upcoming" reads as a promise to tune in when it starts.
+    func isCatchUp(at date: Date) -> Bool {
+        guard let end = endDate, end <= date else { return false }
+        return onDemandStreamURL != nil
+    }
+
     var primaryImageURL: String? {
         guard let imageAssets = imageAssets, !imageAssets.isEmpty else { return nil }
         
@@ -619,6 +647,18 @@ struct DRScheduleResponse: Codable, Equatable {
     let channel: DRChannel
     let items: [DREpisode]
     let scheduleDate: String?
+
+    /// One broadcast day: `day`, DR's full schedule for a date, with `snapshot` folded in.
+    ///
+    /// The snapshot starts with the programme before the one on air, and in the small hours
+    /// that one belongs to the previous broadcast day — DR's day runs from about 05:00 — so
+    /// neither list covers the other. Keyed by broadcast, as the sheets are: the same episode
+    /// airs more than once a day.
+    static func mergedDay(_ day: [DREpisode], snapshot: [DREpisode]) -> [DREpisode] {
+        (day + snapshot)
+            .uniqued(by: \.broadcastID)
+            .sorted { ($0.startDate ?? .distantPast) < ($1.startDate ?? .distantPast) }
+    }
 }
 
 // MARK: - Schedule Item for /schedules/all/now endpoint
@@ -880,7 +920,16 @@ class DRServiceManager: ObservableObject {
     /// How far behind live playback is, in whole seconds; 0 at live or on ICY.
     @Published private(set) var secondsBehindLive: TimeInterval = 0
     @Published var playbackError: String? // Separate error for playback issues
-    
+
+    /// The recording being listened back to, while catch-up plays instead of the live
+    /// stream (F16). `playingChannel` stays its channel, so the mini player, the cards and
+    /// SharePlay go on naming the station; `getCurrentProgram` answers with this.
+    @Published private(set) var onDemandEpisode: DREpisode?
+    /// Where playback is in the recording, in whole seconds, and how long it is. Both 0
+    /// outside on-demand: a live stream has no position worth showing.
+    @Published private(set) var onDemandPosition: TimeInterval = 0
+    @Published private(set) var onDemandDuration: TimeInterval = 0
+
     let audioPlayer = AudioPlayerService()
     private let networkService = DRNetworkService()
     private let imageCache = ImageCacheService.shared
@@ -961,11 +1010,35 @@ class DRServiceManager: ObservableObject {
             .assign(to: \.playbackError, on: self)
             .store(in: &cancellables)
 
+        audioPlayer.$position
+            .removeDuplicates()
+            .assign(to: \.onDemandPosition, on: self)
+            .store(in: &cancellables)
+        audioPlayer.$duration
+            .map { $0.isFinite ? $0 : 0 }
+            .removeDuplicates()
+            .sink { [weak self] seconds in
+                guard let self else { return }
+                // The item's length once it is known, the schedule's until then.
+                self.onDemandDuration = seconds > 0 ? seconds : (self.onDemandEpisode?.duration ?? 0)
+            }
+            .store(in: &cancellables)
+
         // When the remote play command fires but no item is loaded (e.g. restored
-        // from cache), delegate back to playChannel so a fresh stream is started.
+        // from cache), delegate back so a fresh stream is started.
         audioPlayer.onRequestPlay = { [weak self] in
-            guard let self, let channel = self.playingChannel else { return }
-            self.playChannel(channel)
+            self?.restartPlayback()
+        }
+    }
+
+    /// Starts again whatever the player was last given: the recording, from where it had
+    /// got to, or the playing channel live. Every path that brings a dead or never-started
+    /// item back comes through here, so none of them turns a catch-up into the live stream.
+    private func restartPlayback() {
+        if let episode = onDemandEpisode {
+            playOnDemand(episode, from: onDemandPosition)
+        } else if let channel = playingChannel {
+            playChannel(channel)
         }
     }
     
@@ -990,9 +1063,9 @@ class DRServiceManager: ObservableObject {
 
     /// What every Try Again does: fetch whatever failed now, whatever the cache says.
     func retry() {
-        if playbackError != nil, let channel = playingChannel {
+        if playbackError != nil, playingChannel != nil {
             playbackError = nil
-            playChannel(channel)
+            restartPlayback()
         }
         if catalogueFailure != nil || availableChannels.isEmpty {
             retryAttempt = 0
@@ -1104,9 +1177,9 @@ class DRServiceManager: ObservableObject {
         if catalogueFailure != nil || availableChannels.isEmpty || !isCacheValid() {
             startCatalogueFetch()
         }
-        if playbackError != nil, audioPlayer.wantsPlayback, let channel = playingChannel {
+        if playbackError != nil, audioPlayer.wantsPlayback, playingChannel != nil {
             playbackError = nil
-            playChannel(channel)
+            restartPlayback()
         } else {
             audioPlayer.reloadIfStalled()
         }
@@ -1142,11 +1215,13 @@ class DRServiceManager: ObservableObject {
             } else if audioPlayer.hasLoadedItem {
                 // Player item exists — just resume from where it paused
                 audioPlayer.resume()
-                startPolling(for: channel)
+                // A recording has no live track to follow.
+                if onDemandEpisode == nil { startPolling(for: channel) }
                 audioPlayer.updateCommandCenterPlaybackState()
             } else {
-                // Channel was restored from cache but never played this session — start fresh
-                playChannel(channel)
+                // Restored from cache but never played this session, or the item failed —
+                // start fresh, as whatever it was: the recording, or the channel live.
+                restartPlayback()
             }
         } else {
             playChannel(channel)
@@ -1157,12 +1232,25 @@ class DRServiceManager: ObservableObject {
         audioPlayer.skip(by: seconds)
     }
 
+    /// Back to live: the live edge of the DVR window, or out of a recording and onto the
+    /// channel's stream, which is the live control's meaning in either case.
     func seekToLive() {
-        audioPlayer.seekToLive()
+        if onDemandEpisode != nil, let channel = playingChannel {
+            playChannel(channel)
+        } else {
+            audioPlayer.seekToLive()
+        }
+    }
+
+    /// Moves the recording to `seconds` from its start. Live has nowhere to scrub to.
+    func seekOnDemand(to seconds: TimeInterval) {
+        guard onDemandEpisode != nil else { return }
+        audioPlayer.seek(toPosition: seconds)
     }
 
     func stopPlayback() {
         audioPlayer.stop()
+        onDemandEpisode = nil
         playingChannel = nil
         currentTrack = nil
         currentLiveProgram = nil
@@ -1190,16 +1278,21 @@ class DRServiceManager: ObservableObject {
     /// again — an audible gap for nothing. Each district is its own `DRChannel` with its
     /// own `id`, so comparing ids is enough to tell "same channel and district" apart from
     /// "different channel" and "same station, different district".
+    ///
+    /// A recording of the channel is not the channel: choosing the station while catching
+    /// up on one of its programmes means the station, live.
     static func selectionAction(for channel: DRChannel, loaded: DRChannel?,
-                                hasLoadedItem: Bool, isPlaying: Bool) -> SelectionAction {
-        guard loaded?.id == channel.id, hasLoadedItem else { return .restart }
+                                hasLoadedItem: Bool, isPlaying: Bool,
+                                loadedIsOnDemand: Bool = false) -> SelectionAction {
+        guard loaded?.id == channel.id, hasLoadedItem, !loadedIsOnDemand else { return .restart }
         return isPlaying ? .nothing : .resume
     }
 
     func playChannel(_ channel: DRChannel) {
         switch Self.selectionAction(for: channel, loaded: playingChannel,
                                     hasLoadedItem: audioPlayer.hasLoadedItem,
-                                    isPlaying: isPlaying) {
+                                    isPlaying: isPlaying,
+                                    loadedIsOnDemand: onDemandEpisode != nil) {
         case .nothing:
             Log.playback.debug("selected the channel already playing; leaving it")
             return
@@ -1213,6 +1306,7 @@ class DRServiceManager: ObservableObject {
             break
         }
 
+        onDemandEpisode = nil
         recentTracks = []
         heardSnapshot = nil
         heardSnapshotTask?.cancel()
@@ -1277,6 +1371,33 @@ class DRServiceManager: ObservableObject {
             }
         }
     }
+
+    /// Plays the recording of `episode` from `position` seconds in (F16).
+    ///
+    /// The live machinery stands down for it. Track polling follows the live edge, and the
+    /// heard-programme lookup measures back from it; neither means anything in a recording,
+    /// and left running they would replace the episode on screen with whatever is on air.
+    func playOnDemand(_ episode: DREpisode, from position: TimeInterval = 0) {
+        guard let string = episode.onDemandStreamURL, let url = URL(string: string) else {
+            Log.playback.error("no on-demand stream for \(episode.id, privacy: .public)")
+            return
+        }
+        Log.playback.info("playing on demand: \(episode.id, privacy: .public)")
+        stopPolling()
+        recentTracks = []
+        heardSnapshot = nil
+        heardSnapshotTask?.cancel()
+        heardSnapshotTask = nil
+        playbackError = nil
+
+        onDemandEpisode = episode
+        onDemandDuration = episode.duration
+        playingChannel = episode.channel
+        currentTrack = nil
+        currentLiveProgram = episode
+        audioPlayer.play(url: url, onDemand: true, from: position)
+        audioPlayer.updateCommandCenterInfo(channel: episode.channel, program: episode)
+    }
     
     /// The catalogue as home-screen sections, one per broadcaster that has channels.
     ///
@@ -1292,7 +1413,11 @@ class DRServiceManager: ObservableObject {
     /// For the playing channel while behind live, that is the programme on air at the
     /// moment being heard, which near a boundary is the previous one. Every other channel,
     /// and the playing one at live, is what is on air now.
+    ///
+    /// While catching up, the playing channel's programme is the recording, wherever it
+    /// sits in the day.
     func getCurrentProgram(for channel: DRChannel) -> DREpisode? {
+        if channel.id == playingChannel?.id, let onDemandEpisode { return onDemandEpisode }
         guard channel.id == playingChannel?.id, secondsBehindLive > 0 else {
             return liveProgram(for: channel)
         }
@@ -1372,7 +1497,8 @@ class DRServiceManager: ObservableObject {
     /// Picks the track and programme for the moment being heard and publishes them if they
     /// changed.
     private func reselectHeard() {
-        guard let channel = playingChannel else { return }
+        // A recording is one programme with no live tracks: nothing to pick.
+        guard let channel = playingChannel, onDemandEpisode == nil else { return }
         let date = listeningDate
         let track = Self.heardTrack(in: recentTracks, at: date)
         loadHeardSnapshotIfNeeded(for: channel, at: date)
@@ -1422,6 +1548,32 @@ class DRServiceManager: ObservableObject {
             Log.network.error(
                 "schedule snapshot failed for \(channel.slug, privacy: .public): \(error.localizedDescription, privacy: .public)")
             throw error
+        }
+    }
+
+    /// The channel's whole broadcast day so far and to come, for the schedule sheets.
+    ///
+    /// The snapshot alone starts with the programme before the one on air, which leaves
+    /// nothing earlier to catch up on (F16). DR's day schedule has the rest; it is asked for
+    /// the snapshot's own date, since DR's day turns at about 05:00 rather than midnight.
+    /// Only the snapshot is required: without the day, the sheet shows what it always has.
+    func fetchDaySchedule(for channel: DRChannel) async throws -> [DREpisode] {
+        let snapshot: DRScheduleResponse
+        do {
+            snapshot = try await networkService.fetchScheduleSnapshot(for: channel.slug)
+        } catch {
+            Log.network.error(
+                "schedule snapshot failed for \(channel.slug, privacy: .public): \(error.localizedDescription, privacy: .public)")
+            throw error
+        }
+        guard let date = snapshot.scheduleDate else { return snapshot.items }
+        do {
+            let day = try await networkService.fetchDaySchedule(for: channel.slug, date: date)
+            return DRScheduleResponse.mergedDay(day.items, snapshot: snapshot.items)
+        } catch {
+            Log.network.warning(
+                "day schedule failed for \(channel.slug, privacy: .public); showing the snapshot: \(error.localizedDescription, privacy: .public)")
+            return snapshot.items
         }
     }
     
@@ -1506,6 +1658,8 @@ class DRServiceManager: ObservableObject {
             let indexPoints = try await networkService.fetchIndexPoints(for: channel.slug)
 
             return await MainActor.run {
+                // Answered after a recording took over: it has no live track.
+                guard self.onDemandEpisode == nil else { return nil }
                 self.recentTracks = indexPoints.items
                 let currentTrack = Self.heardTrack(in: indexPoints.items, at: self.listeningDate)
                 self.currentTrack = currentTrack
@@ -1593,7 +1747,10 @@ class DRServiceManager: ObservableObject {
     /// theoretical one.
     @discardableResult
     func startSleepTimer(_ mode: SleepTimerMode) -> Bool {
-        let programmeEnd = playingChannel.flatMap { liveProgram(for: $0)?.endDate }
+        // A recording ends when what is left of it has played, not when it ended on air.
+        let programmeEnd = onDemandEpisode != nil && onDemandDuration > 0
+            ? Date().addingTimeInterval(max(onDemandDuration - onDemandPosition, 0))
+            : playingChannel.flatMap { liveProgram(for: $0)?.endDate }
         guard let timer = SleepTimer(mode: mode, from: Date(), programmeEnd: programmeEnd) else {
             Log.playback.warning("sleep timer rejected: no end time for the current programme")
             return false
@@ -1784,6 +1941,14 @@ extension Array where Element: Hashable {
     func uniqued() -> [Element] {
         var seen = Set<Element>()
         return filter { seen.insert($0).inserted }
+    }
+}
+
+extension Array {
+    /// Order-preserving: the first element for each key is kept.
+    func uniqued<Key: Hashable>(by key: (Element) -> Key) -> [Element] {
+        var seen = Set<Key>()
+        return filter { seen.insert(key($0)).inserted }
     }
 }
 

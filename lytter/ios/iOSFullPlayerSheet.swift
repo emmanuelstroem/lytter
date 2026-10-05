@@ -114,10 +114,20 @@ struct iOSFullPlayerSheet: View {
                             serviceManager: serviceManager
                         )
                         
-                        PlayerProgressView(
-                            programme: serviceManager.getCurrentProgram(for: currentChannel),
-                            secondsBehindLive: serviceManager.secondsBehindLive
-                        )
+                        Group {
+                            if serviceManager.onDemandEpisode != nil {
+                                OnDemandProgressView(
+                                    position: serviceManager.onDemandPosition,
+                                    duration: serviceManager.onDemandDuration,
+                                    onSeek: { serviceManager.seekOnDemand(to: $0) }
+                                )
+                            } else {
+                                PlayerProgressView(
+                                    programme: serviceManager.getCurrentProgram(for: currentChannel),
+                                    secondsBehindLive: serviceManager.secondsBehindLive
+                                )
+                            }
+                        }
                         .padding(.horizontal, 20)
                         
                         Spacer()
@@ -126,6 +136,8 @@ struct iOSFullPlayerSheet: View {
                         //
                         // Skip and Live appear only when the stream has a DVR window
                         // (DR's HLS streams); the ICY fallback has nothing to seek in.
+                        // A recording counts as behind live, so Live leaves it for the
+                        // channel and skip forward stays on.
                         PlayerControlsView(
                             isPlaying: serviceManager.isPlaying,
                             showBackwardButton: serviceManager.canSeek,

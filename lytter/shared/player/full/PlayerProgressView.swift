@@ -82,6 +82,78 @@ struct PlayerProgressView: View {
     }
 }
 
+/// A position in a recording, as the players write it.
+enum PlaybackTime {
+    /// "4:05", or "1:02:05" past the hour. Not localised: digits and separators.
+    static func format(_ seconds: TimeInterval) -> String {
+        let total = Int(seconds.rounded(.down))
+        let (hours, minutes, secs) = (total / 3600, total % 3600 / 60, total % 60)
+        return hours > 0
+            ? String(format: "%d:%02d:%02d", hours, minutes, secs)
+            : String(format: "%d:%02d", minutes, secs)
+    }
+}
+
+#if !os(tvOS)
+/// How far through a recording playback is, and a way to move through it (F16).
+///
+/// The live bar above is a read-out because there is nothing to scrub in a broadcast; a
+/// recording is the opposite case, so here the bar is a control. Its labels are elapsed
+/// and remaining time rather than clock times: the hour it went out says nothing about
+/// where you are in it.
+struct OnDemandProgressView: View {
+    /// Whole seconds from the start, as the player reports them.
+    let position: TimeInterval
+    let duration: TimeInterval
+    let onSeek: (TimeInterval) -> Void
+
+    /// Where the thumb is while being dragged. The player's position would pull it back
+    /// every second until the drag let go.
+    @State private var scrubbing: TimeInterval?
+
+    private var shown: TimeInterval { min(scrubbing ?? position, duration) }
+
+    var body: some View {
+        VStack(spacing: 6) {
+            Slider(
+                value: Binding(get: { shown }, set: { scrubbing = $0 }),
+                in: 0...max(duration, 1),
+                onEditingChanged: { editing in
+                    guard !editing, let target = scrubbing else { return }
+                    onSeek(target)
+                    // Held until the player has moved, so the thumb does not jump back first.
+                    Task {
+                        try? await Task.sleep(for: .milliseconds(600))
+                        scrubbing = nil
+                    }
+                }
+            )
+            .tint(Color.accentColor)
+            .accessibilityLabel("Position")
+            .accessibilityValue(PlaybackTime.format(shown))
+
+            HStack(spacing: 8) {
+                Text(PlaybackTime.format(shown))
+
+                Spacer(minLength: 0)
+
+                Label("On demand", systemImage: "clock.arrow.circlepath")
+                    .imageScale(.small)
+                    .fontWeight(.semibold)
+                    .fixedSize()
+
+                Spacer(minLength: 0)
+
+                Text(verbatim: "−\(PlaybackTime.format(max(duration - shown, 0)))")
+            }
+            .font(.caption2.monospacedDigit())
+            .foregroundStyle(Color.secondaryOnPage)
+            .accessibilityHidden(true)
+        }
+    }
+}
+#endif
+
 #Preview {
     PlayerProgressView(programme: nil)
         .padding()

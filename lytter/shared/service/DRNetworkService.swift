@@ -159,6 +159,37 @@ class DRNetworkService {
         }
     }
 
+    // MARK: - Fetch a Broadcast Day for Channel
+
+    /// DR's schedule for one broadcast day, `date` as DR writes it ("2026-10-05").
+    func fetchDaySchedule(for channelSlug: String, date: String) async throws -> DRScheduleResponse {
+        #if DEBUG
+        // The fixture day is the fixture snapshot; the two are merged, so it adds nothing.
+        if UITestFixtures.isActive {
+            guard let fixture = UITestFixtures.schedule(for: channelSlug) else {
+                throw NetworkError.invalidResponse
+            }
+            return fixture
+        }
+        #endif
+        let url = try endpoint(try endpoint(DRAPIConfig.schedules, channelSlug).absoluteString,
+                               date)
+        let (data, response) = try await session.data(for: makeRequest(for: url))
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw NetworkError.invalidResponse
+        }
+        guard (200...299).contains(httpResponse.statusCode) else {
+            throw NetworkError.httpError(httpResponse.statusCode)
+        }
+
+        do {
+            return try decoder.decode(DRScheduleResponse.self, from: data)
+        } catch {
+            throw NetworkError.decodingError
+        }
+    }
+
     // MARK: - Fetch Index Points (Currently Playing Tracks)
     func fetchIndexPoints(for channelSlug: String) async throws -> DRIndexPointsResponse {
         #if DEBUG

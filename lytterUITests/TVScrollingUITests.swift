@@ -194,6 +194,35 @@ final class TVScrollingUITests: XCTestCase {
         XCTAssertTrue(isOnScreen(focused), "the first programme has focus but is off screen")
     }
 
+    /// A finished programme with a recording is a button in the schedule (F16). Selecting
+    /// it closes the sheet onto the player, which then shows the recording rather than what
+    /// is on air. The fixtures give every other finished programme one; 15 has it.
+    @MainActor
+    func testScheduleCatchUpRowPlaysTheRecording() throws {
+        launch()
+        openPlayer()
+
+        XCTAssertTrue(moveFocus(.right, until: { $0.label == "Schedule" }),
+                      "could not reach the schedule button; focus is on \(focusedLabel)")
+        press(.select)
+        let rows = app.descendants(matching: .any).matching(identifier: "schedule.row")
+        XCTAssertTrue(rows.firstMatch.waitForExistence(timeout: 5), "the schedule did not open")
+        sleep(1)
+
+        XCTAssertTrue(moveFocus(.up, until: { $0.label.contains("Fixture-program 15") },
+                                maxPresses: 3),
+                      "could not reach the finished programme; focus is on \(focusedLabel)")
+        press(.select)
+
+        let position = app.descendants(matching: .any)
+            .matching(NSPredicate(format: "label == 'Position'")).firstMatch
+        XCTAssertTrue(position.waitForExistence(timeout: 5),
+                      "the player did not switch to the recording")
+        XCTAssertFalse(rows.firstMatch.exists, "the schedule stayed open")
+        XCTAssertTrue(app.staticTexts["Fixture-program 15"].exists,
+                      "the player does not name the recording")
+    }
+
     /// The fixture description is several paragraphs, longer than the info sheet. A click
     /// down has to move the text, and a click up has to move it back.
     @MainActor

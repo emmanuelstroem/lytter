@@ -59,11 +59,6 @@ What is left is listed below. Three gaps are not entries of their own:
 
 ### P2 — expansion
 
-- [ ] **F16. On-demand playback.** Wire up `fetchScheduleSnapshot` and
-      `isAvailableOnDemand` for catch-up listening.
-      Checked 2026-10-04: not started. The schedule snapshot is used, for the schedule
-      sheet and to show what is heard behind live, but `isAvailableOnDemand` is decoded
-      and never read.
 - [ ] **F18. Widgets + Live Activity** for the currently playing channel.
       Checked 2026-10-04: not started; no widget extension, no WidgetKit or ActivityKit.
 - [ ] **F19. iPhone Duo support.** See [IPHONE-DUO.md](IPHONE-DUO.md).
@@ -121,7 +116,7 @@ iOS, tvOS and macOS → S1, if DR ever asks for a key.
 F49 (API version from GitHub Pages, and a scheduled check that the API still answers).
 
 **Expansion**
-F18 (widgets, Live Activity) → F21 (CarPlay) → F16 (on demand) → F33 (favourite shows)
+F18 (widgets, Live Activity) → F21 (CarPlay) → F33 (favourite shows)
 → F19 (iPhone Duo).
 
 **Housekeeping, whenever it is cheap**

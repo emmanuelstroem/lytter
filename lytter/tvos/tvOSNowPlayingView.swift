@@ -133,7 +133,9 @@ struct tvOSNowPlayingView: View {
     /// redraws itself needs no state to keep in sync.
     @ViewBuilder
     private func programmeProgress(for channel: DRChannel) -> some View {
-        if let programme = serviceManager.getCurrentProgram(for: channel),
+        if serviceManager.onDemandEpisode != nil {
+            onDemandProgress
+        } else if let programme = serviceManager.getCurrentProgram(for: channel),
            let start = programme.startDate,
            let end = programme.endDate {
             // Anchored to the programme's start rather than `.now`, so every redraw asks
@@ -166,6 +168,39 @@ struct tvOSNowPlayingView: View {
                 }
             }
         }
+    }
+
+    /// A recording's position (F16): elapsed and remaining rather than the hours it aired.
+    /// Still a read-out — skip moves through it — so that the row of controls stays the
+    /// only thing that takes focus.
+    private var onDemandProgress: some View {
+        let position = serviceManager.onDemandPosition
+        let duration = max(serviceManager.onDemandDuration, 1)
+        return VStack(alignment: .leading, spacing: 12) {
+            GeometryReader { proxy in
+                ZStack(alignment: .leading) {
+                    Capsule().fill(.white.opacity(0.22))
+                    Capsule()
+                        .fill(.white)
+                        .frame(width: proxy.size.width * min(position / duration, 1))
+                }
+            }
+            .frame(height: 8)
+
+            HStack {
+                Text(verbatim: PlaybackTime.format(position))
+                Spacer()
+                Label("On demand", systemImage: "clock.arrow.circlepath")
+                Spacer()
+                Text(verbatim: "−\(PlaybackTime.format(max(duration - position, 0)))")
+            }
+            .font(.system(size: 20))
+            .foregroundStyle(.white.opacity(0.6))
+            .monospacedDigit()
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Position")
+        .accessibilityValue(PlaybackTime.format(position))
     }
 
 }
