@@ -10,6 +10,7 @@
 		1470660F2E47F55200574321 /* TVServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 147063492E46DE8C00574321 /* TVServices.framework */; };
 		147066162E47F55200574321 /* TopShelfExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 1470660E2E47F55200574321 /* TopShelfExtension.appex */; platformFilters = (tvos, ); settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		147DE6F02E4FF646005991DF /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = 147DE6EF2E4FF646005991DF /* AppIcon.icon */; };
+		F18000000000000000000002 /* LytterWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = F18000000000000000000001 /* LytterWidgets.appex */; platformFilter = ios; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -34,6 +35,13 @@
 			remoteGlobalIDString = 14B52D262E44D1AB00E8476E;
 			remoteInfo = lytter;
 		};
+		F18000000000000000000003 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 14B52D1F2E44D1AB00E8476E /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = F1800000000000000000000B;
+			remoteInfo = LytterWidgets;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -44,6 +52,7 @@
 			dstSubfolderSpec = 13;
 			files = (
 				147066162E47F55200574321 /* TopShelfExtension.appex in Embed Foundation Extensions */,
+				F18000000000000000000002 /* LytterWidgets.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -57,6 +66,7 @@
 		14B52D272E44D1AB00E8476E /* lytter.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = lytter.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		14B52D382E44D1AD00E8476E /* lytterTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = lytterTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		14B52D422E44D1AD00E8476E /* lytterUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = lytterUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		F18000000000000000000001 /* LytterWidgets.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = LytterWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -80,6 +90,13 @@
 				ios/iOSRadioView.swift = (ios, );
 			};
 			target = 14B52D262E44D1AB00E8476E /* lytter */;
+		};
+		F18000000000000000000006 /* Exceptions for "LytterWidgets" folder in "LytterWidgets" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = F1800000000000000000000B /* LytterWidgets */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
@@ -115,6 +132,19 @@
 			path = lytterUITests;
 			sourceTree = "<group>";
 		};
+		F18000000000000000000005 /* LytterWidgets */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				F18000000000000000000006 /* Exceptions for "LytterWidgets" folder in "LytterWidgets" target */,
+			);
+			path = LytterWidgets;
+			sourceTree = "<group>";
+		};
+		F18000000000000000000007 /* WidgetShared */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = WidgetShared;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -147,6 +177,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		F18000000000000000000009 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -159,6 +196,8 @@
 				14B52D452E44D1AD00E8476E /* lytterUITests */,
 				147065FE2E47F44D00574321 /* TopShelfExtension */,
 				147066102E47F55200574321 /* TopShelfExtension */,
+				F18000000000000000000005 /* LytterWidgets */,
+				F18000000000000000000007 /* WidgetShared */,
 				14CA66FD2E46CF01001C4592 /* Frameworks */,
 				14B52D282E44D1AB00E8476E /* Products */,
 				14CA689E2E46D200001C4592 /* Recovered References */,
@@ -172,6 +211,7 @@
 				14B52D382E44D1AD00E8476E /* lytterTests.xctest */,
 				14B52D422E44D1AD00E8476E /* lytterUITests.xctest */,
 				1470660E2E47F55200574321 /* TopShelfExtension.appex */,
+				F18000000000000000000001 /* LytterWidgets.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -229,9 +269,11 @@
 			);
 			dependencies = (
 				147066152E47F55200574321 /* PBXTargetDependency */,
+				F18000000000000000000004 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				14B52D292E44D1AB00E8476E /* lytter */,
+				F18000000000000000000007 /* WidgetShared */,
 			);
 			name = lytter;
 			packageProductDependencies = (
@@ -286,6 +328,29 @@
 			productReference = 14B52D422E44D1AD00E8476E /* lytterUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
+		F1800000000000000000000B /* LytterWidgets */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F1800000000000000000000C /* Build configuration list for PBXNativeTarget "LytterWidgets" */;
+			buildPhases = (
+				F18000000000000000000008 /* Sources */,
+				F18000000000000000000009 /* Frameworks */,
+				F1800000000000000000000A /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				F18000000000000000000005 /* LytterWidgets */,
+				F18000000000000000000007 /* WidgetShared */,
+			);
+			name = LytterWidgets;
+			packageProductDependencies = (
+			);
+			productName = LytterWidgets;
+			productReference = F18000000000000000000001 /* LytterWidgets.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -310,6 +375,9 @@
 						CreatedOnToolsVersion = 26.0;
 						TestTargetID = 14B52D262E44D1AB00E8476E;
 					};
+					F1800000000000000000000B = {
+						CreatedOnToolsVersion = 27.0;
+					};
 				};
 			};
 			buildConfigurationList = 14B52D222E44D1AB00E8476E /* Build configuration list for PBXProject "lytter" */;
@@ -331,6 +399,7 @@
 				14B52D372E44D1AD00E8476E /* lytterTests */,
 				14B52D412E44D1AD00E8476E /* lytterUITests */,
 				1470660D2E47F55200574321 /* TopShelfExtension */,
+				F1800000000000000000000B /* LytterWidgets */,
 			);
 		};
 /* End PBXProject section */
@@ -359,6 +428,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		14B52D402E44D1AD00E8476E /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F1800000000000000000000A /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -396,6 +472,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		F18000000000000000000008 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -413,6 +496,12 @@
 			isa = PBXTargetDependency;
 			target = 14B52D262E44D1AB00E8476E /* lytter */;
 			targetProxy = 14B52D432E44D1AD00E8476E /* PBXContainerItemProxy */;
+		};
+		F18000000000000000000004 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			platformFilter = ios;
+			target = F1800000000000000000000B /* LytterWidgets */;
+			targetProxy = F18000000000000000000003 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -814,6 +903,79 @@
 			};
 			name = Release;
 		};
+		F1800000000000000000000D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = "";
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
+				CODE_SIGN_ENTITLEMENTS = LytterWidgets/LytterWidgets.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = A9Q5VPE9WX;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = LytterWidgets/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Lytter;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.eopio.lytter.LytterWidgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "LYTTER_WIDGETS $(inherited)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		F1800000000000000000000E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = "";
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
+				CODE_SIGN_ENTITLEMENTS = LytterWidgets/LytterWidgets.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = A9Q5VPE9WX;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = LytterWidgets/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Lytter;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.eopio.lytter.LytterWidgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "LYTTER_WIDGETS $(inherited)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -858,6 +1020,15 @@
 			buildConfigurations = (
 				14B52D542E44D1AD00E8476E /* Debug */,
 				14B52D552E44D1AD00E8476E /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		F1800000000000000000000C /* Build configuration list for PBXNativeTarget "LytterWidgets" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F1800000000000000000000D /* Debug */,
+				F1800000000000000000000E /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

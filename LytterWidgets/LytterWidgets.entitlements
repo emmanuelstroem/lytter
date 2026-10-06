@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- The app writes what is playing into this group's container, and the widgets draw
+	     it (F18). Must match the app's lytter.entitlements. -->
+	<key>com.apple.security.application-groups</key>
+	<array>
+		<string>group.com.eopio.lytter</string>
+	</array>
+</dict>
+</plist>

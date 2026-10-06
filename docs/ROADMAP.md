@@ -1,6 +1,6 @@
 # Lytter — Status, Plan & Todo
 
-_Last updated: 2026-10-05. Completed entries have been removed; their write-ups live in the
+_Last updated: 2026-10-06. Completed entries have been removed; their write-ups live in the
 pull requests that closed them and in this file's git history._
 _Companion docs: [OVERVIEW-AND-ARCHITECTURE.md](OVERVIEW-AND-ARCHITECTURE.md) · [IPHONE-DUO.md](IPHONE-DUO.md)_
 
@@ -8,7 +8,8 @@ _Companion docs: [OVERVIEW-AND-ARCHITECTURE.md](OVERVIEW-AND-ARCHITECTURE.md) ·
 
 ## 1. Where the project stands
 
-Live DR radio on iOS, iPadOS, tvOS and macOS, with Top Shelf, CarPlay (in the simulator
+Live DR radio on iOS, iPadOS, tvOS and macOS, with Top Shelf, widgets on iPhone
+and iPad, CarPlay (in the simulator
 until Apple grants the entitlement; F21), search, favourites, recently played, a schedule,
 a sleep timer, Siri and Shortcuts, SharePlay, Danish localisation and an accessibility
 pass. The build is warning-free under Swift 6 on all three SDKs, with unit
@@ -96,8 +97,15 @@ What is left is listed below. Three gaps are not entries of their own:
 
 ### P2 — expansion
 
-- [ ] **F18. Widgets + Live Activity** for the currently playing channel.
-      Checked 2026-10-04: not started; no widget extension, no WidgetKit or ActivityKit.
+- [ ] **F18. Widgets on the Mac.** iPhone and iPad have them (2026-10-06): the
+      `LytterWidgets` extension draws a Now Playing widget (small and medium, and the Lock
+      Screen's rectangular, circular and inline), a Favourites widget (the pinned stations,
+      four or eight, each a tap from playing) and a Control Centre play/pause from iOS 18.
+      All of them read what the app writes into the app group; the extension never asks
+      DR. The broadcaster is shown with DR LYD's logo — see S11. No Live Activity: the system's Now Playing already fills the Lock Screen and the
+      Dynamic Island for an audio app, and one of the app's own would only double it.
+      Remaining: the Mac's desktop and Notification Centre widgets, which need the extension
+      built for macOS and the app group's container to be the one the sandboxed app writes.
 - [ ] **F19. iPhone Duo support.** See [IPHONE-DUO.md](IPHONE-DUO.md).
       Checked 2026-10-04: not started beyond those notes.
 - [ ] **F21. CarPlay — ask Apple for the entitlement.** The CarPlay scene is built
@@ -136,6 +144,8 @@ What is left is listed below. Three gaps are not entries of their own:
 - [ ] **S11. Document the DR API posture.** The app consumes an undocumented public API,
       hardcodes 24 DR stream URLs, and displays DR-supplied artwork and trademarks. Confirm
       terms of use and attribution requirements before submitting to the App Store.
+      The widgets show DR LYD's logo beside each channel (F18), from DR's own logo pack;
+      confirm that use is allowed, and on what terms.
       Also settle whether the app may read the radio guide at `www.dr.dk/lyd/oversigt`
       for the week ahead (F52): it is DR's website rather than their API, and F52 waits
       on the answer.
@@ -165,7 +175,7 @@ iOS, tvOS and macOS → S1, if DR ever asks for a key.
 F49 (API version from GitHub Pages, and a scheduled check that the API still answers).
 
 **Expansion**
-F18 (widgets, Live Activity) → F21 (CarPlay) → F52 (DR's guide page, if S11 allows it)
+F18 (widgets on the Mac) → F21 (CarPlay) → F52 (DR's guide page, if S11 allows it)
 → F19 (iPhone Duo).
 
 **Housekeeping, whenever it is cheap**
