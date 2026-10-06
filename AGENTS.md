@@ -32,8 +32,10 @@ cards. It is a design principle for this app, not a one-off fix.
 | iOS featured shelf card | 14 |
 | iOS standard shelf card | 12 |
 | iOS list-row thumbnail | 8 |
-| iOS search category tile | 12 |
+| tvOS featured shelf card | 22 |
 | tvOS channel card | 16 |
+| macOS featured station card | 10 |
+| macOS standard station card | 8 |
 | tvOS now-playing artwork | 24, badge 12 |
 | tvOS panels | 28 |
 | Mini-player artwork | 10 |
@@ -86,6 +88,20 @@ that only flushes at the end.
 **On tvOS, XCUITest reports an app that has just left as still in front.** For a moment
 after Back exits to the Apple TV home screen, `app.state` is `runningForeground` with nothing
 focused, which reads as "stuck on Home" (F35). Take a screenshot before believing it.
+
+## Broadcasters
+
+**A broadcaster's own code lives in its own folder.** Anything that exists only because of
+one broadcaster's API goes in `lytter/shared/broadcasters/<id>/` — DR's is `dr/`. Anything
+another broadcaster would use too stays in `lytter/shared/`. A broadcaster is a
+`BroadcasterSource` in its folder plus one line in `BroadcasterRegistry`; removing one is
+deleting both, because the target compiles every file on disk. `DRChannel`, `DREpisode` and
+`DRServiceManager` are the exception for now — DR's types, but also the whole app's model
+and core service — until F54d renames and splits them.
+
+**Station ids are stored.** Favourites, recently played, widgets and Siri shortcuts keep
+them, so a new source's ids must be URNs in its own namespace (`urn:lytter:<id>:…`) and
+must never change. A channel with no `broadcasterID` is DR's.
 
 ## Conventions
 

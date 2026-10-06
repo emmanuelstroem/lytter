@@ -93,7 +93,7 @@ What is left is listed below. Three gaps are not entries of their own:
       - **On a 401, look again.** That is how `api.dr.dk` says a version is retired; the
         network layer already recognises it. Re-fetch the file and retry once.
       - **One value for the app and the Top Shelf.** `TopShelfNetworkService` keeps its own
-        copy of `apiVersion` (the duplication `DRModels.swift` warns about). Both should
+        copy of `apiVersion` (the duplication `DRAPIConfig.swift` warns about). Both should
         read the version from the app group.
       - **Detect the next retirement.** Nothing noticed the v4 outage; it was found by
         running the app. A scheduled GitHub Actions job that asserts a 200 *and* a

@@ -21,25 +21,34 @@ and which track is on air right now, and integrates with the system playback sur
 
 ## 2. Repository layout
 
+_Brought up to date 2026-10-06 (F54a); the rest of this document is the 2026-09-23 snapshot._
+
 ```
 lytter.xcodeproj          objectVersion 77, folder-synced groups (Xcode 16+)
-├── lytter/                       ← app target
-│   ├── lytterApp.swift           @main; SwiftData container gate; onOpenURL
-│   ├── ContentView.swift         platform fork: iOS TabView / tvOS tvOSHomeView
-│   ├── Item.swift                ⚠ unused SwiftData template leftover
+├── lytter/                       ← app target (iOS, iPadOS, tvOS, macOS; CarPlay inside)
+│   ├── lytterApp.swift           @main; onOpenURL
+│   ├── ContentView.swift         platform fork: iOS TabView / tvOSHomeView / macOSContentView
+│   ├── Localizable.xcstrings     the one String Catalog (see LOCALISATION.md)
 │   ├── ios/                      iOS-only screens (platform-filtered in pbxproj)
 │   ├── tvos/                     tvOS-only screens (guarded by #if os(tvOS))
+│   ├── macos/                    macOS-only screens (guarded by #if os(macOS))
 │   └── shared/
 │       ├── broadcasters/         one folder per broadcaster + BroadcasterRegistry (F54)
 │       │   └── dr/               DR's API types, network service, disk cache, DRServiceManager
 │       ├── model/                broadcaster-neutral models: favourites, districts, shows
-│       ├── service/              network, audio, image cache, preferences, Siri
+│       ├── service/              audio, image cache, preferences, schedules, reminders, fixtures
+│       ├── intents/              App Intents, Siri, StationEntity
 │       ├── player/               MiniPlayer + FullPlayer component set
-│       ├── views/                MarqueeText, AirPlayButton, KnockoutText
+│       ├── views/                shared components: StationCard, MarqueeText, AirPlayButton…
 │       ├── deeplink/             DeepLinkHandler
-│       └── icons/lytter.xcf      ⚠ 32 MB GIMP source committed to git
+│       └── shareplay/            SharePlay
+├── LytterWidgets/                widget extension (Now Playing, Favourites, Control Centre)
+├── WidgetShared/                 compiled into the app and the widgets: snapshot, app group
+├── SharedAssets/                 station logos, shared by the app and the widgets
 ├── TopShelfExtension/            tvOS Top Shelf provider (own models + client)
-├── lytterTests/ lytterUITests/   Xcode template stubs, no real tests
+├── lytterTests/                  unit tests (Swift Testing)
+├── lytterUITests/                UI tests, incl. tvOS remote-driven scrolling
+├── Tools/                        RenderBrandAssets.swift
 └── AppIcon.icon/                 Icon Composer source (SVG layers)
 ```
 
