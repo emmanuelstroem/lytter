@@ -12,7 +12,7 @@ import Foundation
 /// load an image while it draws; it reads what the app has already downloaded for the lock
 /// screen.
 nonisolated struct NowPlayingStore: Sendable {
-    static let appGroup = "group.com.eopio.lytter"
+    static let appGroup = AppGroup.identifier
     static let snapshotFileName = "now_playing.json"
     static let artworkFileName = "now_playing_artwork.jpg"
 

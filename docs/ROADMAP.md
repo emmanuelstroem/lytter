@@ -115,6 +115,34 @@ What is left is listed below. Three gaps are not entries of their own:
       Dynamic Island for an audio app, and one of the app's own would only double it.
       Remaining: the Mac's desktop and Notification Centre widgets, which need the extension
       built for macOS and the app group's container to be the one the sandboxed app writes.
+- [ ] **F54. More than one broadcaster.** Commercial stations — Nova, PopFM, Radio Soft,
+      Radio Limfjord, Radio Alfa — beside DR, each added or removed in one place, and a
+      Home that filters by them.
+      - [x] *F54a. A folder per broadcaster.* Everything that exists only because of DR's
+        API lives in `lytter/shared/broadcasters/dr/`; what another broadcaster would use
+        too stays in `shared/`. A broadcaster is a `BroadcasterSource` in its own folder
+        plus one line in `BroadcasterRegistry`. The catalogue is fetched from every source
+        at once, and one that fails drops only its own section.
+      - [ ] *F54b. Settings → Broadcasters.* Show, hide and reorder them. A hidden one is
+        not fetched, so it leaves Home, Search, CarPlay and the widgets with no special
+        cases; its favourites return when it is shown again. Appears only once there are
+        two, so a fixture broadcaster in `UITestFixtures` comes with it.
+      - [ ] *F54c. Home chips.* *For you · All · DR · Nova…* on iPhone and iPad; *All* is a
+        shelf per broadcaster and replaces the Radio tab. tvOS and the Mac list the
+        broadcasters as a sidebar section instead. Broadcaster chips appear only when two
+        or more are shown.
+      - [ ] *F54d. A neutral core.* `DRChannel`, `DREpisode` and `DRServiceManager` are DR's
+        API types but also the whole app's station model and core service, so for now they
+        sit in `dr/`. Rename `DRChannel` → `Station` and `DREpisode` → `Programme` (a pure
+        rename, ~230 references in 74 files); split `DRServiceManager` into a shared
+        `RadioService` (playback, now playing, timers, preferences), which moves back to
+        `shared/service/`, and DR's own orchestration (a channel's day, track index points,
+        catch-up, the directory), which stays in `dr/`; make `ConnectionProblem`'s wording
+        broadcaster-neutral. No change in behaviour. Before the first real second broadcaster.
+      - Then the first commercial broadcaster: its stream and metadata APIs, and its terms
+        (as S11 is for DR). It needs a disk cache of its own — DR's holds the whole catalogue
+        today — and, if it has schedules, channel slugs that cannot collide with DR's, which
+        favourite shows key on. `BroadcasterMark` in the widgets chooses DR's logo by name.
 - [ ] **F19. iPhone Duo support.** See [IPHONE-DUO.md](IPHONE-DUO.md).
       Checked 2026-10-04: not started beyond those notes.
 - [ ] **F21. CarPlay — ask Apple for the entitlement.** The CarPlay scene is built
@@ -184,8 +212,8 @@ iOS, tvOS and macOS → S1, if DR ever asks for a key.
 F49 (API version from GitHub Pages, and a scheduled check that the API still answers).
 
 **Expansion**
-F18 (widgets on the Mac) → F21 (CarPlay) → F52 (DR's guide page, if S11 allows it)
-→ F19 (iPhone Duo).
+F18 (widgets on the Mac) → F21 (CarPlay) → F54b → F54c → F54d (more than one
+broadcaster) → F52 (DR's guide page, if S11 allows it) → F19 (iPhone Duo).
 
 **Housekeeping, whenever it is cheap**
 S15 (default main-actor isolation) → P17 (brand-asset size).

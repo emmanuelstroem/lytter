@@ -30,7 +30,9 @@ lytter.xcodeproj          objectVersion 77, folder-synced groups (Xcode 16+)
 │   ├── ios/                      iOS-only screens (platform-filtered in pbxproj)
 │   ├── tvos/                     tvOS-only screens (guarded by #if os(tvOS))
 │   └── shared/
-│       ├── model/DRModels.swift  API DTOs + DRServiceManager + misc state
+│       ├── broadcasters/         one folder per broadcaster + BroadcasterRegistry (F54)
+│       │   └── dr/               DR's API types, network service, disk cache, DRServiceManager
+│       ├── model/                broadcaster-neutral models: favourites, districts, shows
 │       ├── service/              network, audio, image cache, preferences, Siri
 │       ├── player/               MiniPlayer + FullPlayer component set
 │       ├── views/                MarqueeText, AirPlayButton, KnockoutText
@@ -226,7 +228,7 @@ Adaptive rather than fixed-interval: after fetching the current track,
 These are described here as facts about the design; fixes and priorities live in
 [ROADMAP.md](ROADMAP.md).
 
-1. **`DRServiceManager` is a god object.** ~400 lines mixing network orchestration,
+1. **`DRServiceManager` is a god object.** ~1,150 lines mixing network orchestration,
    cache policy, playback control, timer scheduling, now-playing metadata and
    preference persistence. There are no protocol boundaries anywhere in the codebase,
    so nothing can be unit-tested without hitting the live DR API.
