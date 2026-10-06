@@ -208,11 +208,11 @@ final class ScheduleTemplateStore {
     private static func defaultURL() -> URL? {
         let files = FileManager.default
         #if os(tvOS)
-        let base = files.containerURL(forSecurityApplicationGroupIdentifier: DRLocalCache.appGroup)?
+        let base = files.containerURL(forSecurityApplicationGroupIdentifier: AppGroup.identifier)?
             .appendingPathComponent("Library/Caches", isDirectory: true)
             ?? files.urls(for: .cachesDirectory, in: .userDomainMask).first
         #elseif os(iOS)
-        let base = files.containerURL(forSecurityApplicationGroupIdentifier: DRLocalCache.appGroup)?
+        let base = files.containerURL(forSecurityApplicationGroupIdentifier: AppGroup.identifier)?
             .appendingPathComponent("Library/Application Support", isDirectory: true)
             ?? files.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
         #else

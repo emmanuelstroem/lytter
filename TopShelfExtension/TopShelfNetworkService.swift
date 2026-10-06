@@ -17,7 +17,7 @@ enum TopShelfLog {
 
 // MARK: - TopShelf API Configuration
 struct TopShelfAPIConfig {
-    /// ⚠️ Must match `DRAPIConfig.apiVersion` in lytter/shared/model/DRModels.swift.
+    /// ⚠️ Must match `DRAPIConfig.apiVersion` in lytter/shared/broadcasters/dr/DRAPIConfig.swift.
     /// This target cannot see that type, so the value is duplicated. api.dr.dk answers
     /// 401 for any version it no longer serves, so a stale value here means Top Shelf
     /// quietly falls back to its bundled placeholder channels while the app itself works.
