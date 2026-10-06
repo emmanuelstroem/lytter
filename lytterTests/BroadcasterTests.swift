@@ -28,7 +28,7 @@ struct BroadcasterTests {
     }
 
     @Test func channelsBecomeOneSectionPerBroadcaster() {
-        let sections = Broadcaster.sections(from: [channel("p1"), channel("p3")])
+        let sections = Broadcaster.sections(from: [channel("p1"), channel("p3")], shown: [.dr])
 
         #expect(sections.count == 1)
         #expect(sections.first?.broadcaster == .dr)
@@ -38,7 +38,7 @@ struct BroadcasterTests {
     /// A broadcaster that supplies nothing is left out rather than rendered as an empty
     /// heading — which is what happens when one source fails to load and others succeed.
     @Test func aBroadcasterWithNoChannelsIsOmitted() {
-        #expect(Broadcaster.sections(from: []).isEmpty)
+        #expect(Broadcaster.sections(from: [], shown: [.dr]).isEmpty)
     }
 
     /// Explicit ordering, not alphabetical: the national broadcaster belongs at the top
@@ -76,16 +76,33 @@ struct BroadcasterTests {
         #expect(try JSONDecoder().decode(DRChannel.self, from: encoded).broadcasterID == "nova")
     }
 
-    @Test func twoBroadcastersBecomeTwoSectionsInDisplayOrder() {
+    @Test func twoBroadcastersBecomeTwoSectionsInTheOrderShown() {
         let channels = [channel("n1", broadcasterID: "nova"), channel("p1"), channel("n2", broadcasterID: "nova")]
-        let sections = Broadcaster.sections(from: channels, registered: [nova, .dr])
+        let sections = Broadcaster.sections(from: channels, shown: [.dr, nova], registered: [nova, .dr])
 
         #expect(sections.map(\.broadcaster) == [.dr, nova])
         #expect(sections.last?.channels.map(\.id) == ["n1", "n2"])
+        #expect(Broadcaster.sections(from: channels, shown: [nova, .dr], registered: [nova, .dr])
+                    .map(\.broadcaster) == [nova, .dr], "the listener's order is not followed")
+    }
+
+    /// A hidden broadcaster has no section, even with its channels still in hand — an
+    /// answer that was on its way when it was hidden.
+    @Test func aHiddenBroadcasterHasNoSection() {
+        let channels = [channel("p1"), channel("n1", broadcasterID: "nova")]
+        let sections = Broadcaster.sections(from: channels, shown: [.dr], registered: [.dr, nova])
+
+        #expect(sections.map(\.broadcaster) == [.dr])
     }
 
     @Test func drIsRegistered() {
         #expect(BroadcasterRegistry.makeSources().contains { $0 is DRSource })
+    }
+
+    /// The UI tests' second broadcaster is theirs alone: without it, Settings would grow a
+    /// Broadcasters section for everyone.
+    @Test func theFixtureBroadcasterIsNotRegisteredOutsideUITests() {
+        #expect(!BroadcasterRegistry.makeSources().contains { $0 is FixtureSource })
     }
 
     @Test func sectionIdentityIsTheBroadcaster() {
@@ -148,4 +165,63 @@ private final class FailingSource: BroadcasterSource {
     static let broadcaster = Broadcaster(id: "failing", name: "Failing", displayOrder: 2)
     init() {}
     func fetchCatalogue() async throws -> [DREpisode] { throw URLError(.cannotConnectToHost) }
+}
+
+
+/// Which broadcasters are shown, and in what order (F54b).
+@MainActor
+struct VisibleBroadcastersTests {
+
+    private let nova = Broadcaster(id: "nova", name: "Nova", displayOrder: 1)
+    private let pop = Broadcaster(id: "pop", name: "PopFM", displayOrder: 2)
+    private var registered: [Broadcaster] { [pop, .dr, nova] }
+
+    /// Before anything has been moved, display order: DR first.
+    @Test func withNothingSavedTheOrderIsDisplayOrder() {
+        #expect(Broadcaster.visible(registered: registered, order: [], hidden: []) == [.dr, nova, pop])
+    }
+
+    /// An order that is neither the registry's nor display order, so following either by
+    /// mistake shows.
+    @Test func theSavedOrderIsFollowed() {
+        #expect(Broadcaster.visible(registered: registered, order: ["nova", "pop", "dr"], hidden: [])
+                    == [nova, pop, .dr])
+    }
+
+    /// A broadcaster registered after the order was saved is not lost: it follows the
+    /// saved ones, by display order.
+    @Test func aNewlyRegisteredBroadcasterFollowsTheSavedOnes() {
+        #expect(Broadcaster.visible(registered: registered, order: ["nova", "dr"], hidden: [])
+                    == [nova, .dr, pop])
+    }
+
+    /// One removed from the app since is passed over, as is a duplicate.
+    @Test func idsNoLongerRegisteredAreIgnored() {
+        #expect(Broadcaster.arranged(registered, order: ["gone", "nova", "nova", "dr"])
+                    == [nova, .dr, pop])
+    }
+
+    @Test func hiddenBroadcastersAreLeftOut() {
+        #expect(Broadcaster.visible(registered: registered, order: [], hidden: ["nova"]) == [.dr, pop])
+    }
+
+    /// Settings lists the hidden ones too, or one could never be switched back on.
+    @Test func settingsListsHiddenBroadcasters() {
+        #expect(Broadcaster.arranged(registered, order: []) == [.dr, nova, pop])
+    }
+
+    /// Never an empty app: with every broadcaster hidden, the first in order is shown.
+    @Test func theLastBroadcasterIsNeverHidden() {
+        #expect(Broadcaster.visible(registered: registered, order: ["nova"], hidden: ["dr", "nova", "pop"])
+                    == [nova])
+    }
+
+    /// With DR alone, the preferences will not hide it.
+    @Test func preferencesRefuseToHideTheLastBroadcaster() {
+        let preferences = UserPreferencesService()
+        preferences.setBroadcaster(Broadcaster.dr.id, shown: false)
+
+        #expect(preferences.visibleBroadcasters == [.dr])
+        #expect(!preferences.hiddenBroadcasterIDs.contains(Broadcaster.dr.id))
+    }
 }

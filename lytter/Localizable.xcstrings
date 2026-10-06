@@ -188,6 +188,17 @@
         }
       }
     },
+    "A broadcaster switched off is left out of Home and Search; your favourites from it are kept for when it is switched back on." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En radiostation, der er slået fra, vises ikke på Hjem eller i Søg. Dine favoritter fra den gemmes, til den slås til igen."
+          }
+        }
+      }
+    },
     "A notification five minutes before a favourite show starts. When the time comes from the weekly pattern rather than today's schedule, it says so." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -306,6 +317,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "API-adgang nægtet (403). Kontrollér din abonnementsnøgle."
+          }
+        }
+      }
+    },
+    "Broadcasters" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Radiostationer"
           }
         }
       }
@@ -516,6 +538,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "DR's kanaler hentes, så snart du er online igen."
+          }
+        }
+      }
+    },
+    "Drag to reorder them on Home. A broadcaster switched off is left out of Home and Search; your favourites from it are kept for when it is switched back on." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Træk for at ændre rækkefølgen på Hjem. En radiostation, der er slået fra, vises ikke på Hjem eller i Søg. Dine favoritter fra den gemmes, til den slås til igen."
           }
         }
       }
@@ -2008,6 +2041,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "For mange forespørgsler. Vent et øjeblik, og prøv igen."
+          }
+        }
+      }
+    },
+    "Touch and hold one to drag it to a new place on Home. A broadcaster switched off is left out of Home, Search and CarPlay; your favourites from it are kept for when it is switched back on." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hold fingeren på en for at trække den til en ny plads på Hjem. En radiostation, der er slået fra, vises ikke på Hjem, i Søg eller i CarPlay. Dine favoritter fra den gemmes, til den slås til igen."
           }
         }
       }
