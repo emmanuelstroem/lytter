@@ -68,6 +68,15 @@ What is left is listed below. Three gaps are not entries of their own:
         template silently — never an error on screen. A unit test decodes a saved page
         as a fixture, which catches decoding mistakes; it cannot catch DR changing the
         site.
+- [ ] **F53. Show the channel's logo when Show Images is off.** With the setting off (F43),
+      every picture is replaced by `StationArtworkPlaceholder`: the station's colour and name.
+      DR's own logos for P1–P8 and DR LYD now sit in `SharedAssets/Logos.xcassets`, compiled
+      into the app as well as the widgets (F18), so the placeholder can draw `DRP1Logo` for P1
+      and so on, keeping the colour and name only for a channel with no logo. A P4 or P5
+      district needs its district beside the logo, as the Favourites widget's tiles have it,
+      since every district shares the one logo. The logos are 120-point bitmaps, sized for
+      widgets: sharp up to card size on iPhone, but tvOS's larger cards would want them
+      re-exported larger from DR's files (see `ChannelLogo` in `FavouritesWidget.swift`).
 - [ ] **F14. Add a README.** Nineteen commits and no entry point for a reader.
       Checked 2026-10-04: not started; there is still no README.
 - [ ] **F49. Read the DR API version from a file the app fetches, not only from the
@@ -99,8 +108,8 @@ What is left is listed below. Three gaps are not entries of their own:
 
 - [ ] **F18. Widgets on the Mac.** iPhone and iPad have them (2026-10-06): the
       `LytterWidgets` extension draws a Now Playing widget (small and medium, and the Lock
-      Screen's rectangular, circular and inline), a Favourites widget (the pinned stations,
-      four or eight, each a tap from playing) and a Control Centre play/pause from iOS 18.
+      Screen's rectangular, circular and inline), a Favourites widget (the pinned stations as
+      their logos, four or twelve, each a tap from playing) and a Control Centre play/pause from iOS 18.
       All of them read what the app writes into the app group; the extension never asks
       DR. The broadcaster is shown with DR LYD's logo — see S11. No Live Activity: the system's Now Playing already fills the Lock Screen and the
       Dynamic Island for an audio app, and one of the app's own would only double it.

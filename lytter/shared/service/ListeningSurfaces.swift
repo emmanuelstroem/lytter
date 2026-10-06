@@ -60,8 +60,7 @@ final class ListeningSurfaces {
             .sink { [weak self] in self?.publish() }
             .store(in: &cancellables)
 
-        // The catalogue is republished on every refresh, which is also when each
-        // favourite's programme moves on.
+        // The channels, for a favourite DR has retired or renamed.
         preferences.$favourites.map { _ in () }
             .merge(with: manager.$availableChannels.map { _ in () })
             .debounce(for: .milliseconds(300), scheduler: RunLoop.main)
@@ -72,8 +71,7 @@ final class ListeningSurfaces {
     private func publishFavourites() {
         guard let manager else { return }
         let favourites = FavouriteStations.make(favourites: manager.userPreferences.favourites,
-                                                channels: manager.availableChannels,
-                                                programme: manager.liveProgram(for:))
+                                                channels: manager.availableChannels)
         guard favourites != writtenFavourites else { return }
         store.saveFavourites(favourites)
         writtenFavourites = favourites

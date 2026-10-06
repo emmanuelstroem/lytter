@@ -130,10 +130,7 @@ struct NowPlayingSnapshotTests {
     // MARK: - Favourites
 
     private func favourites(_ ids: [String], channels: [DRChannel]) -> FavouriteStations {
-        let schedule = [morning]
-        return .make(favourites: Favourites(channelIDs: ids), channels: channels) { channel in
-            schedule.first { $0.channel.id == channel.id }
-        }
+        .make(favourites: Favourites(channelIDs: ids), channels: channels)
     }
 
     @Test func favouritesKeepThePinnedOrderAndDropWhatTheCatalogueLacks() {
@@ -141,23 +138,21 @@ struct NowPlayingSnapshotTests {
         let made = favourites(["urn:p3", "urn:gone", "urn:p1"], channels: [p1, p3])
         #expect(made.stations.map(\.channelID) == ["urn:p3", "urn:p1"])
         #expect(made.stations.map(\.broadcaster) == ["DR", "DR"])
-        #expect(made.stations[0].programme == "Show morgen")
-        #expect(made.stations[1].programme == nil)
         #expect(made.stations.map(\.district) == [nil, nil])
     }
 
-    @Test func favouritesStopAtWhatTheLargestWidgetDraws() {
-        let channels = (1...10).map { Support.channel("x\($0)") }
-        let made = favourites(channels.map(\.id), channels: channels)
-        #expect(made.stations.count == FavouriteStations.limit)
+    @Test func aDistrictFavouriteSaysWhichDistrict() {
+        let kbh = DRChannel(id: "urn:p4kbh", title: "P4 København", slug: "p4kbh",
+                            type: "Channel", presentationUrl: nil)
+        let station = favourites(["urn:p4kbh"], channels: [kbh]).stations[0]
+        #expect(station.stationName == "P4")
+        #expect(station.district == "København")
     }
 
-    @Test func aFavouritesProgrammeGoesWhenItEnds() {
-        let station = favourites(["urn:p3"], channels: [p3]).stations[0]
-        #expect(station.subtitle(at: Support.cph("2026-10-06 08:59")) == "Show morgen")
-        #expect(station.subtitle(at: Support.cph("2026-10-06 09:00")) == nil)
-        #expect(favourites(["urn:p3"], channels: [p3]).changes(after: Support.cph("2026-10-06 07:00"))
-                == [Support.cph("2026-10-06 09:00")])
+    @Test func favouritesStopAtWhatTheLargestWidgetDraws() {
+        let channels = (1...20).map { Support.channel("x\($0)") }
+        let made = favourites(channels.map(\.id), channels: channels)
+        #expect(made.stations.count == FavouriteStations.limit)
     }
 
     // MARK: - The store

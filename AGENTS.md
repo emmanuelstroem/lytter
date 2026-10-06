@@ -38,6 +38,7 @@ cards. It is a design principle for this app, not a one-off fix.
 | tvOS panels | 28 |
 | Mini-player artwork | 10 |
 | Widget artwork | `ContainerRelativeShape` — the widget's own curve, less the inset |
+| Favourites widget tile | 6 (widget ≈ 22, inset 16), the same on every tile |
 
 Prefer `style: .continuous` — it is the curve the system uses, and it is visibly different
 from the circular default at larger radii.

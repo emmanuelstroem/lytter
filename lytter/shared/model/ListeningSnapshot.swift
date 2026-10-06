@@ -91,22 +91,18 @@ private extension NowPlayingSnapshot.Programme {
 }
 
 extension FavouriteStations {
-    /// The pinned channels, in pinned order, each with what is on it now.
+    /// The pinned channels, in pinned order.
     ///
     /// Channels the catalogue does not have are left out, as the app's own Favourites shelf
     /// leaves them out (`Favourites.resolve`); past `limit`, the rest are for the app.
-    static func make(favourites: Favourites, channels: [DRChannel],
-                     programme: (DRChannel) -> DREpisode?) -> FavouriteStations {
+    static func make(favourites: Favourites, channels: [DRChannel]) -> FavouriteStations {
         let stations = favourites.resolve(in: channels).prefix(limit).map { channel in
-            let onNow = programme(channel)
-            return Station(channelID: channel.id,
-                           broadcaster: Broadcaster.supplying(channel).name,
-                           channelName: channel.qualifiedName,
-                           stationName: channel.name,
-                           district: channel.district,
-                           stationKey: channel.stationKey,
-                           programme: onNow?.programmeName,
-                           programmeEnd: onNow?.endDate)
+            Station(channelID: channel.id,
+                    broadcaster: Broadcaster.supplying(channel).name,
+                    channelName: channel.qualifiedName,
+                    stationName: channel.name,
+                    district: channel.district,
+                    stationKey: channel.stationKey)
         }
         return FavouriteStations(stations: Array(stations))
     }
