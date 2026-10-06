@@ -940,6 +940,10 @@ class DRServiceManager: ObservableObject {
     /// Reminders before favourite shows start (F51). tvOS shows no notifications but badges.
     private let showReminders = ShowReminderScheduler()
     #endif
+    #if os(iOS)
+    /// The widgets and the Control Centre control (F18).
+    private let listeningSurfaces = ListeningSurfaces()
+    #endif
     private var cancellables = Set<AnyCancellable>()
     
     // Caching properties
@@ -963,11 +967,25 @@ class DRServiceManager: ObservableObject {
 
     init() {
         setupBindings()
+        #if os(iOS)
+        startListeningSurfaces()
+        #endif
         loadDiskCache()   // Populate UI instantly from disk
         loadChannels()    // Refresh from API in background
         networkMonitor.start { [weak self] online in self?.networkPathChanged(online: online) }
         startScheduleRefresh()
     }
+
+    #if os(iOS)
+    /// Not under UI tests, whose fixtures would otherwise be what the simulator's widgets
+    /// show from then on.
+    private func startListeningSurfaces() {
+        #if DEBUG
+        if UITestFixtures.isActive { return }
+        #endif
+        listeningSurfaces.start(observing: self)
+    }
+    #endif
 
     /// Synchronously loads the last persisted schedules so the UI is populated
     /// immediately on launch without waiting for the network.

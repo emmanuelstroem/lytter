@@ -27,30 +27,10 @@ struct PreferencesEnvironment: ViewModifier {
 }
 
 extension DRChannel {
-    /// A colour for the station, which stands in for its artwork when there is none.
-    ///
-    /// Fixed per station rather than per channel, so P4 København and P4 Fyn agree. DR's
-    /// national stations have one each; anything else gets a colour derived from its name —
-    /// stably, which `hashValue` is not: it is seeded per launch, so a colour taken from it
-    /// changed every time the app started.
+    /// A colour for the station, which stands in for its artwork when there is none. Shared
+    /// with the widgets through `StationPalette`, which says how it is chosen.
     var stationColor: Color {
-        switch name.lowercased() {
-        case "p1": .blue
-        case "p2": .green
-        case "p3": .orange
-        case "p4": .purple
-        case "p5": .red
-        case "p6": .pink
-        case "p7": .yellow
-        case "p8": .indigo
-        default:
-            Color(hue: Double(Self.stableSeed(stationKey) % 360) / 360,
-                  saturation: 0.6, brightness: 0.75)
-        }
-    }
-
-    private static func stableSeed(_ text: String) -> Int {
-        text.unicodeScalars.reduce(0) { ($0 &* 31 &+ Int($1.value)) & 0xFFFF }
+        StationPalette.color(stationName: name, stationKey: stationKey)
     }
 }
 

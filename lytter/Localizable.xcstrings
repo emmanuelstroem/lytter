@@ -1106,6 +1106,17 @@
         }
       }
     },
+    "Play or Pause" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afspil eller pause"
+          }
+        }
+      }
+    },
     "Play Station" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1168,6 +1179,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Afspiller en DR-radiokanal direkte."
+          }
+        }
+      }
+    },
+    "Plays or pauses the station you last listened to." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afspiller den station, du sidst lyttede til, eller sætter den på pause."
           }
         }
       }
