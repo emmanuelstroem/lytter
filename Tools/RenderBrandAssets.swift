@@ -1,7 +1,7 @@
 // RenderBrandAssets.swift — generates every app icon and the tvOS Top Shelf artwork.
 //
-// The mark is a transistor radio: orange-red body, diagonal antenna, two cream bars
-// and a dial. It is defined in a unit square and drawn with CoreGraphics, so it stays
+// The mark is a transistor radio: white body, diagonal antenna, two red bars and a
+// dial, on a red field. It is defined in a unit square and drawn with CoreGraphics, so it stays
 // vector-exact at every size rather than being upscaled from a master PNG.
 //
 // Depth comes from a single light source above and slightly in front, the way Apple's
@@ -32,51 +32,49 @@ func srgb(_ r: Double, _ g: Double, _ b: Double, _ a: Double = 1) -> CGColor {
 func white(_ a: Double) -> CGColor { srgb(1, 1, 1, a) }
 func black(_ a: Double) -> CGColor { srgb(0, 0, 0, a) }
 
-/// Two palettes: the brand one, and a luminance-only one for the iOS tinted variant,
-/// where the system applies the user's tint to a greyscale image.
+/// Three palettes: the brand one, a deeper one for dark appearance, and a luminance-only
+/// one for the iOS tinted variant, where the system applies the user's tint to a
+/// greyscale image.
+///
+/// The mark is a white radio on a red field, its bars and dial picking the red back up
+/// so they read as cut into the body. It replaced a red radio on a cream field, which in
+/// turn replaced one on maroon; the red field reads as red at every size, which the
+/// earlier dark field never did, and needs no light/dark compromise to do it.
 struct Palette {
     var bodyTop, bodyBottom, antenna: CGColor
     var controlTop, controlBottom: CGColor
     var fieldTop, fieldBottom, glow: CGColor
 
     static let brand = Palette(
-        bodyTop:       srgb(1.000, 0.310, 0.125),
-        bodyBottom:    srgb(0.796, 0.098, 0.000),
-        antenna:       srgb(0.894, 0.200, 0.043),
-        controlTop:    srgb(1.000, 0.957, 0.933),
-        controlBottom: srgb(0.972, 0.816, 0.769),
-        // Raised from (0.102, 0.075, 0.071) / (0.020, 0.016, 0.018). That field read as
-        // moody at 1024px and as a black square everywhere it is actually seen: the Dock,
-        // the Home Screen, Spotlight. tvOS never showed the problem because its parallax
-        // stack is viewed large, on a TV, with the system's own depth between layers — a
-        // different perceptual situation from a 60-point Dock icon, not a different field.
-        // Still clearly darker than the body, so the glyph is still what draws the eye.
-        fieldTop:      srgb(0.301, 0.098, 0.071),
-        fieldBottom:   srgb(0.129, 0.035, 0.027),
-        glow:          srgb(1.000, 0.231, 0.078))
+        bodyTop:       srgb(1.000, 1.000, 1.000),
+        bodyBottom:    srgb(0.957, 0.929, 0.918),
+        antenna:       srgb(0.980, 0.965, 0.957),
+        controlTop:    srgb(1.000, 0.310, 0.125),
+        controlBottom: srgb(0.796, 0.098, 0.000),
+        fieldTop:      srgb(1.000, 0.231, 0.078),
+        fieldBottom:   srgb(0.851, 0.110, 0.000),
+        glow:          srgb(1.000, 0.478, 0.302))
 
-    /// The mark on a warm cream field. The dark field read as a black square at every size
-    /// an icon is actually seen (Dock, Home Screen, Spotlight); a light one cannot, and the
-    /// red body and antenna contrast with it more than they ever did with maroon. Shares the
-    /// brand's body, antenna and controls, so only the field differs.
-    static let light = Palette(
+    /// The same mark on a deeper red, for dark appearance — the matching `.icon` fill is
+    /// srgb(0.80, 0.10, 0.02). Still red, but not a bright square on a dark Home Screen.
+    static let dark = Palette(
         bodyTop:       brand.bodyTop,
         bodyBottom:    brand.bodyBottom,
         antenna:       brand.antenna,
-        controlTop:    brand.controlTop,
-        controlBottom: brand.controlBottom,
-        fieldTop:      srgb(1.000, 0.965, 0.941),
-        fieldBottom:   srgb(0.961, 0.878, 0.827),
-        glow:          brand.glow)
+        controlTop:    srgb(0.850, 0.180, 0.060),
+        controlBottom: srgb(0.620, 0.060, 0.000),
+        fieldTop:      srgb(0.820, 0.120, 0.030),
+        fieldBottom:   srgb(0.560, 0.055, 0.010),
+        glow:          srgb(0.960, 0.300, 0.140))
 
-    /// Greyscale, matched to the brand palette's luminance so the tinted icon keeps
-    /// the same internal contrast.
+    /// Greyscale: a dark field and a light radio, so the user's tint lands on the radio
+    /// the way it lands on the white glass of the `.icon`.
     static let tinted = Palette(
-        bodyTop:       srgb(0.620, 0.620, 0.620),
-        bodyBottom:    srgb(0.360, 0.360, 0.360),
-        antenna:       srgb(0.470, 0.470, 0.470),
-        controlTop:    srgb(0.980, 0.980, 0.980),
-        controlBottom: srgb(0.855, 0.855, 0.855),
+        bodyTop:       srgb(0.980, 0.980, 0.980),
+        bodyBottom:    srgb(0.855, 0.855, 0.855),
+        antenna:       srgb(0.920, 0.920, 0.920),
+        controlTop:    srgb(0.520, 0.520, 0.520),
+        controlBottom: srgb(0.330, 0.330, 0.330),
         fieldTop:      srgb(0.090, 0.090, 0.090),
         fieldBottom:   srgb(0.018, 0.018, 0.018),
         glow:          srgb(0.550, 0.550, 0.550))
@@ -402,20 +400,20 @@ func textWidth(_ s: String, size: CGFloat, weight: NSFont.Weight,
     return CGFloat(CTLineGetTypographicBounds(line, nil, nil, nil))
 }
 
+/// The mark and the app's name. No tagline: the image is baked, so any words beyond the
+/// name could not be localised, and "Lytter" reads the same in every language.
 func renderTopShelf(size: CGSize, to path: String) {
     let ctx = makeContext(size)
     let pal = Palette.brand
     let s = size.height / 720
 
     let markH: CGFloat = 0.58
-    let titleSize = 168 * s, subSize = 52 * s, gap = 116 * s
+    let titleSize = 168 * s, gap = 116 * s, tracking = -2 * s
     let markW = Mark.bboxW * ((size.height * markH) / Mark.bboxH)
-    let textW = max(textWidth("Lytter", size: titleSize, weight: .bold, tracking: -2 * s),
-                    textWidth("LIVE DANISH RADIO", size: subSize, weight: .medium,
-                              tracking: 6 * s))
+    let textW = textWidth("Lytter", size: titleSize, weight: .bold, tracking: tracking)
     let lockupX = (size.width - (markW + gap + textW)) / 2
     let p = Placement(frame: size, bboxHeightFraction: markH,
-                      centre: CGPoint(x: lockupX + markW / 2, y: size.height * 0.455))
+                      centre: CGPoint(x: lockupX + markW / 2, y: size.height * 0.48))
 
     drawField(ctx, size: size, pal: pal,
               glowAt: CGPoint(x: p.bodyRect.midX, y: p.bodyRect.midY),
@@ -424,14 +422,12 @@ func renderTopShelf(size: CGSize, to path: String) {
     drawBody(ctx, p, pal, shadows: true)
     drawControls(ctx, p, pal, shadows: true)
 
-    let textX = lockupX + markW + gap
-    let baseline = p.bodyRect.midY + titleSize * 0.10
-    drawText(ctx, "Lytter", size: titleSize, weight: .bold, color: pal.controlTop,
-             at: CGPoint(x: textX, y: baseline), tracking: -2 * s)
-    drawText(ctx, "LIVE DANISH RADIO", size: subSize, weight: .medium,
-             color: srgb(0.62, 0.58, 0.57), at: CGPoint(x: textX + 5 * s,
-                                                        y: baseline + 76 * s),
-             tracking: 6 * s)
+    // Capitals centred on the body, which is where the eye puts the mark's centre —
+    // not on its bounding box, which the antenna stretches upward.
+    let capHeight = NSFont.systemFont(ofSize: titleSize, weight: .bold).capHeight
+    drawText(ctx, "Lytter", size: titleSize, weight: .bold, color: pal.bodyTop,
+             at: CGPoint(x: lockupX + markW + gap, y: p.bodyRect.midY + capHeight / 2),
+             tracking: tracking)
     writePNG(ctx, to: path, opaque: true)
 }
 
@@ -445,15 +441,15 @@ let appIcon = "\(assets)/AppIcon.appiconset"
 let watchIcon = "\(assets)/AppIcon Watch.appiconset"
 
 print("iOS app icon — opaque, full bleed")
-renderSquareIcon(side: 1024, pal: .light, glowAlpha: 0.10, to: "\(appIcon)/all.png")
-renderSquareIcon(side: 1024, pal: .brand, glowAlpha: 0.22, to: "\(appIcon)/dark.png")
+renderSquareIcon(side: 1024, pal: .brand, glowAlpha: 0.34, to: "\(appIcon)/all.png")
+renderSquareIcon(side: 1024, pal: .dark, glowAlpha: 0.30, to: "\(appIcon)/dark.png")
 renderSquareIcon(side: 1024, pal: .tinted, glowAlpha: 0.18, to: "\(appIcon)/tinted.png")
 
 print("watchOS app icon")
 renderSquareIcon(side: 1024, pal: .brand, glowAlpha: 0.34,
                  to: "\(watchIcon)/watch.png")
 
-// Light field, full-bleed and opaque, the same as iOS. The transparent-margin "icon on a plate"
+// Full-bleed and opaque, the same as iOS. The transparent-margin "icon on a plate"
 // convention this replaced predates Big Sur; the system has drawn its own rounded-square
 // shape and shadow around a submitted icon rather than applying one for several OS
 // releases now, so a plate with a transparent margin around it stayed exactly as
@@ -464,7 +460,7 @@ for (px, name) in [(16, "all_16x16"), (32, "all_32x32"), (32, "all_32x32 1"),
                    (64, "all_64x64"), (128, "all_128x128"), (256, "all_256x256 1"),
                    (256, "all_256x256"), (512, "all_512x512 1"), (512, "all_512x512"),
                    (1024, "store")] {
-    renderSquareIcon(side: CGFloat(px), pal: .light, glowAlpha: 0.10,
+    renderSquareIcon(side: CGFloat(px), pal: .brand, glowAlpha: 0.34,
                      to: "\(appIcon)/\(name).png")
 }
 
