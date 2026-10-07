@@ -184,16 +184,18 @@ class UserPreferencesService: ObservableObject {
                             order: broadcasterOrder, hidden: hiddenBroadcasterIDs)
     }
 
+    /// Whether `id` is on screen — what its switch in Settings says.
+    func isShown(_ id: String) -> Bool {
+        visibleBroadcasters.contains { $0.id == id }
+    }
+
     /// Shows or hides a broadcaster. Hiding the last one shown does nothing; Settings
-    /// does not offer it.
+    /// does not offer it. See `Broadcaster.hidden(afterSwitching:on:…)`.
     func setBroadcaster(_ id: String, shown: Bool) {
-        var hidden = hiddenBroadcasterIDs
-        if shown {
-            hidden.remove(id)
-        } else {
-            guard visibleBroadcasters.contains(where: { $0.id != id }) else { return }
-            hidden.insert(id)
-        }
+        let hidden = Broadcaster.hidden(afterSwitching: id, on: shown,
+                                        registered: BroadcasterRegistry.broadcasters,
+                                        order: broadcasterOrder, hidden: hiddenBroadcasterIDs)
+        guard hidden != hiddenBroadcasterIDs else { return }
         hiddenBroadcasterIDs = hidden
         if !Self.keepsBroadcastersToItself {
             userDefaults.set(hidden.sorted(), forKey: Keys.hiddenBroadcasterIDs)

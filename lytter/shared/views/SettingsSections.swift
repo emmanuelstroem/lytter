@@ -137,7 +137,9 @@ private struct BroadcastersSection: View {
 
         Section {
             ForEach(arranged) { broadcaster in
-                let isShown = !preferences.hiddenBroadcasterIDs.contains(broadcaster.id)
+                // What is on screen, not what is stored: should the stored ids hide them
+                // all, the one shown anyway reads on.
+                let isShown = preferences.isShown(broadcaster.id)
                 Toggle(isOn: Binding(
                     get: { isShown },
                     set: { preferences.setBroadcaster(broadcaster.id, shown: $0) })) {
@@ -156,7 +158,7 @@ private struct BroadcastersSection: View {
             Text("Broadcasters")
         } footer: {
             #if os(iOS)
-            Text("Touch and hold one to drag it to a new place on Home. A broadcaster switched off is left out of Home, Search and CarPlay; your favourites from it are kept for when it is switched back on.")
+            Text("Touch and hold one to drag it to a new place on Home. A broadcaster switched off is left out of Home, Search, CarPlay and the Favourites widget; your favourites from it are kept for when it is switched back on.")
             #elseif os(macOS)
             Text("Drag to reorder them on Home. A broadcaster switched off is left out of Home and Search; your favourites from it are kept for when it is switched back on.")
             #else

@@ -224,6 +224,41 @@ struct VisibleBroadcastersTests {
         #expect(preferences.visibleBroadcasters == [.dr])
         #expect(!preferences.hiddenBroadcasterIDs.contains(Broadcaster.dr.id))
     }
+
+    // MARK: Switching one on or off in Settings
+
+    @Test func switchingOneOffHidesIt() {
+        #expect(Broadcaster.hidden(afterSwitching: "nova", on: false, registered: registered,
+                                   order: [], hidden: []) == ["nova"])
+    }
+
+    @Test func switchingOneOnShowsIt() {
+        #expect(Broadcaster.hidden(afterSwitching: "nova", on: true, registered: registered,
+                                   order: [], hidden: ["nova", "pop"]) == ["pop"])
+    }
+
+    @Test func switchingOffTheLastOneShownChangesNothing() {
+        #expect(Broadcaster.hidden(afterSwitching: "dr", on: false, registered: registered,
+                                   order: [], hidden: ["nova", "pop"]) == ["nova", "pop"])
+    }
+
+    /// With every one stored as hidden, the first is shown anyway. Switching another on
+    /// must not take that one away: what is on screen stays on screen.
+    @Test func switchingAnotherOnKeepsTheOneShownAnyway() {
+        let hidden = Broadcaster.hidden(afterSwitching: "nova", on: true, registered: registered,
+                                        order: [], hidden: ["dr", "nova", "pop"])
+
+        #expect(hidden == ["pop"])
+        #expect(Broadcaster.visible(registered: registered, order: [], hidden: hidden) == [.dr, nova])
+    }
+
+    /// A switch reads what is on screen, not what is stored.
+    @Test func theOneShownAnywayReadsOn() {
+        let preferences = UserPreferencesService()
+
+        #expect(preferences.isShown(Broadcaster.dr.id))
+        #expect(!preferences.isShown("not-registered"))
+    }
 }
 
 

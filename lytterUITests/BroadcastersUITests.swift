@@ -174,6 +174,28 @@ final class BroadcastersUITests: XCTestCase {
         XCTAssertTrue(card("P1").waitForExistence(timeout: 5), "All does not show DR's stations")
     }
 
+    /// Showing that broadcaster again leaves Home on All. Home fell back there; the chip
+    /// is not taken up again behind the listener's back.
+    @MainActor
+    func testShowingTheBroadcasterAgainLeavesHomeOnAll() throws {
+        launch()
+        chip("broadcaster:fixture").tap()
+        XCTAssertTrue(card("Testradio Pop").waitForExistence(timeout: 5), "Testradio's stations are not shown")
+
+        openSettings()
+        setSwitch(broadcasterSwitch("Testradio"), on: false)
+        app.tabBars.buttons["Home"].tap()
+        XCTAssertTrue(waitForAbsence(chip("broadcaster:fixture")), "a hidden broadcaster still has a chip")
+
+        openSettings()
+        setSwitch(broadcasterSwitch("Testradio"), on: true)
+        app.tabBars.buttons["Home"].tap()
+
+        XCTAssertTrue(chip("broadcaster:fixture").waitForExistence(timeout: 5), "Testradio's chip did not return")
+        XCTAssertTrue(chip("all").isSelected, "Home jumped back to Testradio's chip")
+        XCTAssertFalse(chip("broadcaster:fixture").isSelected, "Home jumped back to Testradio's chip")
+    }
+
     // MARK: - Helpers
 
     @MainActor

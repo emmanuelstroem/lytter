@@ -47,6 +47,18 @@ struct HomeView: View {
         storedScope = scope.storageValue
     }
 
+    /// Lets go of a chip that is no longer offered — its broadcaster has been hidden — so
+    /// that showing the broadcaster again leaves Home on *All*, where it fell back to,
+    /// rather than jumping back to the chip.
+    private func forgetUnavailableChoice() {
+        if let stored = HomeScope(storageValue: storedScope), !availableScopes.contains(stored) {
+            storedScope = HomeScope.all.storageValue
+        }
+        if let chosenScope, !availableScopes.contains(chosenScope) {
+            self.chosenScope = .all
+        }
+    }
+
     /// Wraps plain channels as single-channel groups, so the shelf can take one type.
     /// A group of one has no districts, so tapping it plays rather than opening a picker.
     private func singles(_ channels: [DRChannel]) -> [GroupedChannel] {
@@ -109,8 +121,10 @@ struct HomeView: View {
             StatusBarScrim()
         }
         .onAppear {
+            forgetUnavailableChoice()
             if chosenScope == nil { chosenScope = scope }
         }
+        .onChange(of: availableScopes) { _, _ in forgetUnavailableChoice() }
     }
 
     private static let top = "home.top"
