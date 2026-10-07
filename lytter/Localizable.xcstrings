@@ -288,6 +288,17 @@
       },
       "shouldTranslate" : false
     },
+    "All" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle"
+          }
+        }
+      }
+    },
     "All Stations" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -637,6 +648,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Favoritter"
+          }
+        }
+      }
+    },
+    "For you" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Til dig"
           }
         }
       }
@@ -1532,6 +1554,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Søg efter kanaler …"
+          }
+        }
+      }
+    },
+    "See all" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se alle"
           }
         }
       }

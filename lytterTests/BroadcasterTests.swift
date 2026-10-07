@@ -225,3 +225,63 @@ struct VisibleBroadcastersTests {
         #expect(!preferences.hiddenBroadcasterIDs.contains(Broadcaster.dr.id))
     }
 }
+
+
+/// Home's chips: which are offered, and which Home opens on (F54c).
+@MainActor
+struct HomeScopeTests {
+
+    private let nova = Broadcaster(id: "nova", name: "Nova", displayOrder: 1)
+
+    /// With DR alone a "DR" chip would show what "All" does, so there is none.
+    @Test func oneBroadcasterHasNoChipOfItsOwn() {
+        #expect(HomeScope.available(visible: [.dr]) == [.forYou, .all])
+    }
+
+    /// Two or more: one chip each, in the order shown — the listener's, not the registry's.
+    @Test func twoBroadcastersHaveAChipEach() {
+        #expect(HomeScope.available(visible: [nova, .dr])
+                    == [.forYou, .all, .broadcaster("nova"), .broadcaster("dr")])
+    }
+
+    /// A first launch opens on stations, not on an empty page of favourites.
+    @Test func withNothingOfTheirOwnHomeOpensOnAll() {
+        #expect(HomeScope.initial(stored: "", available: [.forYou, .all], hasOwnStations: false) == .all)
+    }
+
+    @Test func withFavouritesOrHistoryHomeOpensForYou() {
+        #expect(HomeScope.initial(stored: "", available: [.forYou, .all], hasOwnStations: true) == .forYou)
+    }
+
+    /// The chip last chosen wins over the default, either way round.
+    @Test func theLastChoiceIsKept() {
+        let available = HomeScope.available(visible: [.dr, nova])
+
+        #expect(HomeScope.initial(stored: "all", available: available, hasOwnStations: true) == .all)
+        #expect(HomeScope.initial(stored: "forYou", available: available, hasOwnStations: false) == .forYou)
+        #expect(HomeScope.initial(stored: "broadcaster:nova", available: available, hasOwnStations: true)
+                    == .broadcaster("nova"))
+    }
+
+    /// A broadcaster hidden since it was chosen leaves Home on All, where its stations
+    /// were — not on For you, which never showed them.
+    @Test func aHiddenBroadcasterFallsBackToAll() {
+        let available = HomeScope.available(visible: [.dr])
+
+        #expect(HomeScope.initial(stored: "broadcaster:nova", available: available, hasOwnStations: true) == .all)
+        #expect(HomeScope.resolved(.broadcaster("nova"), in: available) == .all)
+        #expect(HomeScope.resolved(.forYou, in: available) == .forYou)
+    }
+
+    /// Something stored that is not a scope at all is as good as nothing stored.
+    @Test func anUnreadableChoiceIsIgnored() {
+        #expect(HomeScope.initial(stored: "radio", available: [.forYou, .all], hasOwnStations: true) == .forYou)
+        #expect(HomeScope(storageValue: "broadcaster:") == nil)
+    }
+
+    @Test func everyScopeSurvivesStorage() {
+        for scope in [HomeScope.forYou, .all, .broadcaster("dr"), .broadcaster("urn:lytter:nova")] {
+            #expect(HomeScope(storageValue: scope.storageValue) == scope)
+        }
+    }
+}

@@ -87,7 +87,6 @@
 				ios/DistrictSelectionSheet.swift = (ios, );
 				ios/HomeView.swift = (ios, );
 				ios/SearchView.swift = (ios, );
-				ios/iOSRadioView.swift = (ios, );
 			};
 			target = 14B52D262E44D1AB00E8476E /* lytter */;
 		};

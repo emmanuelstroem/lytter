@@ -28,9 +28,7 @@ struct ContentView: View {
                     Tab("Home", systemImage: "house", value: 0) {
                         HomeView(serviceManager: serviceManager, selectionState: selectionState, preferences: serviceManager.userPreferences)
                     }
-                    Tab("Radio", systemImage: "antenna.radiowaves.left.and.right", value: 1) {
-                        iOSRadioView(serviceManager: serviceManager, selectionState: selectionState)
-                    }
+                    // No Radio tab: Home's *All* chip is every station (F54c).
                     Tab("Search", systemImage: "magnifyingglass", value: 2, role: .search) {
                         SearchView(serviceManager: serviceManager, selectionState: selectionState,
                                    preferences: serviceManager.userPreferences)
@@ -57,13 +55,6 @@ struct ContentView: View {
                         .tabItem {
                             Image(systemName: "house")
                             Text("Home")
-                        }
-                    
-                    // Radio Tab
-                    iOSRadioView(serviceManager: serviceManager, selectionState: selectionState)
-                        .tabItem {
-                            Image(systemName: "antenna.radiowaves.left.and.right")
-                            Text("Radio")
                         }
                     
                     // Search Tab
@@ -96,7 +87,7 @@ struct ContentView: View {
         // Deep links resolve here, not per-screen.
         //
         // The same .onChange used to be copy-pasted onto HomeView, SearchView and
-        // iOSRadioView. Only the selected tab's view is alive, so a link arriving while
+        // the Radio tab. Only the selected tab's view is alive, so a link arriving while
         // the Shortcuts tab was showing was observed by nobody and silently dropped —
         // and if more than one had been alive, the channel would have been played once
         // per copy. ContentView outlives every tab.

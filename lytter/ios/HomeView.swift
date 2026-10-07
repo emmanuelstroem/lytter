@@ -9,6 +9,11 @@ import SwiftUI
 import os
 
 #if os(iOS)
+/// Home, under a row of chips: *For you* · *All* · one per broadcaster (F54c).
+///
+/// *All* is what the Radio tab was, so there is no Radio tab: one place lists stations,
+/// and the chips say which. A chip per broadcaster appears only once two are shown — see
+/// `HomeScope.available`.
 struct HomeView: View {
     @ObservedObject var serviceManager: DRServiceManager
     @ObservedObject var selectionState: SelectionState
@@ -16,11 +21,49 @@ struct HomeView: View {
     /// so pinning a channel would update the store and redraw nothing. That cost a debug
     /// cycle in #26.
     @ObservedObject var preferences: UserPreferencesService
-    
+
+    /// The chip last chosen, kept across launches. Empty until one has been tapped.
+    @AppStorage("homeScope") private var storedScope = ""
+    /// This session's scope, fixed when Home first appears. Without it, a first launch
+    /// opening on *All* would jump to *For you* the moment the first station was played.
+    @State private var chosenScope: HomeScope?
+
+    private var availableScopes: [HomeScope] {
+        HomeScope.available(visible: serviceManager.visibleBroadcasters)
+    }
+
+    private var hasOwnStations: Bool {
+        !preferences.favourites.isEmpty || !preferences.recentlyPlayed.isEmpty
+    }
+
+    private var scope: HomeScope {
+        let scope = chosenScope ?? HomeScope.initial(stored: storedScope, available: availableScopes,
+                                                     hasOwnStations: hasOwnStations)
+        return HomeScope.resolved(scope, in: availableScopes)
+    }
+
+    private func choose(_ scope: HomeScope) {
+        chosenScope = scope
+        storedScope = scope.storageValue
+    }
+
     /// Wraps plain channels as single-channel groups, so the shelf can take one type.
     /// A group of one has no districts, so tapping it plays rather than opening a picker.
     private func singles(_ channels: [DRChannel]) -> [GroupedChannel] {
         channels.map { GroupedChannel(channels: [$0]) }
+    }
+
+    private var favourites: [DRChannel] {
+        preferences.favourites.resolve(in: serviceManager.availableChannels)
+    }
+
+    private var recentlyPlayed: [DRChannel] {
+        preferences.recentlyPlayed.resolve(in: serviceManager.availableChannels)
+    }
+
+    private func play(_ channel: DRChannel) {
+        serviceManager.playChannel(channel)
+        selectionState.selectChannel(channel, showSheet: false)
     }
 
     var body: some View {
@@ -29,60 +72,179 @@ struct HomeView: View {
         // it does show is drawn inside the ScrollView.
         ZStack {
             AppBackground()
-            
-            ScrollView {
-                VStack(spacing: 24) {
-                    HomeHeader()
 
-                    ConnectionBanner(serviceManager: serviceManager)
+            ScrollViewReader { proxy in
+                ScrollView {
+                    VStack(spacing: 24) {
+                        HomeHeader()
+                            .id(Self.top)
 
-                    CatalogueStateView(serviceManager: serviceManager) {
-                        let play: (DRChannel) -> Void = { channel in
-                            serviceManager.playChannel(channel)
-                            selectionState.selectChannel(channel, showSheet: false)
-                        }
+                        HomeScopeChips(scopes: availableScopes, selected: scope,
+                                       broadcasters: serviceManager.visibleBroadcasters,
+                                       onSelect: choose)
 
-                        // Favourites, favourite shows, history, then one shelf per broadcaster. Each
-                        // draws nothing when it has nothing, so a first launch shows only
-                        // the catalogue rather than two empty headings.
-                        ChannelShelf(
-                            title: String(localized: "Favourites"),
-                            groups: singles(preferences.favourites.resolve(in: serviceManager.availableChannels)),
-                            style: .featured,
-                            serviceManager: serviceManager,
-                            onChannelTap: play
-                        )
+                        ConnectionBanner(serviceManager: serviceManager)
 
-                        // Favourite shows (F33), under the channels: when each is next on.
-                        ShowShelf(serviceManager: serviceManager,
-                                  preferences: preferences,
-                                  showSchedule: serviceManager.showSchedule)
-
-                        ChannelShelf(
-                            title: String(localized: "Recently Played"),
-                            groups: singles(preferences.recentlyPlayed.resolve(in: serviceManager.availableChannels)),
-                            serviceManager: serviceManager,
-                            onChannelTap: play
-                        )
-
-                        ForEach(serviceManager.broadcasterSections) { section in
-                            ChannelShelf(
-                                title: section.broadcaster.name,
-                                groups: GroupedChannel.grouped(from: section.channels),
-                                serviceManager: serviceManager,
-                                onChannelTap: play
-                            )
+                        CatalogueStateView(serviceManager: serviceManager) {
+                            switch scope {
+                            case .forYou: forYou
+                            case .all: all
+                            case .broadcaster(let id): broadcaster(id)
+                            }
                         }
                     }
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 100) // Space for bottom tab bar
                 }
-                .padding(.horizontal, 16)
-                .padding(.bottom, 100) // Space for bottom tab bar
+                // A chip chosen from far down — *See all* under the last shelf — would
+                // otherwise open its page scrolled to wherever that shelf was.
+                .onChange(of: chosenScope) { _, _ in
+                    withAnimation { proxy.scrollTo(Self.top, anchor: .top) }
+                }
             }
 
             // A sibling of the background rather than an overlay on the scroll view: as an
             // overlay it inherits the scroll view's already-inset frame, so it drew an
             // 18-point band below the status bar instead of behind it.
             StatusBarScrim()
+        }
+        .onAppear {
+            if chosenScope == nil { chosenScope = scope }
+        }
+    }
+
+    private static let top = "home.top"
+
+    // MARK: - Scopes
+
+    /// Favourites, favourite shows, history. Each draws nothing when it has nothing, so
+    /// with none of them there is a line saying what will come here instead of a blank.
+    @ViewBuilder
+    private var forYou: some View {
+        ChannelShelf(
+            title: String(localized: "Favourites"),
+            groups: singles(favourites),
+            style: .featured,
+            serviceManager: serviceManager,
+            onChannelTap: play
+        )
+
+        // Favourite shows (F33), under the channels: when each is next on.
+        ShowShelf(serviceManager: serviceManager,
+                  preferences: preferences,
+                  showSchedule: serviceManager.showSchedule)
+
+        ChannelShelf(
+            title: String(localized: "Recently Played"),
+            groups: singles(recentlyPlayed),
+            serviceManager: serviceManager,
+            onChannelTap: play
+        )
+
+        if favourites.isEmpty && recentlyPlayed.isEmpty && preferences.favouriteShows.isEmpty {
+            Text("Your favourites and the stations you play appear here.")
+                .font(.subheadline)
+                .foregroundStyle(Color.secondaryOnPage)
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: .infinity)
+                .padding(.top, 40)
+        }
+    }
+
+    /// One shelf per broadcaster, each opening its own chip. With one broadcaster there is
+    /// no chip to open, so its stations are the grid the Radio tab was.
+    @ViewBuilder
+    private var all: some View {
+        let sections = serviceManager.broadcasterSections
+        if sections.count == 1, let only = sections.first {
+            stationGrid(only)
+        } else {
+            ForEach(sections) { section in
+                ChannelShelf(
+                    title: section.broadcaster.name,
+                    groups: GroupedChannel.grouped(from: section.channels),
+                    serviceManager: serviceManager,
+                    onChannelTap: play,
+                    onSeeAll: { choose(.broadcaster(section.broadcaster.id)) }
+                )
+            }
+        }
+    }
+
+    /// One broadcaster: the favourites from it, then all of its stations.
+    @ViewBuilder
+    private func broadcaster(_ id: String) -> some View {
+        ChannelShelf(
+            title: String(localized: "Favourites"),
+            groups: singles(favourites.filter { Broadcaster.supplying($0).id == id }),
+            style: .featured,
+            serviceManager: serviceManager,
+            onChannelTap: play
+        )
+
+        if let section = serviceManager.broadcasterSections.first(where: { $0.broadcaster.id == id }) {
+            stationGrid(section)
+        }
+    }
+
+    /// Every station of `section`, under its broadcaster's name, in a grid. Districts
+    /// still fold into one card per station.
+    private func stationGrid(_ section: BroadcasterSection) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(verbatim: section.broadcaster.name)
+                .font(.title2.weight(.semibold))
+                .foregroundStyle(Color.primary)
+                .padding(.horizontal, 16)
+
+            ChannelGrid(groups: GroupedChannel.grouped(from: section.channels),
+                        serviceManager: serviceManager,
+                        onChannelTap: play)
+                .padding(.horizontal, 16)
+        }
+    }
+}
+
+/// The chips under Home's header. Free-standing capsules, so no corner of theirs meets
+/// another's (AGENTS.md, Concentricity); the selected one is the prominent one.
+private struct HomeScopeChips: View {
+    let scopes: [HomeScope]
+    let selected: HomeScope
+    let broadcasters: [Broadcaster]
+    let onSelect: (HomeScope) -> Void
+
+    var body: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                ForEach(scopes, id: \.self) { scope in
+                    chip(scope)
+                }
+            }
+            .padding(.horizontal, 16)
+        }
+    }
+
+    @ViewBuilder
+    private func chip(_ scope: HomeScope) -> some View {
+        let button = Button { onSelect(scope) } label: { title(scope) }
+            .buttonBorderShape(.capsule)
+            .accessibilityIdentifier("home.scope.\(scope.storageValue)")
+            .accessibilityAddTraits(scope == selected ? .isSelected : [])
+
+        if scope == selected {
+            button.buttonStyle(.borderedProminent)
+        } else {
+            // Neutral rather than the accent: one purple chip says which is chosen.
+            button.buttonStyle(.bordered).tint(Color.primary)
+        }
+    }
+
+    private func title(_ scope: HomeScope) -> Text {
+        switch scope {
+        case .forYou: Text("For you")
+        case .all: Text("All")
+        case .broadcaster(let id):
+            // Proper nouns, not localised.
+            Text(verbatim: broadcasters.first { $0.id == id }?.name ?? id)
         }
     }
 }
