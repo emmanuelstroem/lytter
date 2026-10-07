@@ -292,7 +292,10 @@ final class TVScrollingUITests: XCTestCase {
                       "the schedule should open on the programme on air; focus is on \(focusedLabel)")
 
         XCUIRemote.shared.press(.select, forDuration: 1.5)
-        let pin = app.buttons["Add Show to Favourites"]
+        // Any type, not a button: since tvOS 26.5 the menu's item reports itself as "Other",
+        // so a buttons query found nothing although the menu was open.
+        let pin = app.descendants(matching: .any)
+            .matching(NSPredicate(format: "label == 'Add Show to Favourites'")).firstMatch
         XCTAssertTrue(pin.waitForExistence(timeout: 5), "holding select offered no way to pin the show")
         shot("schedule-pin-menu")
         // The menu opens with its one item focused, in a window of its own where focus is
