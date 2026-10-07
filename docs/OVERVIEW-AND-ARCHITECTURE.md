@@ -21,7 +21,7 @@ and which track is on air right now, and integrates with the system playback sur
 
 ## 2. Repository layout
 
-_Brought up to date 2026-10-06 (F54a); the rest of this document is the 2026-09-23 snapshot._
+_Brought up to date 2026-10-06 (F54a, F54b); the rest of this document is the 2026-09-23 snapshot._
 
 ```
 lytter.xcodeproj          objectVersion 77, folder-synced groups (Xcode 16+)
@@ -34,7 +34,8 @@ lytter.xcodeproj          objectVersion 77, folder-synced groups (Xcode 16+)
 │   ├── macos/                    macOS-only screens (guarded by #if os(macOS))
 │   └── shared/
 │       ├── broadcasters/         one folder per broadcaster + BroadcasterRegistry (F54)
-│       │   └── dr/               DR's API types, network service, disk cache, DRServiceManager
+│       │   ├── dr/               DR's API types, network service, disk cache, DRServiceManager
+│       │   └── fixture/          a second broadcaster for UI tests (debug builds only)
 │       ├── model/                broadcaster-neutral models: favourites, districts, shows
 │       ├── service/              audio, image cache, preferences, schedules, reminders, fixtures
 │       ├── intents/              App Intents, Siri, StationEntity

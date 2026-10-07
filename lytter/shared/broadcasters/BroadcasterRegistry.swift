@@ -18,7 +18,16 @@ enum BroadcasterRegistry {
 
     static let sourceTypes: [any BroadcasterSource.Type] = [
         DRSource.self,
-    ]
+    ] + testSourceTypes
+
+    /// A second broadcaster, when a UI test asks for one. See `FixtureSource`.
+    private static var testSourceTypes: [any BroadcasterSource.Type] {
+        #if DEBUG
+        UITestFixtures.hasSecondBroadcaster ? [FixtureSource.self] : []
+        #else
+        []
+        #endif
+    }
 
     static var broadcasters: [Broadcaster] { sourceTypes.map { $0.broadcaster } }
 

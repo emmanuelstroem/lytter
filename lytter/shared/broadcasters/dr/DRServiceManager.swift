@@ -33,6 +33,9 @@ class DRServiceManager: ObservableObject {
     @Published private(set) var isOnline = true
     /// True once a fetch with nothing on screen has run past `ConnectionTiming.slowAfter`.
     @Published private(set) var isWaitingLong = false
+    /// The broadcasters the listener has not hidden, in their order (F54b). Only these are
+    /// fetched, so a hidden one leaves every screen without any of them asking.
+    @Published private(set) var visibleBroadcasters: [Broadcaster] = []
     
     @Published var playingChannel: DRChannel?
     @Published var currentLiveProgram: DREpisode?
@@ -94,6 +97,7 @@ class DRServiceManager: ObservableObject {
     private let networkMonitor = NetworkMonitor()
 
     init() {
+        visibleBroadcasters = userPreferences.visibleBroadcasters
         setupBindings()
         #if os(iOS)
         startListeningSurfaces()
@@ -126,9 +130,10 @@ class DRServiceManager: ObservableObject {
         #else
         let schedules = DRLocalCache.shared.load()
         #endif
-        guard !schedules.isEmpty else { return }
-        cachedSchedules = schedules
-        availableChannels = Array(Set(schedules.map { $0.channel }))
+        let shownSchedules = shown(schedules)
+        guard !shownSchedules.isEmpty else { return }
+        cachedSchedules = shownSchedules
+        availableChannels = Array(Set(shownSchedules.map { $0.channel }))
             .sorted { $0.title < $1.title }
         for source in sources {
             source.restore(from: availableChannels.filter {
@@ -139,6 +144,16 @@ class DRServiceManager: ObservableObject {
     }
     
     private func setupBindings() {
+        // Hiding, showing or reordering broadcasters in Settings. Both values are passed
+        // on, being published before either property changes.
+        userPreferences.$broadcasterOrder
+            .combineLatest(userPreferences.$hiddenBroadcasterIDs)
+            .dropFirst()
+            .sink { [weak self] order, hidden in
+                self?.broadcastersChanged(to: Broadcaster.visible(
+                    registered: BroadcasterRegistry.broadcasters, order: order, hidden: hidden))
+            }
+            .store(in: &cancellables)
         // A show pinned on a channel not fetched today — on a constrained network, where
         // only favourite shows' channels are — needs today's schedule to say when it is on.
         // The new value is passed on: @Published publishes before the property changes.
@@ -272,7 +287,9 @@ class DRServiceManager: ObservableObject {
 
     private func fetchCatalogue() async {
         do {
-            let schedules = try await Catalogue.fetch(from: sources)
+            // Filtered again on the way back: a broadcaster hidden while the fetch was out
+            // is not shown by its answer.
+            let schedules = shown(try await Catalogue.fetch(from: visibleSources))
             let channels = Array(Set(schedules.map { $0.channel })).sorted { $0.title < $1.title }
 
             self.cachedSchedules = schedules
@@ -300,6 +317,42 @@ class DRServiceManager: ObservableObject {
             // yesterday's programmes with nothing to say they were not today's.
             self.catalogueFailure = RequestFailure(error)
             self.scheduleAutomaticRetry()
+        }
+    }
+
+    // MARK: - Broadcasters (F54b)
+
+    /// The sources of the broadcasters shown. A hidden one is not asked.
+    private var visibleSources: [any BroadcasterSource] {
+        let ids = Set(visibleBroadcasters.map(\.id))
+        return sources.filter { ids.contains(type(of: $0).broadcaster.id) }
+    }
+
+    /// `schedules` without the broadcasters that are hidden.
+    private func shown(_ schedules: [DREpisode]) -> [DREpisode] {
+        let ids = Set(visibleBroadcasters.map(\.id))
+        return schedules.filter { ids.contains(Broadcaster.supplying($0.channel).id) }
+    }
+
+    /// A hidden broadcaster's channels leave at once; one shown again is fetched at once,
+    /// having nothing in memory to show until then. What is playing carries on either way.
+    private func broadcastersChanged(to visible: [Broadcaster]) {
+        let wereShown = Set(visibleBroadcasters.map(\.id))
+        visibleBroadcasters = visible
+        let ids = Set(visible.map(\.id))
+        cachedSchedules = shown(cachedSchedules)
+        availableChannels = availableChannels.filter { ids.contains(Broadcaster.supplying($0).id) }
+
+        guard visible.contains(where: { !wereShown.contains($0.id) }) else { return }
+        lastSchedulesUpdate = nil
+        // A fetch already out was asked of the old set; this one follows it.
+        if let inFlight = catalogueTask {
+            Task { [weak self] in
+                await inFlight.value
+                self?.startCatalogueFetch()
+            }
+        } else {
+            startCatalogueFetch()
         }
     }
 
@@ -555,13 +608,14 @@ class DRServiceManager: ObservableObject {
         audioPlayer.updateCommandCenterInfo(channel: episode.channel, program: episode)
     }
     
-    /// The catalogue as home-screen sections, one per broadcaster that has channels.
+    /// The catalogue as home-screen sections, one per shown broadcaster that has channels,
+    /// in the listener's order.
     ///
     /// DR is the only source today, so this is a single section — but the home screen
     /// renders whatever this returns, which is what makes adding a broadcaster a data
     /// change rather than a layout one.
     var broadcasterSections: [BroadcasterSection] {
-        Broadcaster.sections(from: availableChannels)
+        Broadcaster.sections(from: availableChannels, shown: visibleBroadcasters)
     }
 
     /// The programme the listener is hearing on `channel`.

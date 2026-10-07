@@ -123,10 +123,12 @@ What is left is listed below. Three gaps are not entries of their own:
         too stays in `shared/`. A broadcaster is a `BroadcasterSource` in its own folder
         plus one line in `BroadcasterRegistry`. The catalogue is fetched from every source
         at once, and one that fails drops only its own section.
-      - [ ] *F54b. Settings → Broadcasters.* Show, hide and reorder them. A hidden one is
-        not fetched, so it leaves Home, Search, CarPlay and the widgets with no special
-        cases; its favourites return when it is shown again. Appears only once there are
-        two, so a fixture broadcaster in `UITestFixtures` comes with it.
+      - [x] *F54b. Settings → Broadcasters.* Show, hide and reorder them — reordering by
+        touch and hold on iPhone and iPad, by dragging on the Mac, not on tvOS. A hidden one
+        is not fetched, so it leaves Home, Search, CarPlay and the widgets with no special
+        cases; its favourites return when it is shown again, and the last one shown cannot
+        be hidden. Appears only once there are two, so UI tests can register a second,
+        `FixtureSource` ("Testradio"), with `LYTTER_UITEST_SECOND_BROADCASTER=1`.
       - [ ] *F54c. Home chips.* *For you · All · DR · Nova…* on iPhone and iPad; *All* is a
         shelf per broadcaster and replaces the Radio tab. tvOS and the Mac list the
         broadcasters as a sidebar section instead. Broadcaster chips appear only when two

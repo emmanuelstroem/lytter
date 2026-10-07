@@ -27,6 +27,11 @@ struct SettingsSections: View {
     }
 
     var body: some View {
+        // Nothing to choose between until there are two.
+        if BroadcasterRegistry.broadcasters.count > 1 {
+            BroadcastersSection(preferences: preferences)
+        }
+
         Section {
             Toggle("Show Images", isOn: Binding(
                 get: { preferences.showsArtwork },
@@ -113,6 +118,50 @@ struct SettingsSections: View {
             }
         } header: {
             Text("Listening")
+        }
+    }
+}
+
+/// Which broadcasters are shown, and in what order (F54b).
+///
+/// A toggle each, everywhere. Reordering is by dragging — touch and hold on iOS, where no
+/// Edit button is needed for one short list; on tvOS, where a row cannot be dragged with
+/// the remote, the order is only shown. The last broadcaster
+/// shown cannot be switched off.
+private struct BroadcastersSection: View {
+    @ObservedObject var preferences: UserPreferencesService
+
+    var body: some View {
+        let arranged = preferences.arrangedBroadcasters
+        let shownCount = preferences.visibleBroadcasters.count
+
+        Section {
+            ForEach(arranged) { broadcaster in
+                let isShown = !preferences.hiddenBroadcasterIDs.contains(broadcaster.id)
+                Toggle(isOn: Binding(
+                    get: { isShown },
+                    set: { preferences.setBroadcaster(broadcaster.id, shown: $0) })) {
+                    Text(verbatim: broadcaster.name)
+                }
+                .disabled(isShown && shownCount == 1)
+            }
+            #if !os(tvOS)
+            .onMove { offsets, destination in
+                var ids = arranged.map(\.id)
+                ids.move(fromOffsets: offsets, toOffset: destination)
+                preferences.setBroadcasterOrder(ids)
+            }
+            #endif
+        } header: {
+            Text("Broadcasters")
+        } footer: {
+            #if os(iOS)
+            Text("Touch and hold one to drag it to a new place on Home. A broadcaster switched off is left out of Home, Search and CarPlay; your favourites from it are kept for when it is switched back on.")
+            #elseif os(macOS)
+            Text("Drag to reorder them on Home. A broadcaster switched off is left out of Home and Search; your favourites from it are kept for when it is switched back on.")
+            #else
+            Text("A broadcaster switched off is left out of Home and Search; your favourites from it are kept for when it is switched back on.")
+            #endif
         }
     }
 }

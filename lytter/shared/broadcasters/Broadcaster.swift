@@ -46,19 +46,46 @@ extension Broadcaster {
         return registered.first { $0.id == id } ?? .dr
     }
 
-    /// Groups channels into sections, in display order.
+    /// Groups channels into sections, one per broadcaster in `shown`, in that order.
     ///
     /// A broadcaster with no channels is omitted rather than rendered as an empty heading —
-    /// which matters as soon as a source fails to load while others succeed.
+    /// which matters as soon as a source fails to load while others succeed. So is one not
+    /// in `shown`: the listener has hidden it.
     static func sections(from channels: [DRChannel],
+                         shown: [Broadcaster],
                          registered: [Broadcaster] = BroadcasterRegistry.broadcasters) -> [BroadcasterSection] {
         let grouped = Dictionary(grouping: channels) { supplying($0, in: registered).id }
 
-        return registered
+        return shown.compactMap { broadcaster in
+            guard let owned = grouped[broadcaster.id], !owned.isEmpty else { return nil }
+            return BroadcasterSection(broadcaster: broadcaster, channels: owned)
+        }
+    }
+
+    /// Every registered broadcaster in the listener's order, hidden ones included — what
+    /// Settings lists (F54b).
+    ///
+    /// The saved order comes first. A broadcaster it does not name — one registered since
+    /// it was saved, or every one before anything has been moved — follows, by
+    /// `displayOrder`. Ids no longer registered are passed over.
+    static func arranged(_ registered: [Broadcaster], order: [String]) -> [Broadcaster] {
+        let byID = Dictionary(registered.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+        let saved = order.uniqued().compactMap { byID[$0] }
+        let savedIDs = Set(saved.map(\.id))
+        let unsaved = registered
+            .filter { !savedIDs.contains($0.id) }
             .sorted { $0.displayOrder < $1.displayOrder }
-            .compactMap { broadcaster in
-                guard let owned = grouped[broadcaster.id], !owned.isEmpty else { return nil }
-                return BroadcasterSection(broadcaster: broadcaster, channels: owned)
-            }
+        return saved + unsaved
+    }
+
+    /// The broadcasters the app shows and fetches, in the listener's order.
+    ///
+    /// Never none: an app with every broadcaster hidden would be an empty screen with no
+    /// way to say why. Settings will not hide the last one, and should the stored ids say
+    /// otherwise — the last one shown was renamed, say — the first in order is shown.
+    static func visible(registered: [Broadcaster], order: [String], hidden: Set<String>) -> [Broadcaster] {
+        let arranged = arranged(registered, order: order)
+        let shown = arranged.filter { !hidden.contains($0.id) }
+        return shown.isEmpty ? Array(arranged.prefix(1)) : shown
     }
 }

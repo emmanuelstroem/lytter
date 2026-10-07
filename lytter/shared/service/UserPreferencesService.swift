@@ -26,6 +26,8 @@ class UserPreferencesService: ObservableObject {
         static let recentSearchChannelIDs = "recentSearchChannelIDs"
         static let favouriteShows = "favouriteShows"
         static let remindsShows = "remindsShows"
+        static let broadcasterOrder = "broadcasterOrder"
+        static let hiddenBroadcasterIDs = "hiddenBroadcasterIDs"
     }
     
     // MARK: - Published Properties
@@ -68,6 +70,15 @@ class UserPreferencesService: ObservableObject {
     /// both are a short recency list with no duplicates.
     @Published private(set) var recentSearches = RecentlyPlayed()
 
+    /// The broadcasters in the order the listener put them in Settings, by id (F54b).
+    /// Empty until something has been moved; see `Broadcaster.arranged`.
+    @Published private(set) var broadcasterOrder: [String] = []
+
+    /// Broadcasters the listener has switched off. They are not fetched, so they leave
+    /// Home, Search, CarPlay and the widgets; their favourites stay stored and come back
+    /// with them.
+    @Published private(set) var hiddenBroadcasterIDs: Set<String> = []
+
     init() {
         loadLastPlayedChannel()
         favourites = Favourites(
@@ -92,6 +103,21 @@ class UserPreferencesService: ObservableObject {
             channelIDs: userDefaults.stringArray(forKey: Keys.recentSearchChannelIDs) ?? [])
         favouriteShows = Self.loadFavouriteShows(from: userDefaults)
         remindsShows = userDefaults.bool(forKey: Keys.remindsShows)
+        if !Self.keepsBroadcastersToItself {
+            broadcasterOrder = userDefaults.stringArray(forKey: Keys.broadcasterOrder) ?? []
+            hiddenBroadcasterIDs = Set(userDefaults.stringArray(forKey: Keys.hiddenBroadcasterIDs) ?? [])
+        }
+    }
+
+    /// Under UI tests the broadcasters start in their registered order with none hidden,
+    /// and what a test changes is not stored: a test that hides one would otherwise hide
+    /// it for every test after it.
+    private static var keepsBroadcastersToItself: Bool {
+        #if DEBUG
+        UITestFixtures.isActive
+        #else
+        false
+        #endif
     }
 
     private static func loadFavouriteShows(from defaults: UserDefaults) -> FavouriteShows {
@@ -143,6 +169,43 @@ class UserPreferencesService: ObservableObject {
     func clearRecentlyPlayed() {
         recentlyPlayed = RecentlyPlayed()
         userDefaults.removeObject(forKey: Keys.recentlyPlayedChannelIDs)
+    }
+
+    // MARK: - Broadcasters
+
+    /// Every registered broadcaster, in the listener's order, hidden ones included.
+    var arrangedBroadcasters: [Broadcaster] {
+        Broadcaster.arranged(BroadcasterRegistry.broadcasters, order: broadcasterOrder)
+    }
+
+    /// The broadcasters shown and fetched, in the listener's order. Never empty.
+    var visibleBroadcasters: [Broadcaster] {
+        Broadcaster.visible(registered: BroadcasterRegistry.broadcasters,
+                            order: broadcasterOrder, hidden: hiddenBroadcasterIDs)
+    }
+
+    /// Shows or hides a broadcaster. Hiding the last one shown does nothing; Settings
+    /// does not offer it.
+    func setBroadcaster(_ id: String, shown: Bool) {
+        var hidden = hiddenBroadcasterIDs
+        if shown {
+            hidden.remove(id)
+        } else {
+            guard visibleBroadcasters.contains(where: { $0.id != id }) else { return }
+            hidden.insert(id)
+        }
+        hiddenBroadcasterIDs = hidden
+        if !Self.keepsBroadcastersToItself {
+            userDefaults.set(hidden.sorted(), forKey: Keys.hiddenBroadcasterIDs)
+        }
+    }
+
+    /// Stores the broadcasters' order, as ids.
+    func setBroadcasterOrder(_ ids: [String]) {
+        broadcasterOrder = ids
+        if !Self.keepsBroadcastersToItself {
+            userDefaults.set(ids, forKey: Keys.broadcasterOrder)
+        }
     }
 
     // MARK: - Recent searches

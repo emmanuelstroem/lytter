@@ -120,6 +120,41 @@ enum UITestFixtures {
                                   scheduleDate: nil)
     }
 
+    // MARK: - A second broadcaster (F54)
+
+    /// Whether `FixtureSource` is registered beside DR, from `LYTTER_UITEST_SECOND_BROADCASTER`.
+    /// Off unless asked for, so every other test sees DR alone, as a listener does today.
+    static var hasSecondBroadcaster: Bool {
+        isActive && ProcessInfo.processInfo.environment["LYTTER_UITEST_SECOND_BROADCASTER"] == "1"
+    }
+
+    /// The second broadcaster's catalogue: offline when the simulated network is, and up
+    /// when only DR is down.
+    static func secondBroadcasterResponse(now: Date = Date()) throws -> [DREpisode] {
+        if !isSimulatedOnline { throw URLError(.notConnectedToInternet) }
+        return secondBroadcasterChannels.map { channel in
+            episode(on: channel,
+                    index: 0,
+                    start: now.addingTimeInterval(-30 * 60),
+                    end: now.addingTimeInterval(30 * 60),
+                    title: "\(channel.name) Fixture: Morgen",
+                    description: "Et program på en anden radiostation.")
+        }
+    }
+
+    /// Named as a directory would name them, so "Testradio Pop" is a station of its own
+    /// rather than a district "Pop" of a station "Testradio". Ids in the broadcaster's own
+    /// namespace, as `BroadcasterSource` requires.
+    private static var secondBroadcasterChannels: [DRChannel] {
+        ["Pop", "Rock", "Jazz"].map { genre in
+            let slug = "testradio-\(genre.lowercased())"
+            return DRChannel(id: "urn:lytter:fixture:\(slug)", title: "Testradio \(genre)",
+                             slug: slug, type: "Channel", presentationUrl: nil,
+                             stationSlug: slug, stationTitle: "Testradio \(genre)",
+                             broadcasterID: FixtureSource.broadcaster.id)
+        }
+    }
+
     // MARK: - Favourite shows (F33)
 
     /// How many series the schedule fixture rotates through: each airs three times a day.
