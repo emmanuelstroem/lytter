@@ -35,7 +35,8 @@ final class TVScrollingUITests: XCTestCase {
     func testHomeScrollsDownToLowerShelves() throws {
         launch(favourites: ["p1", "p2", "p3"], recentlyPlayed: ["p6", "p8", "p3"])
 
-        let drHeading = app.staticTexts["DR"]
+        // In a scroll view: the sidebar has a "DR" of its own, under Broadcasters (F54c).
+        let drHeading = app.scrollViews.staticTexts["DR"]
         XCTAssertFalse(isOnScreen(drHeading), "the test needs the DR shelf to start off screen")
 
         press(.down, times: 2)
@@ -77,13 +78,14 @@ final class TVScrollingUITests: XCTestCase {
         shot("show-shelf-end")
     }
 
-    // MARK: - Radio and Search
+    // MARK: - Broadcasters and Search
 
-    /// Radio is one horizontal row of every station. Pressing right has to reach the last.
+    /// A broadcaster's page, under the sidebar's Broadcasters section (F54c), is one
+    /// horizontal row of its stations. Pressing right has to reach the last.
     @MainActor
-    func testRadioShelfScrollsSideways() throws {
+    func testBroadcasterShelfScrollsSideways() throws {
         launch()
-        openSection("Radio")
+        openSection("DR")
 
         XCTAssertTrue(moveFocus(.right, until: { $0.label.hasPrefix("P8") }, maxPresses: 16),
                       "pressing right never reached the last station; focus is on \(focusedLabel)")
@@ -131,7 +133,7 @@ final class TVScrollingUITests: XCTestCase {
     @MainActor
     func testSidebarOrder() throws {
         launch()
-        let destinations = ["Search", "Home", "Radio", "Now Playing", "Settings"]
+        let destinations = ["Search", "Home", "DR", "Now Playing", "Settings"]
         XCTAssertTrue(moveFocus(.left, until: { destinations.contains($0.label) }, maxPresses: 8),
                       "could not move into the sidebar; focus is on \(focusedLabel)")
         press(.up, times: destinations.count)
@@ -372,7 +374,7 @@ final class TVScrollingUITests: XCTestCase {
     /// not Menu, which from Home leaves the app altogether.
     @MainActor
     private func openSection(_ name: String) {
-        let destinations = ["Search", "Home", "Radio", "Now Playing", "Settings"]
+        let destinations = ["Search", "Home", "DR", "Now Playing", "Settings"]
         XCTAssertTrue(moveFocus(.left, until: { destinations.contains($0.label) }, maxPresses: 8),
                       "could not move into the sidebar; focus is on \(focusedLabel)")
         shot("in-sidebar")

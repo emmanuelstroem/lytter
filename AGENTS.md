@@ -20,7 +20,8 @@ district picker's options are `.buttonBorderShape(.capsule)` rather than `.card`
 **It applies to shapes that meet a corner.** A thumbnail inset on all sides of a list row
 does not share the row's corner, so it is not governed by this — forcing it to
 `16 − 12 = 4` would be applying the letter against the intent. Ask first whether the two
-curves are ever adjacent.
+curves are ever adjacent. Home's chips (*For you · All · DR…*) are the same case: capsules
+standing free on the page, with no shape around them to share a corner with.
 
 **Check it whenever you add a rounded shape inside another.** New views, new sheets, new
 cards. It is a design principle for this app, not a one-off fix.

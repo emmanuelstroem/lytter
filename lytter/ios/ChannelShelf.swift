@@ -34,14 +34,25 @@ struct ChannelShelf: View {
     var style: ChannelShelfStyle = .standard
     @ObservedObject var serviceManager: DRServiceManager
     let onChannelTap: (DRChannel) -> Void
+    /// Opens the shelf's full list — on Home's *All*, that broadcaster's chip (F54c). No
+    /// button without it.
+    var onSeeAll: (() -> Void)? = nil
 
     var body: some View {
         if !groups.isEmpty {
             VStack(alignment: .leading, spacing: 12) {
-                Text(title)
-                    .font(.title2.weight(.semibold))
-                    .foregroundStyle(Color.primary)
-                    .padding(.horizontal, 16)
+                HStack(alignment: .firstTextBaseline) {
+                    Text(title)
+                        .font(.title2.weight(.semibold))
+                        .foregroundStyle(Color.primary)
+                    Spacer()
+                    if let onSeeAll {
+                        Button("See all", action: onSeeAll)
+                            .font(.body)
+                            .accessibilityIdentifier("seeAll.\(title)")
+                    }
+                }
+                .padding(.horizontal, 16)
 
                 ScrollView(.horizontal, showsIndicators: false) {
                     LazyHStack(alignment: .top, spacing: 14) {
@@ -58,6 +69,23 @@ struct ChannelShelf: View {
                     // Cards cast a shadow; without this the scroll view clips it.
                     .padding(.vertical, 4)
                 }
+            }
+        }
+    }
+}
+
+/// Every station in `groups`, as cards in a grid — what the Radio tab was, before Home's
+/// chips took it over (F54c). The same card as the shelves, so a station looks the same
+/// wherever it is listed; a station with districts is one card, which opens the picker.
+struct ChannelGrid: View {
+    let groups: [GroupedChannel]
+    @ObservedObject var serviceManager: DRServiceManager
+    let onChannelTap: (DRChannel) -> Void
+
+    var body: some View {
+        LazyVGrid(columns: [GridItem(.adaptive(minimum: 148), spacing: 16)], spacing: 20) {
+            ForEach(groups) { group in
+                ChannelShelfCard(group: group, serviceManager: serviceManager, onTap: onChannelTap)
             }
         }
     }

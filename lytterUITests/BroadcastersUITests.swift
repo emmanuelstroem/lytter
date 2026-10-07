@@ -6,7 +6,8 @@
 import XCTest
 
 #if os(iOS)
-/// Settings → Broadcasters: show, hide and reorder them (F54b).
+/// Settings → Broadcasters: show, hide and reorder them (F54b); and Home's chips, one per
+/// broadcaster once there are two (F54c).
 ///
 /// Runs on fixtures, with `FixtureSource` — "Testradio", three channels — registered beside
 /// DR where a test asks for a second broadcaster. Nothing a test changes here is stored.
@@ -111,6 +112,68 @@ final class BroadcastersUITests: XCTestCase {
                           "Home does not follow the order chosen in Settings")
     }
 
+    // MARK: - Home's chips (F54c)
+
+    /// With DR alone: For you and All, no chip for DR, and no Radio tab — All took it over.
+    @MainActor
+    func testOneBroadcasterHasForYouAndAll() throws {
+        launch(secondBroadcaster: false)
+
+        XCTAssertTrue(chip("forYou").exists, "no For you chip")
+        XCTAssertTrue(chip("all").isSelected, "Home did not open on All")
+        XCTAssertFalse(chip("broadcaster:dr").exists, "DR has a chip of its own with nothing to tell it from All")
+        XCTAssertFalse(app.tabBars.buttons["Radio"].exists, "the Radio tab is still there")
+        shot("home-chips-dr-only")
+    }
+
+    /// A broadcaster's chip shows its stations and no other's.
+    @MainActor
+    func testABroadcastersChipShowsItsStations() throws {
+        launch()
+        let testradio = chip("broadcaster:fixture")
+        XCTAssertTrue(testradio.waitForExistence(timeout: 5), "the second broadcaster has no chip")
+        XCTAssertTrue(chip("broadcaster:dr").exists, "DR has no chip beside Testradio's")
+
+        testradio.tap()
+        XCTAssertTrue(testradio.isSelected, "the chip tapped is not the one selected")
+        XCTAssertTrue(card("Testradio Pop").waitForExistence(timeout: 5), "Testradio's stations are not shown")
+        XCTAssertTrue(card("Testradio Jazz").exists, "not every Testradio station is shown")
+        XCTAssertFalse(card("P1").exists, "DR's stations are shown under Testradio")
+        shot("home-chip-testradio")
+    }
+
+    /// See all, on a broadcaster's shelf under All, is that broadcaster's chip.
+    @MainActor
+    func testSeeAllOpensTheBroadcastersChip() throws {
+        launch()
+        let seeAll = app.buttons["seeAll.Testradio"]
+        XCTAssertTrue(seeAll.waitForExistence(timeout: 10), "Testradio's shelf has no See all")
+        if !seeAll.isHittable { app.swipeUp() }
+
+        seeAll.tap()
+        XCTAssertTrue(chip("broadcaster:fixture").isSelected, "See all did not select Testradio's chip")
+        XCTAssertTrue(card("Testradio Pop").waitForExistence(timeout: 5), "Testradio's stations are not shown")
+        XCTAssertFalse(card("P1").exists, "DR's stations are still shown")
+    }
+
+    /// Hiding the broadcaster Home is showing takes its chip away and leaves Home on All,
+    /// where its stations were.
+    @MainActor
+    func testHidingTheChosenBroadcasterReturnsHomeToAll() throws {
+        launch()
+        chip("broadcaster:fixture").tap()
+        XCTAssertTrue(card("Testradio Pop").waitForExistence(timeout: 5), "Testradio's stations are not shown")
+
+        openSettings()
+        setSwitch(broadcasterSwitch("Testradio"), on: false)
+        app.tabBars.buttons["Home"].tap()
+
+        XCTAssertTrue(waitForAbsence(chip("broadcaster:fixture")), "a hidden broadcaster still has a chip")
+        XCTAssertFalse(chip("broadcaster:dr").exists, "DR kept a chip with no other broadcaster shown")
+        XCTAssertTrue(chip("all").isSelected, "Home did not fall back to All")
+        XCTAssertTrue(card("P1").waitForExistence(timeout: 5), "All does not show DR's stations")
+    }
+
     // MARK: - Helpers
 
     @MainActor
@@ -119,7 +182,10 @@ final class BroadcastersUITests: XCTestCase {
         app = XCUIApplication()
         app.launchEnvironment["LYTTER_UITEST_FIXTURES"] = "1"
         if secondBroadcaster { app.launchEnvironment["LYTTER_UITEST_SECOND_BROADCASTER"] = "1" }
+        // On All, whatever chip the simulator was last left on: with no favourites and no
+        // history that is where Home opens anyway, but a chosen chip is remembered.
         app.launchArguments = [
+            "-homeScope", "all",
             "-favouriteChannelIDs", "()",
             "-recentlyPlayedChannelIDs", "()",
             "-recentSearchChannelIDs", "()",
@@ -140,6 +206,19 @@ final class BroadcastersUITests: XCTestCase {
     @MainActor
     private func homeSection(_ name: String) -> XCUIElement {
         app.scrollViews.firstMatch.staticTexts[name]
+    }
+
+    /// One of Home's chips, by `HomeScope.storageValue`.
+    @MainActor
+    private func chip(_ scope: String) -> XCUIElement {
+        app.buttons["home.scope.\(scope)"]
+    }
+
+    /// A station's card on Home, by the station's name.
+    @MainActor
+    private func card(_ station: String) -> XCUIElement {
+        app.scrollViews.firstMatch.buttons
+            .matching(NSPredicate(format: "label BEGINSWITH %@", "\(station),")).firstMatch
     }
 
     @MainActor

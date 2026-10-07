@@ -61,20 +61,32 @@ struct tvOSHomeView: View {
                     Tab("Home", systemImage: "house", value: tvOSSection.home) {
                         shelves
                     }
-                    Tab("Radio", systemImage: "antenna.radiowaves.left.and.right",
-                        value: tvOSSection.radio) {
-                        tvOSRadioView(serviceManager: serviceManager,
-                                      selectionState: selectionState)
+                    // One entry per broadcaster shown, where Radio was (F54c) — the
+                    // counterpart of the chips on iPhone.
+                    TabSection("Broadcasters") {
+                        ForEach(serviceManager.visibleBroadcasters) { broadcaster in
+                            Tab(broadcaster.name, systemImage: "antenna.radiowaves.left.and.right",
+                                value: tvOSSection.broadcaster(broadcaster.id)) {
+                                tvOSBroadcasterView(serviceManager: serviceManager,
+                                                    selectionState: selectionState,
+                                                    broadcasterID: broadcaster.id)
+                            }
+                        }
                     }
-                    Tab("Now Playing", systemImage: "play.circle",
-                        value: tvOSSection.nowPlaying) {
-                        tvOSNowPlayingView(serviceManager: serviceManager)
-                            .onExitCommand { section = .home }
-                    }
-                    // Last, at the bottom of the sidebar, as in the TV app (F37).
-                    Tab("Settings", systemImage: "gearshape", value: tvOSSection.settings) {
-                        tvOSSettingsView(preferences: serviceManager.userPreferences,
-                                         channels: serviceManager.availableChannels)
+                    // A section without a heading, only to keep these two below
+                    // Broadcasters: the sidebar lists every tab outside a section first,
+                    // so on their own they rose above it.
+                    TabSection {
+                        Tab("Now Playing", systemImage: "play.circle",
+                            value: tvOSSection.nowPlaying) {
+                            tvOSNowPlayingView(serviceManager: serviceManager)
+                                .onExitCommand { section = .home }
+                        }
+                        // Last, at the bottom of the sidebar, as in the TV app (F37).
+                        Tab("Settings", systemImage: "gearshape", value: tvOSSection.settings) {
+                            tvOSSettingsView(preferences: serviceManager.userPreferences,
+                                             channels: serviceManager.availableChannels)
+                        }
                     }
                 }
                 // No `.tabViewSidebarHeader` — the app name above the list would suit it,
@@ -97,9 +109,17 @@ struct tvOSHomeView: View {
                 handleDeepLinkChannel(targetChannel)
             }
         }
+        // A broadcaster hidden in Settings takes its sidebar entry with it; one being shown
+        // when that happens would leave the selection naming nothing.
+        .onChange(of: serviceManager.visibleBroadcasters) { _, visible in
+            if case .broadcaster(let id) = section, !visible.contains(where: { $0.id == id }) {
+                section = .home
+            }
+        }
     }
 
-    /// tvOS 17 has no sidebar style, so it keeps the tab bar it always had.
+    /// tvOS 17 has no sidebar style, so it keeps the tab bar it always had — and with it one
+    /// Radio tab of every broadcaster shown, since a tab bar cannot hold a section.
     private var legacyTabs: some View {
         TabView(selection: $section) {
             tvOSSearchView(serviceManager: serviceManager, selectionState: selectionState)
@@ -110,9 +130,10 @@ struct tvOSHomeView: View {
                 .tabItem { Label("Home", systemImage: "house") }
                 .tag(tvOSSection.home)
 
-            tvOSRadioView(serviceManager: serviceManager, selectionState: selectionState)
+            tvOSBroadcasterView(serviceManager: serviceManager, selectionState: selectionState,
+                                broadcasterID: nil)
                 .tabItem { Label("Radio", systemImage: "antenna.radiowaves.left.and.right") }
-                .tag(tvOSSection.radio)
+                .tag(tvOSSection.allBroadcasters)
 
             tvOSNowPlayingView(serviceManager: serviceManager)
                 .onExitCommand { section = .home }
@@ -256,13 +277,14 @@ struct tvOSHomeView: View {
 }
 
 /// The app's top-level destinations, and the sidebar's selection.
-enum tvOSSection: String, CaseIterable, Identifiable, Hashable {
+enum tvOSSection: Hashable {
     case search
     case home
-    case radio
+    /// One broadcaster, under the sidebar's Broadcasters section.
+    case broadcaster(String)
+    /// Every broadcaster: tvOS 17's Radio tab.
+    case allBroadcasters
     case nowPlaying
     case settings
-
-    var id: String { rawValue }
 }
 #endif

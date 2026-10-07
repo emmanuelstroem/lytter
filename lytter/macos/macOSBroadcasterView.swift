@@ -1,18 +1,21 @@
 //
-//  macOSRadioView.swift
+//  macOSBroadcasterView.swift
 //  lytter
 //
 
 import SwiftUI
 
 #if os(macOS)
-/// Every station, as a grid — the library view, not the curated one Home is.
-struct macOSRadioView: View {
+/// One broadcaster's stations, as a grid — the library view, not the curated one Home is.
+/// A row under the sidebar's Broadcasters section (F54c); it was Radio, every station.
+struct macOSBroadcasterView: View {
     @ObservedObject var serviceManager: DRServiceManager
+    let broadcasterID: String
     let onSelect: (DRChannel) -> Void
 
     private var groups: [GroupedChannel] {
-        GroupedChannel.grouped(from: serviceManager.availableChannels)
+        GroupedChannel.grouped(from: serviceManager.availableChannels
+            .filter { Broadcaster.supplying($0).id == broadcasterID })
     }
 
     var body: some View {

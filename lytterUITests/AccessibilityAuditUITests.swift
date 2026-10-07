@@ -20,15 +20,15 @@ final class AccessibilityAuditUITests: XCTestCase {
     func testMainScreensPassTheAudit() throws {
         let app = XCUIApplication()
         app.launchEnvironment["LYTTER_UITEST_FIXTURES"] = "1"
+        // On All, where every station is (F54c), whatever chip the simulator last had.
+        app.launchArguments = ["-homeScope", "all"]
         app.launch()
         let card = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'P1'")).firstMatch
         XCTAssertTrue(card.waitForExistence(timeout: 20), "Home did not load")
 
-        try audit(app)                                  // Home
+        try audit(app)                                  // Home, on All: chips and every station
         // Settings before Search: in search mode the tab bar folds away its other tabs.
         app.tabBars.buttons["Settings"].tap()
-        try audit(app)
-        app.tabBars.buttons["Radio"].tap()
         try audit(app)
         app.tabBars.buttons["Search"].tap()
         try audit(app)

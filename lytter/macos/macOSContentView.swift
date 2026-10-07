@@ -23,9 +23,19 @@ struct macOSContentView: View {
 
     var body: some View {
         NavigationSplitView {
-            List(macOSSection.allCases, selection: $section) { item in
-                Label(item.title, systemImage: item.systemImage)
-                    .tag(item)
+            List(selection: $section) {
+                ForEach(macOSSection.destinations, id: \.self) { item in
+                    Label(item.title, systemImage: item.systemImage)
+                        .tag(item)
+                }
+                // One row per broadcaster shown, where Radio was (F54c) — the
+                // counterpart of the chips on iPhone.
+                Section("Broadcasters") {
+                    ForEach(serviceManager.visibleBroadcasters) { broadcaster in
+                        Label(broadcaster.name, systemImage: "antenna.radiowaves.left.and.right")
+                            .tag(macOSSection.broadcaster(broadcaster.id))
+                    }
+                }
             }
             .navigationSplitViewColumnWidth(min: 180, ideal: 200)
         } detail: {
@@ -33,13 +43,14 @@ struct macOSContentView: View {
                 switch section ?? .home {
                 case .home:
                     macOSHomeView(serviceManager: serviceManager, onSelect: play)
-                case .radio:
-                    macOSRadioView(serviceManager: serviceManager, onSelect: play)
+                case .broadcaster(let id):
+                    macOSBroadcasterView(serviceManager: serviceManager, broadcasterID: id,
+                                         onSelect: play)
                 case .search:
                     macOSSearchView(serviceManager: serviceManager, query: query, onSelect: play)
                 }
             }
-            .navigationTitle((section ?? .home).title)
+            .navigationTitle(title(of: section ?? .home))
         }
         .searchable(text: $query, placement: .sidebar,
                     prompt: Text("Stations, regions and programmes"))
@@ -58,6 +69,17 @@ struct macOSContentView: View {
         .onChange(of: serviceManager.availableChannels.count) { _, count in
             if count > 0 { resolveDeepLink() }
         }
+        // A broadcaster hidden in Settings takes its row with it, and its page.
+        .onChange(of: serviceManager.visibleBroadcasters) { _, visible in
+            if case .broadcaster(let id) = section, !visible.contains(where: { $0.id == id }) {
+                section = .home
+            }
+        }
+    }
+
+    private func title(of section: macOSSection) -> String {
+        guard case .broadcaster(let id) = section else { return section.title }
+        return serviceManager.visibleBroadcasters.first { $0.id == id }?.name ?? id
     }
 
     private func play(_ channel: DRChannel) {
@@ -88,26 +110,30 @@ struct macOSContentView: View {
     }
 }
 
-/// The sidebar's items. Three, matching iOS and tvOS — Home, Radio, Search — so a listener
-/// finds the same three places on every screen they own.
-enum macOSSection: String, CaseIterable, Identifiable, Hashable {
-    case home, radio, search
+/// The sidebar's items: Home and Search, then a section of broadcasters — the places a
+/// listener finds on iOS and tvOS too.
+enum macOSSection: Hashable {
+    case home, search
+    /// One broadcaster's stations, under the sidebar's Broadcasters section.
+    case broadcaster(String)
 
-    var id: String { rawValue }
+    /// The rows above the broadcasters, in order.
+    static let destinations: [macOSSection] = [.home, .search]
 
+    /// A destination's name. A broadcaster's is its own, which the section does not know.
     var title: String {
         switch self {
         case .home: String(localized: "Home")
-        case .radio: String(localized: "Radio")
         case .search: String(localized: "Search")
+        case .broadcaster(let id): id
         }
     }
 
     var systemImage: String {
         switch self {
         case .home: "house"
-        case .radio: "antenna.radiowaves.left.and.right"
         case .search: "magnifyingglass"
+        case .broadcaster: "antenna.radiowaves.left.and.right"
         }
     }
 }

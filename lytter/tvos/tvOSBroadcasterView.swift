@@ -1,5 +1,5 @@
 //
-//  tvOSRadioView.swift
+//  tvOSBroadcasterView.swift
 //  lytter
 //
 //  Created by Assistant on 08/08/2025.
@@ -8,27 +8,44 @@
 import SwiftUI
 
 #if os(tvOS)
-struct tvOSRadioView: View {
+/// One broadcaster's stations in a row, under its name — a sidebar entry under
+/// Broadcasters (F54c). Was the Radio tab, which listed every station; with
+/// `broadcasterID` nil it still does, for tvOS 17, whose tab bar cannot hold a section.
+struct tvOSBroadcasterView: View {
     @ObservedObject var serviceManager: DRServiceManager
     @ObservedObject var selectionState: SelectionState
+    /// The broadcaster to list; nil for every one shown.
+    let broadcasterID: String?
     // Sheet removed; districts are presented via Menu wrapping the channel card
     
     @FocusState private var focusedMenuChannelId: String?
+
+    /// The heading: the broadcaster's name, or "Radio" for all of them.
+    private var title: Text {
+        guard let broadcasterID else { return Text("Radio") }
+        let name = serviceManager.visibleBroadcasters.first { $0.id == broadcasterID }?.name
+        return Text(verbatim: name ?? broadcasterID)
+    }
+
+    /// This view's channels: one broadcaster's, or all of them.
+    private var channels: [DRChannel] {
+        guard let broadcasterID else { return serviceManager.availableChannels }
+        return serviceManager.availableChannels.filter { Broadcaster.supplying($0).id == broadcasterID }
+    }
     
     // One representative per base channel (deduped by name)
     private var primaryChannels: [DRChannel] {
         // Was a local copy of the grouping. `GroupedChannel` is shared now, so tvOS and iOS
         // agree on what a station is by construction rather than by two functions happening
         // to behave the same.
-        let ordered = GroupedChannel.grouped(from: serviceManager.availableChannels)
+        let ordered = GroupedChannel.grouped(from: channels)
             .compactMap(\.representative)
             .sorted { $0.title < $1.title }
 
         // Favourites first, as themselves. A pinned district channel is not a station
         // representative, so it would otherwise not appear at all — and putting it in
         // front is the whole point: one click, no variant menu.
-        let favourites = serviceManager.userPreferences.favourites
-            .resolve(in: serviceManager.availableChannels)
+        let favourites = serviceManager.userPreferences.favourites.resolve(in: channels)
         let pinned = Set(favourites.map(\.id))
         return favourites + ordered.filter { !pinned.contains($0.id) }
     }
@@ -42,7 +59,7 @@ struct tvOSRadioView: View {
                 VStack {
                     VStack(alignment: .leading, spacing: 32) {
                         // Section header — Music-app style
-                        Text("Radio")
+                        title
                             .font(.system(size: 52, weight: .bold))
                             .foregroundStyle(.white)
                             .padding(.horizontal, 60)
@@ -60,7 +77,7 @@ struct tvOSRadioView: View {
                                         // its own focus bookkeeping; a station should not
                                         // look or behave differently depending on which
                                         // screen it is listed on.
-                                        let variants = serviceManager.availableChannels
+                                        let variants = channels
                                             .filter { $0.stationKey == channel.stationKey }
 
                                         tvOSStationCard(
