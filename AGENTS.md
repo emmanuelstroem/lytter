@@ -33,6 +33,7 @@ cards. It is a design principle for this app, not a one-off fix.
 | iOS featured shelf card | 14 |
 | iOS standard shelf card | 12 |
 | iOS list-row thumbnail | 8 |
+| iOS card playing badge | half the card's, inset by the other half (6 standard, 7 featured) |
 | tvOS featured shelf card | 22 |
 | tvOS channel card | 16 |
 | macOS featured station card | 10 |

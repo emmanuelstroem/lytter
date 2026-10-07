@@ -16,22 +16,21 @@ enum HomeScope: Hashable, Sendable {
     /// One shelf per broadcaster. Took over from the Radio tab.
     case all
 
-    /// That broadcaster's favourites, then every one of its stations.
+    /// Every one of that broadcaster's stations, A to Z.
     case broadcaster(String)
 
     /// The chips to offer, given the broadcasters the listener has not hidden.
     ///
-    /// A chip per broadcaster only once there are two: with DR alone, "DR" would show
-    /// exactly what "All" does.
+    /// A chip per broadcaster shown, in the listener's order — DR's too while it is the only
+    /// one, so the row keeps its shape as broadcasters come and go.
     static func available(visible: [Broadcaster]) -> [HomeScope] {
-        let broadcasters = visible.count > 1 ? visible.map { HomeScope.broadcaster($0.id) } : []
-        return [.forYou, .all] + broadcasters
+        [.forYou, .all] + visible.map { HomeScope.broadcaster($0.id) }
     }
 
     /// Where Home opens.
     ///
     /// The chip last chosen, if it is still offered. One that is not — its broadcaster has
-    /// been hidden since, or is the only one left — falls back to `.all`, the scope that
+    /// been hidden since — falls back to `.all`, the scope that
     /// still holds its stations. With nothing chosen yet, `.forYou` once there is
     /// something of the listener's own to show, otherwise `.all`: a first launch should
     /// open on stations, not on an empty page.

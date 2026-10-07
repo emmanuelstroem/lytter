@@ -88,4 +88,19 @@ extension Broadcaster {
         let shown = arranged.filter { !hidden.contains($0.id) }
         return shown.isEmpty ? Array(arranged.prefix(1)) : shown
     }
+
+    /// The hidden ids once `id` has been switched on or off in Settings.
+    ///
+    /// What is on screen stays on screen. Should the stored ids hide every broadcaster,
+    /// `visible` shows the first anyway; from here on that one counts as shown, so
+    /// switching another on does not take it away. Switching off the last one shown
+    /// changes nothing.
+    static func hidden(afterSwitching id: String, on: Bool, registered: [Broadcaster],
+                       order: [String], hidden: Set<String>) -> Set<String> {
+        let shownIDs = Set(visible(registered: registered, order: order, hidden: hidden).map(\.id))
+        if !on && !shownIDs.contains(where: { $0 != id }) { return hidden }
+        var result = hidden.subtracting(shownIDs)
+        if on { result.remove(id) } else { result.insert(id) }
+        return result
+    }
 }

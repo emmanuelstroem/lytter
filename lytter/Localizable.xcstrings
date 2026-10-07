@@ -2078,13 +2078,13 @@
         }
       }
     },
-    "Touch and hold one to drag it to a new place on Home. A broadcaster switched off is left out of Home, Search and CarPlay; your favourites from it are kept for when it is switched back on." : {
+    "Touch and hold one to drag it to a new place on Home. A broadcaster switched off is left out of Home, Search, CarPlay and the Favourites widget; your favourites from it are kept for when it is switched back on." : {
       "extractionState" : "manual",
       "localizations" : {
         "da" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Hold fingeren på en for at trække den til en ny plads på Hjem. En radiostation, der er slået fra, vises ikke på Hjem, i Søg eller i CarPlay. Dine favoritter fra den gemmes, til den slås til igen."
+            "value" : "Hold fingeren på en for at trække den til en ny plads på Hjem. En radiostation, der er slået fra, vises ikke på Hjem, i Søg, i CarPlay eller i widgetten Favoritter. Dine favoritter fra den gemmes, til den slås til igen."
           }
         }
       }

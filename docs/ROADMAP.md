@@ -129,12 +129,13 @@ What is left is listed below. Three gaps are not entries of their own:
         cases; its favourites return when it is shown again, and the last one shown cannot
         be hidden. Appears only once there are two, so UI tests can register a second,
         `FixtureSource` ("Testradio"), with `LYTTER_UITEST_SECOND_BROADCASTER=1`.
-      - [x] *F54c. Home chips.* *For you · All · DR · Nova…* on iPhone and iPad. *For you*
-        is Favourites, shows and Recently Played; *All* is a shelf per broadcaster, each
-        with *See all* to its chip, and replaces the Radio tab — with one broadcaster shown
-        it is that broadcaster's grid, as Radio was. A broadcaster's chip is its favourites,
-        then its stations. Broadcaster chips appear only when two or more are shown; the
-        chip chosen is remembered, and one whose broadcaster is hidden falls back to *All*.
+      - [x] *F54c. Home chips.* *For you · All · DR · Nova…* on iPhone and iPad. *For you* is
+        Favourites, shows and Recently Played; *All* is a shelf per broadcaster, each with
+        *See all* to its chip, and replaces the Radio tab — with one broadcaster shown it
+        is that broadcaster's grid, as Radio was. A broadcaster's chip is its stations, A
+        to Z. Every broadcaster shown has a chip, DR's too while it is the only one, so
+        the row keeps its shape; the chip chosen is remembered, and one whose broadcaster
+        is hidden falls back to *All* and stays there when the broadcaster is shown again.
         tvOS (18+) and the Mac list the broadcasters as a sidebar section instead; tvOS 17
         keeps one Radio tab of them all.
       - [ ] *F54d. A neutral core.* `DRChannel`, `DREpisode` and `DRServiceManager` are DR's

@@ -91,7 +91,8 @@ extension GroupedChannel {
         Dictionary(grouping: channels) { $0.stationKey }
             .values
             .map { GroupedChannel(channels: $0) }
-            .sorted { $0.name < $1.name }
+            // As a reader sorts: P2 before P10, and "radio Soft" beside "Radio Alfa".
+            .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
     }
 
     /// Whether this station answers a search.

@@ -134,6 +134,39 @@ struct ChannelShelfCard: View {
 
     private var artworkURL: URL? { serviceManager.artworkURL(for: channel) }
 
+    private var isPlaying: Bool {
+        Self.isPlaying(group, loaded: serviceManager.playingChannel, isPlaying: serviceManager.isPlaying)
+    }
+
+    /// Whether a card for `group` is the station being heard — any of its districts, for a
+    /// card that stands for several, since the card is the station. Not while paused.
+    static func isPlaying(_ group: GroupedChannel, loaded: DRChannel?, isPlaying: Bool) -> Bool {
+        group.channels.contains { DRServiceManager.isAudible($0, loaded: loaded, isPlaying: isPlaying) }
+    }
+
+    /// How far the playing badge sits in from the card's top-right corner, and the badge's
+    /// own corner radius: half the card's radius each, so the two curves share a centre
+    /// (AGENTS.md, Concentricity). 6 and 6 on the standard card, 7 and 7 on the featured.
+    static func playingBadgeInset(_ style: ChannelShelfStyle) -> CGFloat {
+        style.metrics.cornerRadius / 2
+    }
+
+    /// The playing mark in the card's top-right corner, on dark glass so that it reads over
+    /// any artwork. In the corner rather than beside the name, which had no room for it on
+    /// the standard card for the longest districts.
+    private var playingBadge: some View {
+        let inset = Self.playingBadgeInset(style)
+        return PlayingMark()
+            .font(.system(size: style.metrics.accessoryFontSize))
+            // Concrete: inside a Button a hierarchical style resolves against the tint.
+            .foregroundStyle(Color.accentColor)
+            .padding(inset)
+            .background(.ultraThinMaterial,
+                        in: RoundedRectangle(cornerRadius: inset, style: .continuous))
+            .environment(\.colorScheme, .dark)
+            .padding(inset)
+    }
+
     /// What is on now — for a group, whatever the listener's region, or failing that the
     /// first district, is playing.
     ///
@@ -175,6 +208,7 @@ struct ChannelShelfCard: View {
     private var featuredCard: some View {
         artwork
             .overlay(alignment: .bottom) { caption }
+            .overlay(alignment: .topTrailing) { if isPlaying { playingBadge } }
             .clipShape(RoundedRectangle(cornerRadius: style.metrics.cornerRadius,
                                         style: .continuous))
             // Diffuse, barely offset. At radius 7 with y: 4 the shadow hugged the card's
@@ -188,6 +222,7 @@ struct ChannelShelfCard: View {
         VStack(alignment: .leading, spacing: 6) {
             artwork
                 .overlay(alignment: .bottom) { caption }
+                .overlay(alignment: .topTrailing) { if isPlaying { playingBadge } }
                 .clipShape(RoundedRectangle(cornerRadius: style.metrics.cornerRadius,
                                             style: .continuous))
                 .shadow(color: .black.opacity(0.14), radius: 10, y: 2)
@@ -216,6 +251,8 @@ struct ChannelShelfCard: View {
         // label, so "%@, %@" does not land in the catalog for a translator to puzzle over.
         .accessibilityLabel(Text(verbatim: "\(title), \(subtitle)"))
         .accessibilityHint(opensPicker ? "Choose a district" : "Plays this channel")
+        // The mark is drawn, not read; as in the district sheet, the playing one is selected.
+        .accessibilityAddTraits(isPlaying ? .isSelected : [])
         .contextMenu {
             // Favouriting needs to know which channel is meant, so a station with districts
             // is pinned from the picker, where the listener has said which one.

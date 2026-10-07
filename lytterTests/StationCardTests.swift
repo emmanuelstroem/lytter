@@ -88,6 +88,47 @@ struct StationCardTests {
         }
     }
 
+    #if os(iOS)
+    /// The phone's playing badge sits in the card's corner, so its curve has to share the
+    /// card's centre: its radius is the card's, less the inset (AGENTS.md, Concentricity).
+    @Test(arguments: [StationCardStyle.featured, .standard])
+    func thePlayingBadgeIsConcentricWithTheCard(style: StationCardStyle) {
+        let inset = ChannelShelfCard.playingBadgeInset(style)
+
+        #expect(inset > 0)
+        #expect(inset == StationCardMetrics.iOS(style).cornerRadius - inset,
+                "a \(inset)-point badge inset \(inset) does not share a \(StationCardMetrics.iOS(style).cornerRadius)-point card's corner")
+    }
+
+    /// A card is the station: P4's is marked whichever district is playing — each in turn,
+    /// whatever order the group keeps them in.
+    @Test func aStationsCardIsMarkedWhicheverDistrictPlays() {
+        let p4 = GroupedChannel(channels: [channel("p4kbh"), channel("p4fyn"), channel("p4syd")])
+
+        for district in p4.channels {
+            #expect(ChannelShelfCard.isPlaying(p4, loaded: district, isPlaying: true),
+                    "P4's card is not marked while \(district.id) plays")
+        }
+    }
+
+    /// Loaded but paused is not playing: the mark says "now".
+    @Test func aPausedStationIsNotMarked() {
+        let p1 = GroupedChannel(channels: [channel("p1")])
+
+        #expect(!ChannelShelfCard.isPlaying(p1, loaded: channel("p1"), isPlaying: false))
+    }
+
+    @Test func anotherStationPlayingDoesNotMarkThisOne() {
+        let p1 = GroupedChannel(channels: [channel("p1")])
+
+        #expect(!ChannelShelfCard.isPlaying(p1, loaded: channel("p2"), isPlaying: true))
+    }
+
+    private func channel(_ id: String) -> DRChannel {
+        DRChannel(id: id, title: id.uppercased(), slug: id, type: "Channel", presentationUrl: nil)
+    }
+    #endif
+
     /// The television marks the playing station beside its name, so any name there has to
     /// fit with the marker next to it.
     @Test(arguments: [StationCardStyle.featured, .standard])
