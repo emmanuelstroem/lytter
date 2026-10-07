@@ -268,9 +268,10 @@ struct HomeScopeTests {
 
     private let nova = Broadcaster(id: "nova", name: "Nova", displayOrder: 1)
 
-    /// With DR alone a "DR" chip would show what "All" does, so there is none.
-    @Test func oneBroadcasterHasNoChipOfItsOwn() {
-        #expect(HomeScope.available(visible: [.dr]) == [.forYou, .all])
+    /// DR has a chip while it is the only broadcaster too, so the row does not change
+    /// shape when a second one arrives.
+    @Test func oneBroadcasterHasAChipOfItsOwn() {
+        #expect(HomeScope.available(visible: [.dr]) == [.forYou, .all, .broadcaster("dr")])
     }
 
     /// Two or more: one chip each, in the order shown — the listener's, not the registry's.

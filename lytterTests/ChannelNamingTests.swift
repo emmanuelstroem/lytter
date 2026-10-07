@@ -106,4 +106,17 @@ struct ChannelNamingTests {
 
         #expect(group.districts == ["Bornholm", "Fyn", "Syd"])
     }
+
+    /// Stations are listed A to Z as a reader sorts: P1 first, P2 before P10, whatever the
+    /// case. A plain `<` put P10 before P2 and every capital before every small letter.
+    @Test func stationsAreListedAlphabetically() {
+        let station = { (title: String) in
+            DRChannel(id: title, title: title, slug: title.lowercased(), type: "Channel",
+                      presentationUrl: nil, stationSlug: title.lowercased(), stationTitle: title)
+        }
+        let names = GroupedChannel.grouped(from: ["P10", "radio Soft", "P2", "Radio Alfa", "P1"].map(station))
+            .map(\.name)
+
+        #expect(names == ["P1", "P2", "P10", "Radio Alfa", "radio Soft"])
+    }
 }

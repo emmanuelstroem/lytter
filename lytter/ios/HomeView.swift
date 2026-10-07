@@ -12,7 +12,8 @@ import os
 /// Home, under a row of chips: *For you* · *All* · one per broadcaster (F54c).
 ///
 /// *All* is what the Radio tab was, so there is no Radio tab: one place lists stations,
-/// and the chips say which. A chip per broadcaster appears only once two are shown — see
+/// and the chips say which. Every broadcaster shown has a chip, DR's too while it is the
+/// only one — see
 /// `HomeScope.available`.
 struct HomeView: View {
     @ObservedObject var serviceManager: DRServiceManager
@@ -165,8 +166,8 @@ struct HomeView: View {
         }
     }
 
-    /// One shelf per broadcaster, each opening its own chip. With one broadcaster there is
-    /// no chip to open, so its stations are the grid the Radio tab was.
+    /// One shelf per broadcaster, each opening its own chip. With one broadcaster, its
+    /// stations as the grid the Radio tab was: one shelf would hide most of them.
     @ViewBuilder
     private var all: some View {
         let sections = serviceManager.broadcasterSections
@@ -185,17 +186,10 @@ struct HomeView: View {
         }
     }
 
-    /// One broadcaster: the favourites from it, then all of its stations.
+    /// One broadcaster: every one of its stations, A to Z. Not its favourites first — they
+    /// are on *For you*, and above the grid they listed P4 a second time, out of order.
     @ViewBuilder
     private func broadcaster(_ id: String) -> some View {
-        ChannelShelf(
-            title: String(localized: "Favourites"),
-            groups: singles(favourites.filter { Broadcaster.supplying($0).id == id }),
-            style: .featured,
-            serviceManager: serviceManager,
-            onChannelTap: play
-        )
-
         if let section = serviceManager.broadcasterSections.first(where: { $0.broadcaster.id == id }) {
             stationGrid(section)
         }

@@ -33,21 +33,13 @@ struct tvOSBroadcasterView: View {
         return serviceManager.availableChannels.filter { Broadcaster.supplying($0).id == broadcasterID }
     }
     
-    // One representative per base channel (deduped by name)
+    /// One card per station, A to Z, as on the phone's broadcaster page (F54c). Favourites
+    /// used to lead, as themselves — which listed P4 twice, a pinned district and then the
+    /// station, out of order. They have Home's first shelf.
     private var primaryChannels: [DRChannel] {
-        // Was a local copy of the grouping. `GroupedChannel` is shared now, so tvOS and iOS
-        // agree on what a station is by construction rather than by two functions happening
-        // to behave the same.
-        let ordered = GroupedChannel.grouped(from: channels)
-            .compactMap(\.representative)
-            .sorted { $0.title < $1.title }
-
-        // Favourites first, as themselves. A pinned district channel is not a station
-        // representative, so it would otherwise not appear at all — and putting it in
-        // front is the whole point: one click, no variant menu.
-        let favourites = serviceManager.userPreferences.favourites.resolve(in: channels)
-        let pinned = Set(favourites.map(\.id))
-        return favourites + ordered.filter { !pinned.contains($0.id) }
+        // `GroupedChannel` is shared, so tvOS and iOS agree on what a station is, and on
+        // the order, by construction rather than by two functions happening to agree.
+        GroupedChannel.grouped(from: channels).compactMap(\.representative)
     }
     
     var body: some View {
