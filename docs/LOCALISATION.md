@@ -78,6 +78,10 @@ find ~/Library/Developer/Xcode/DerivedData/lytter-*/Build -path "*Debug-iphonesi
   separate bundle and cannot read the app's. Its few strings — the widget gallery's name and
   descriptions, "Favourites", "Next: …" — go there, with their Danish. The widget intents'
   titles and descriptions are in both catalogs, because the intents are compiled into both.
+  The Top Shelf extension is the same case, with
+  [`TopShelfExtension/Localizable.xcstrings`](../TopShelfExtension/Localizable.xcstrings) for
+  its section title. (The static Top Shelf *image* carries only the name "Lytter": a baked
+  image cannot be localised, so it holds no other words.)
 
 - **The 401 error message** is not localised. It names a build setting and tells the reader to
   edit source; anyone who can act on it reads English, and translating it would only make the

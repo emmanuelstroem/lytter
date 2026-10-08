@@ -23,9 +23,11 @@ class ContentProvider: TVTopShelfContentProvider {
         // Fetch live channel data with images
         let radioItems = await createRadioItems()
         
-        // Create single section with all radio channels
+        // Create single section with all radio channels. Its title names what the row
+        // shows — what each station has on — not a broadcaster, and comes from the
+        // extension's own catalog (it cannot read the app's).
         let radioSection = TVTopShelfItemCollection<TVTopShelfSectionedItem>(items: radioItems)
-        radioSection.title = "DR Radio"
+        radioSection.title = String(localized: "On Air Now")
         
         return TVTopShelfSectionedContent(sections: [radioSection])
     }
