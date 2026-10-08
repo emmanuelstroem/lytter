@@ -38,6 +38,24 @@ struct AppBackground: View {
     }
 }
 
+extension View {
+    /// The page's side margins: where Home's and Search's content starts.
+    ///
+    /// The phone's 16 points is right for a phone's width and too tight in a visionOS
+    /// window: the content sat close against the window's rounded edge, further out than
+    /// the system's own navigation titles and Settings' rows, which start 24 in. The pages
+    /// there use the same 24, so Home and Search line up with the screens the system lays
+    /// out. (`scenePadding` gives the phone's 16 in a visionOS window, so it is not that.)
+    @ViewBuilder
+    func pageMargins() -> some View {
+        #if os(visionOS)
+        padding(.horizontal, 24)
+        #else
+        padding(.horizontal, 16)
+        #endif
+    }
+}
+
 /// Keeps the clock and battery readable when content scrolls beneath them.
 ///
 /// Home has no navigation bar — it was removed because it contributed an empty bar and
