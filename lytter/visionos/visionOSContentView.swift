@@ -13,8 +13,8 @@ import SwiftUI
 /// player, so it floats below the window in an ornament of its own. There is no page
 /// background either: the window's glass is the background (see `AppBackground`).
 ///
-/// Deep links and the full player are handled by `ContentView`, around this, exactly as
-/// they are around the phone's tabs.
+/// Deep links are handled by `ContentView`, around this, exactly as they are around the
+/// phone's tabs. The full player is not: see `fullPlayer`.
 struct visionOSContentView: View {
     @ObservedObject var serviceManager: DRServiceManager
     @ObservedObject var selectionState: SelectionState
@@ -23,6 +23,10 @@ struct visionOSContentView: View {
     /// The ornament's corner. The artwork inside it is 10 and inset 10 from its edge, and
     /// meets this corner, so this is 10 + 10 (AGENTS.md, concentricity).
     static let miniPlayerCornerRadius: CGFloat = 20
+
+    /// The full player's panel. It stands free in the window, clear of the window's
+    /// corners, so there is no curve for it to share (AGENTS.md, concentricity).
+    static let fullPlayerCornerRadius: CGFloat = 40
 
     var body: some View {
         TabView(selection: $selectedTabIndex) {
@@ -41,6 +45,9 @@ struct visionOSContentView: View {
         }
         // The phone's accent, which its TabView sets the same way.
         .tint(.purple)
+        .overlay { fullPlayer }
+        // The player belongs to the page it was opened over.
+        .onChange(of: selectedTabIndex) { _, _ in closeFullPlayer() }
         // Below the window, and only once something has been chosen: an empty bar under a
         // window that has not played anything yet is chrome with nothing to say.
         .ornament(visibility: serviceManager.playingChannel == nil ? .hidden : .visible,
@@ -57,6 +64,37 @@ struct visionOSContentView: View {
                                                             style: .continuous))
                 .padding(.top, 16)
         }
+    }
+
+    /// The full player, over the window rather than in a sheet.
+    ///
+    /// A sheet on visionOS is modal: the window behind it stops taking taps, and nothing
+    /// drags it away the way a phone's sheet is pulled down. With no close button in the
+    /// player either, it could not be dismissed at all. Here it is a panel over a dimmed
+    /// window, and a tap anywhere on the window outside it closes it.
+    @ViewBuilder
+    private var fullPlayer: some View {
+        if selectionState.isShowingFullPlayer {
+            ZStack {
+                Color.black.opacity(0.3)
+                    .contentShape(Rectangle())
+                    .onTapGesture { closeFullPlayer() }
+                    .accessibilityLabel("Close")
+                    .accessibilityAddTraits(.isButton)
+
+                FullPlayerSheet(serviceManager: serviceManager, selectionState: selectionState)
+                    .frame(maxWidth: 560)
+                    .glassBackgroundEffect(in: RoundedRectangle(cornerRadius: Self.fullPlayerCornerRadius,
+                                                                style: .continuous))
+                    .padding(.vertical, 32)
+                    .accessibilityAction(.escape) { closeFullPlayer() }
+            }
+            .transition(.opacity)
+        }
+    }
+
+    private func closeFullPlayer() {
+        withAnimation { selectionState.isShowingFullPlayer = false }
     }
 }
 #endif

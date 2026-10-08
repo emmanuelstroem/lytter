@@ -58,6 +58,7 @@ struct PlayerControlsView: View {
                                 .foregroundStyle(Color.secondary)
                         }
                         .accessibilityLabel("Skip back 15 seconds")
+                        .transportButtonStyle()
                     }
                     
                     if showPlayPauseButton {
@@ -71,6 +72,7 @@ struct PlayerControlsView: View {
                         // The label has to track the action, not the glyph: VoiceOver
                         // announces what the button will do.
                         .accessibilityLabel(isPlaying ? "Pause" : "Play")
+                        .transportButtonStyle()
                     }
                     
                     if showForwardButton {
@@ -82,6 +84,7 @@ struct PlayerControlsView: View {
                                 .foregroundStyle(Color.secondary)
                         }
                         .disabled(!isForwardEnabled)
+                        .transportButtonStyle()
                         .opacity(isForwardEnabled ? 1 : 0.35)
                         .accessibilityLabel("Skip forward 15 seconds")
                     }
@@ -110,6 +113,22 @@ struct PlayerControlsView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .padding(.horizontal, geometry.size.width * 0.05)
         }
+    }
+}
+
+private extension View {
+    /// No platter on visionOS. A button there draws a glass capsule by default, padded
+    /// around its label; the glyphs here are sized from the row's height, and the play
+    /// glyph spilled out of its capsule. Borderless keeps the gaze highlight, which takes
+    /// the circle.
+    @ViewBuilder
+    func transportButtonStyle() -> some View {
+        #if os(visionOS)
+        buttonStyle(.borderless)
+            .buttonBorderShape(.circle)
+        #else
+        self
+        #endif
     }
 }
 

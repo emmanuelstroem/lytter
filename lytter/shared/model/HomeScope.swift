@@ -34,10 +34,15 @@ enum HomeScope: Hashable, Sendable {
     /// still holds its stations. With nothing chosen yet, `.forYou` once there is
     /// something of the listener's own to show, otherwise `.all`: a first launch should
     /// open on stations, not on an empty page.
+    ///
+    /// *For you* chosen last time is not kept while it has nothing in it either — its
+    /// favourites removed since, or its history cleared. Opening on a page that only says
+    /// what will come there is the empty page again.
     static func initial(stored: String, available: [HomeScope], hasOwnStations: Bool) -> HomeScope {
         guard let chosen = HomeScope(storageValue: stored) else {
             return hasOwnStations ? .forYou : .all
         }
+        if chosen == .forYou && !hasOwnStations { return .all }
         return available.contains(chosen) ? chosen : .all
     }
 

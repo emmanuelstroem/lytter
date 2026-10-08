@@ -33,8 +33,11 @@ struct HomeView: View {
         HomeScope.available(visible: serviceManager.visibleBroadcasters)
     }
 
+    /// Whether *For you* has anything in it. What it would show, not what is stored: a
+    /// favourite or a recent whose station is no longer in the catalogue draws nothing
+    /// there, and counting it opened Home on an empty *For you*.
     private var hasOwnStations: Bool {
-        !preferences.favourites.isEmpty || !preferences.recentlyPlayed.isEmpty
+        !favourites.isEmpty || !recentlyPlayed.isEmpty || !preferences.favouriteShows.isEmpty
     }
 
     private var scope: HomeScope {
@@ -107,6 +110,11 @@ struct HomeView: View {
                         }
                     }
                     .pageMargins()
+                    #if os(visionOS)
+                    // The header has no status bar above it in a window, so it sat against
+                    // the window's top edge. The same 24 as the side margins.
+                    .padding(.top, 24)
+                    #endif
                     .padding(.bottom, 100) // Space for bottom tab bar
                 }
                 // A chip chosen from far down — *See all* under the last shelf — would
@@ -123,12 +131,21 @@ struct HomeView: View {
         }
         .onAppear {
             forgetUnavailableChoice()
-            if chosenScope == nil { chosenScope = scope }
+            settleScope()
         }
         .onChange(of: availableScopes) { _, _ in forgetUnavailableChoice() }
+        .onChange(of: serviceManager.availableChannels.isEmpty) { _, _ in settleScope() }
     }
 
     private static let top = "home.top"
+
+    /// Fixes this session's scope, once the catalogue is in. Before that, favourites and
+    /// history resolve to nothing, so every launch would look like one with nothing of the
+    /// listener's own — and the catalogue's loading state is all Home shows meanwhile.
+    private func settleScope() {
+        guard chosenScope == nil, !serviceManager.availableChannels.isEmpty else { return }
+        chosenScope = scope
+    }
 
     // MARK: - Scopes
 
@@ -271,7 +288,7 @@ struct HomeHeader: View {
     var body: some View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
-                Text("Lyt")
+                Text("Lytter")
                     .font(.largeTitle)
                     .fontWeight(.bold)
                     .foregroundStyle(Color.primary)

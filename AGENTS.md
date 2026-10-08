@@ -42,6 +42,7 @@ cards. It is a design principle for this app, not a one-off fix.
 | tvOS panels | 28 |
 | Mini-player artwork | 10 |
 | visionOS mini-player ornament | 20 (artwork 10, inset 10 on every side) |
+| visionOS full-player panel | 40 — stands free in the window, clear of its corners |
 | visionOS cards | the iPhone's (14 featured, 12 standard); the hover highlight takes the card's radius |
 | Widget artwork | `ContainerRelativeShape` — the widget's own curve, less the inset |
 | Favourites widget tile | 6 (widget ≈ 22, inset 16), the same on every tile |
