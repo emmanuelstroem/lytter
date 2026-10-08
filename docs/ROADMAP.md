@@ -194,6 +194,11 @@ What is left is listed below. Three gaps are not entries of their own:
       for the week ahead (F52): it is DR's website rather than their API, and F52 waits
       on the answer.
       Checked 2026-10-04: not started.
+      Checked 2026-10-08: still the blocker for submitting. DR being free to listen to does
+      not license redistribution; App Review rejects radio apps under 5.2.3 without
+      "documentary evidence" of rights, and the app uses DR's logos (5.2.1). The request
+      to DR is drafted in [APP-STORE.md § 9](APP-STORE.md#9-the-request-to-dr); not yet
+      sent. Meanwhile Settings ends with About, which says Lytter is independent of DR.
 
 ---
 
@@ -212,8 +217,10 @@ What is left is listed below. Three gaps are not entries of their own:
 ## 5. Suggested sequence
 
 **Before submitting to the App Store**
-S11 (DR's terms and attribution) → F14 (README) → CI: GitHub Actions building and testing
-iOS, tvOS and macOS → S1, if DR ever asks for a key.
+S11 (DR's written permission — the blocker) → the checklist in
+[APP-STORE.md](APP-STORE.md): Pages live, store text, age rating, App Privacy,
+screenshots, archives → F14 (README) → CI: GitHub Actions building and testing iOS, tvOS
+and macOS → S1, if DR ever asks for a key.
 
 **Resilience**
 F49 (API version from GitHub Pages, and a scheduled check that the API still answers).
