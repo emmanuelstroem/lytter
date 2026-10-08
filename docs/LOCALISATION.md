@@ -71,7 +71,7 @@ find ~/Library/Developer/Xcode/DerivedData/lytter-*/Build -path "*Debug-iphonesi
      -name "*.stringsdata" -exec plutil -p {} \; | grep '"key"'
 ```
 
-## Three deliberate exceptions
+## Four deliberate exceptions
 
 - **The widget extension has a catalog of its own,**
   [`LytterWidgets/Localizable.xcstrings`](../LytterWidgets/Localizable.xcstrings). It is a
@@ -82,6 +82,18 @@ find ~/Library/Developer/Xcode/DerivedData/lytter-*/Build -path "*Debug-iphonesi
   [`TopShelfExtension/Localizable.xcstrings`](../TopShelfExtension/Localizable.xcstrings) for
   its section title. (The static Top Shelf *image* carries only the name "Lytter": a baked
   image cannot be localised, so it holds no other words.)
+
+- **Info.plist strings have a catalog of their own,**
+  [`lytter/InfoPlist.xcstrings`](../lytter/InfoPlist.xcstrings). The system reads them,
+  not the app — the Siri permission prompt (`NSSiriUsageDescription`) is drawn by iOS —
+  and it looks them up in `InfoPlist.strings`, never in `Localizable.strings`. The key is
+  the Info.plist key, not the English text; the English itself is the build setting
+  `INFOPLIST_KEY_NSSiriUsageDescription`, so change both together. The catalog also
+  carries `CFBundleDisplayName`, unchanged as "Lytter": once a language has this table the
+  system takes the app's name from it, and without the key the Shortcuts button read
+  "-genveje". To see the Siri prompt in Danish, set the *simulator's* language to Danish;
+  the dialog is the system's, and `-AppleLanguages` on the app alone leaves it in English.
+  `ReleaseInfoPlistTests` checks the Danish is there and reaches the bundle.
 
 - **The 401 error message** is not localised. It names a build setting and tells the reader to
   edit source; anyone who can act on it reads English, and translating it would only make the
