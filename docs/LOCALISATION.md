@@ -91,7 +91,10 @@ find ~/Library/Developer/Xcode/DerivedData/lytter-*/Build -path "*Debug-iphonesi
   `INFOPLIST_KEY_NSSiriUsageDescription`, so change both together. The catalog also
   carries `CFBundleDisplayName`, unchanged as "Lytter": once a language has this table the
   system takes the app's name from it, and without the key the Shortcuts button read
-  "-genveje". To see the Siri prompt in Danish, set the *simulator's* language to Danish;
+  "-genveje". And `CFBundleName`, in English too: it is otherwise `$(PRODUCT_NAME)`, the
+  target's lower-case "lytter", which the Shortcuts button spelled as "lytter shortcuts".
+  Neither the Info.plist file nor an `INFOPLIST_KEY_CFBundleName` setting overrides the
+  generated value; the catalog does. To see the Siri prompt in Danish, set the *simulator's* language to Danish;
   the dialog is the system's, and `-AppleLanguages` on the app alone leaves it in English.
   `ReleaseInfoPlistTests` checks the Danish is there and reaches the bundle.
 

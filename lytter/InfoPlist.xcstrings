@@ -19,6 +19,24 @@
         }
       }
     },
+    "CFBundleName" : {
+      "comment" : "Bundle name",
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lytter"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lytter"
+          }
+        }
+      }
+    },
     "NSSiriUsageDescription" : {
       "comment" : "Privacy - Siri Usage Description: shown when the app asks for Siri access.",
       "extractionState" : "extracted_with_value",

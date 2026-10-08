@@ -94,4 +94,15 @@ struct ReleaseInfoPlistTests {
         #expect((table["NSSiriUsageDescription"] as? String)?.hasPrefix("Lytter bruger Siri") == true)
         #expect(table["CFBundleDisplayName"] as? String == "Lytter")
     }
+
+    /// The bundle name is the target's, lower-case "lytter", and the system spells the app
+    /// with it in places: the Shortcuts button read "lytter shortcuts". The catalog's English
+    /// and Danish tables carry the capitalised name instead.
+    @Test(arguments: ["en", "da"])
+    func builtAppCarriesCapitalisedBundleName(language: String) throws {
+        let path = try #require(Bundle.main.path(forResource: "InfoPlist", ofType: "strings",
+                                                 inDirectory: nil, forLocalization: language))
+        let table = try #require(NSDictionary(contentsOfFile: path))
+        #expect(table["CFBundleName"] as? String == "Lytter")
+    }
 }
