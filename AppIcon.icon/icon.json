@@ -2,13 +2,13 @@
   "fill-specializations": [
     {
       "value": {
-        "solid": "srgb:1.00000,0.96471,0.94118,1.00000"
+        "automatic-gradient": "srgb:1.00000,0.14913,0.00000,1.00000"
       }
     },
     {
       "appearance": "dark",
       "value": {
-        "solid": "srgb:0.22000,0.07000,0.05500,1.00000"
+        "automatic-gradient": "srgb:0.80000,0.10000,0.02000,1.00000"
       }
     }
   ],
@@ -19,9 +19,6 @@
       "hidden": false,
       "layers": [
         {
-          "fill": {
-            "solid": "srgb:1.00000,0.95686,0.93333,1.00000"
-          },
           "image-name": "dash.svg",
           "name": "dash",
           "position": {
@@ -30,12 +27,22 @@
               -8.78125,
               -101.0703125
             ]
-          }
+          },
+          "fill-specializations": [
+            {
+              "value": {
+                "solid": "srgb:1.00000,0.14913,0.00000,1.00000"
+              }
+            },
+            {
+              "appearance": "dark",
+              "value": {
+                "solid": "srgb:0.80000,0.10000,0.02000,1.00000"
+              }
+            }
+          ]
         },
         {
-          "fill": {
-            "solid": "srgb:1.00000,0.95686,0.93333,1.00000"
-          },
           "image-name": "dash.svg",
           "name": "dash",
           "position": {
@@ -44,12 +51,22 @@
               -13.3984375,
               22.953125
             ]
-          }
+          },
+          "fill-specializations": [
+            {
+              "value": {
+                "solid": "srgb:1.00000,0.14913,0.00000,1.00000"
+              }
+            },
+            {
+              "appearance": "dark",
+              "value": {
+                "solid": "srgb:0.80000,0.10000,0.02000,1.00000"
+              }
+            }
+          ]
         },
         {
-          "fill": {
-            "solid": "srgb:1.00000,0.95686,0.93333,1.00000"
-          },
           "image-name": "circle.svg",
           "name": "circle",
           "position": {
@@ -58,7 +75,20 @@
               8.0390625,
               -5.0078125
             ]
-          }
+          },
+          "fill-specializations": [
+            {
+              "value": {
+                "solid": "srgb:1.00000,0.14913,0.00000,1.00000"
+              }
+            },
+            {
+              "appearance": "dark",
+              "value": {
+                "solid": "srgb:0.80000,0.10000,0.02000,1.00000"
+              }
+            }
+          ]
         }
       ],
       "lighting": "individual",
@@ -80,7 +110,7 @@
       "layers": [
         {
           "fill": {
-            "solid": "srgb:1.00000,0.14913,0.00000,1.00000"
+            "solid": "srgb:1.00000,1.00000,1.00000,1.00000"
           },
           "hidden": false,
           "image-name": "cover.svg",
@@ -101,7 +131,7 @@
       },
       "specular": true,
       "translucency": {
-        "enabled": true,
+        "enabled": false,
         "value": 0.5
       }
     },
@@ -112,7 +142,7 @@
         {
           "blend-mode": "normal",
           "fill": {
-            "solid": "srgb:0.89412,0.20000,0.04314,1.00000"
+            "solid": "srgb:1.00000,1.00000,1.00000,1.00000"
           },
           "hidden": false,
           "image-name": "antenna.svg",
@@ -134,7 +164,7 @@
       },
       "specular": true,
       "translucency": {
-        "enabled": true,
+        "enabled": false,
         "value": 0.5
       }
     }
