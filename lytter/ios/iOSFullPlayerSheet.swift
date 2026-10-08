@@ -197,6 +197,9 @@ struct iOSFullPlayerSheet: View {
                 }
             }
         }
+        #if os(iOS)
+        // Not on visionOS, where the player is not a sheet and is not dragged away: it
+        // closes when the window around it is tapped.
         .overlay(alignment: .top) {
             // Drag indicator
             RoundedRectangle(cornerRadius: 2.5)
@@ -204,6 +207,7 @@ struct iOSFullPlayerSheet: View {
                 .frame(width: 36, height: 5)
                 .padding(.top, 8)
         }
+        #endif
         .sheet(isPresented: $showingSleepSheet) {
             iOSSleepTimerSheet(serviceManager: serviceManager)
         }

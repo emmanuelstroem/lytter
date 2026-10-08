@@ -41,10 +41,13 @@ struct ContentView: View {
             // A link opened from cold arrives before the catalogue. This is the retry.
             if count > 0 { resolveDeepLink() }
         }
+        #if os(iOS)
         // Presented here, not from the mini player: see SelectionState.isShowingFullPlayer.
+        // visionOS draws it over its window instead — see visionOSContentView.
         .sheet(isPresented: $selectionState.isShowingFullPlayer) {
             FullPlayerSheet(serviceManager: serviceManager, selectionState: selectionState)
         }
+        #endif
 
     #elseif os(tvOS)
         tvOSHomeView(

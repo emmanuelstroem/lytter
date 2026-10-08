@@ -294,9 +294,16 @@ struct HomeScopeTests {
         let available = HomeScope.available(visible: [.dr, nova])
 
         #expect(HomeScope.initial(stored: "all", available: available, hasOwnStations: true) == .all)
-        #expect(HomeScope.initial(stored: "forYou", available: available, hasOwnStations: false) == .forYou)
+        #expect(HomeScope.initial(stored: "forYou", available: available, hasOwnStations: true) == .forYou)
         #expect(HomeScope.initial(stored: "broadcaster:nova", available: available, hasOwnStations: true)
                     == .broadcaster("nova"))
+    }
+
+    /// For you chosen last time, but empty now, opens on All rather than on an empty page.
+    @Test func anEmptyForYouOpensOnAllEvenWhenItWasChosen() {
+        let available = HomeScope.available(visible: [.dr])
+
+        #expect(HomeScope.initial(stored: "forYou", available: available, hasOwnStations: false) == .all)
     }
 
     /// A broadcaster hidden since it was chosen leaves Home on All, where its stations
