@@ -11,6 +11,8 @@ import AppKit
 #endif
 @testable import lytter
 
+// The same platforms as StationCard itself, which visionOS does not compile.
+#if os(iOS) || os(tvOS) || os(macOS)
 /// A station's name is set at one size on every card and never shrinks to fit, so that "P1"
 /// and "P4 - Nordjylland" in the same row are the same size. That only works if every name
 /// DR broadcasts fits across every card at that size. These measure it.
@@ -156,3 +158,4 @@ struct StationCardTests {
     }
     #endif
 }
+#endif
