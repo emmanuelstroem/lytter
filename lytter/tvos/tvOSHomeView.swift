@@ -40,11 +40,13 @@ struct tvOSHomeView: View {
     /// Long enough for the sidebar's collapse animation to finish under the cover.
     private static let sidebarCollapseTime: Duration = .milliseconds(400)
 
-    // Menu returns Home from Now Playing, and only from there. Every other section is a
-    // grid or a list, so focus can always walk left into the sidebar. Now Playing fades its
-    // controls out after a few seconds and fills the screen with artwork, and once they are
-    // gone there is nothing to walk left *from* — the screen became a dead end with no way
-    // back. Lost when this moved from a hand-rolled switcher to a TabView.
+    // Menu goes Home from every other destination first, as in the TV and Music apps, and
+    // only Home's Menu is the system's: it opens the sidebar, and from there leaves the app.
+    // Each destination needs a handler of its own. The system acts on Menu before one on
+    // the TabView hears it, and from Search or Settings it opened the sidebar instead. The
+    // one on the TabView catches Menu while focus is in the sidebar, where it would
+    // otherwise leave the app; on Home it is nil so the press falls through. Sheets and
+    // pushed screens are presented over all this, so they close first.
 
     var body: some View {
         Group {
@@ -57,6 +59,7 @@ struct tvOSHomeView: View {
                         role: .search) {
                         tvOSSearchView(serviceManager: serviceManager,
                                        selectionState: selectionState)
+                            .onExitCommand(perform: goHome)
                     }
                     Tab("Home", systemImage: "house", value: tvOSSection.home) {
                         shelves
@@ -70,6 +73,7 @@ struct tvOSHomeView: View {
                                 tvOSBroadcasterView(serviceManager: serviceManager,
                                                     selectionState: selectionState,
                                                     broadcasterID: broadcaster.id)
+                                    .onExitCommand(perform: goHome)
                             }
                         }
                     }
@@ -80,12 +84,13 @@ struct tvOSHomeView: View {
                         Tab("Now Playing", systemImage: "play.circle",
                             value: tvOSSection.nowPlaying) {
                             tvOSNowPlayingView(serviceManager: serviceManager)
-                                .onExitCommand { section = .home }
+                                .onExitCommand(perform: goHome)
                         }
                         // Last, at the bottom of the sidebar, as in the TV app (F37).
                         Tab("Settings", systemImage: "gearshape", value: tvOSSection.settings) {
                             tvOSSettingsView(preferences: serviceManager.userPreferences,
                                              channels: serviceManager.availableChannels)
+                                .onExitCommand(perform: goHome)
                         }
                     }
                 }
@@ -102,6 +107,7 @@ struct tvOSHomeView: View {
                 Color.black.ignoresSafeArea().allowsHitTesting(false)
             }
         }
+        .onExitCommand(perform: sidebarExit)
         .environmentObject(serviceManager)
         .environmentObject(selectionState)
         .onChange(of: deepLinkHandler.shouldNavigateToChannel) { _, shouldNavigate in
@@ -123,6 +129,7 @@ struct tvOSHomeView: View {
     private var legacyTabs: some View {
         TabView(selection: $section) {
             tvOSSearchView(serviceManager: serviceManager, selectionState: selectionState)
+                .onExitCommand(perform: goHome)
                 .tabItem { Label("Search", systemImage: "magnifyingglass") }
                 .tag(tvOSSection.search)
 
@@ -132,16 +139,18 @@ struct tvOSHomeView: View {
 
             tvOSBroadcasterView(serviceManager: serviceManager, selectionState: selectionState,
                                 broadcasterID: nil)
+                .onExitCommand(perform: goHome)
                 .tabItem { Label("Radio", systemImage: "antenna.radiowaves.left.and.right") }
                 .tag(tvOSSection.allBroadcasters)
 
             tvOSNowPlayingView(serviceManager: serviceManager)
-                .onExitCommand { section = .home }
+                .onExitCommand(perform: goHome)
                 .tabItem { Label("Now Playing", systemImage: "play.circle") }
                 .tag(tvOSSection.nowPlaying)
 
             tvOSSettingsView(preferences: serviceManager.userPreferences,
                              channels: serviceManager.availableChannels)
+                .onExitCommand(perform: goHome)
                 .tabItem { Label("Settings", systemImage: "gearshape") }
                 .tag(tvOSSection.settings)
         }
@@ -258,6 +267,18 @@ struct tvOSHomeView: View {
     /// Wraps plain channels as single-channel groups, so the shelf takes one type.
     private func singles(_ channels: [DRChannel]) -> [GroupedChannel] {
         channels.map { GroupedChannel(channels: [$0]) }
+    }
+
+    private func goHome() {
+        section = .home
+    }
+
+    /// Menu while focus is in the sidebar: Home, unless Home is where the viewer already is.
+    /// Written out because `section == .home ? nil : goHome` stopped the compiler with
+    /// "failed to produce diagnostic for expression".
+    private var sidebarExit: (() -> Void)? {
+        if section == .home { return nil }
+        return { section = .home }
     }
 
     private func play(_ channel: DRChannel) {
