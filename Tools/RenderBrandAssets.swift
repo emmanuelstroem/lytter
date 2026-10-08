@@ -1,4 +1,5 @@
-// RenderBrandAssets.swift — generates every app icon and the tvOS Top Shelf artwork.
+// RenderBrandAssets.swift — generates every app icon, the tvOS Top Shelf artwork and the
+// fallback now-playing artwork.
 //
 // The mark is a transistor radio: white body, diagonal antenna, two red bars and a
 // dial, on a red field. It is defined in a unit square and drawn with CoreGraphics, so it stays
@@ -357,13 +358,12 @@ func renderSquareIcon(side: CGFloat, pal: Palette, glowAlpha: Double, to path: S
     writePNG(ctx, to: path, opaque: true)
 }
 
-/// One layer of the tvOS parallax stack. No baked inter-element shadows: the layers
-/// move independently and tvOS draws the shadows between them.
-func renderTVLayer(_ layer: String, size: CGSize, to path: String) {
+/// One layer of a layered icon — the tvOS parallax stack or the visionOS solid image
+/// stack. No baked inter-element shadows: the layers move independently and the system
+/// draws the shadows between them.
+func renderStackLayer(_ layer: String, size: CGSize, placement p: Placement, to path: String) {
     let ctx = makeContext(size)
     let pal = Palette.brand
-    let p = Placement(frame: size, bboxHeightFraction: 0.62,
-                      centre: CGPoint(x: size.width / 2, y: size.height * 0.455))
     switch layer {
     case "Back":
         drawField(ctx, size: size, pal: pal,
@@ -377,6 +377,27 @@ func renderTVLayer(_ layer: String, size: CGSize, to path: String) {
     default: fatalError("unknown layer \(layer)")
     }
     writePNG(ctx, to: path, opaque: layer == "Back")
+}
+
+/// tvOS: a wide plate, the mark a little above centre where the system's focus lift
+/// leaves it looking centred.
+func renderTVLayer(_ layer: String, size: CGSize, to path: String) {
+    renderStackLayer(layer, size: size,
+                     placement: Placement(frame: size, bboxHeightFraction: 0.62,
+                                          centre: CGPoint(x: size.width / 2,
+                                                          y: size.height * 0.455)),
+                     to: path)
+}
+
+/// visionOS: a square the system masks to a circle, so the mark is centred on its own
+/// bounding box and kept well inside the circle (its farthest point, the antenna tip, is
+/// about a third of the side from the centre).
+func renderVisionLayer(_ layer: String, side: CGFloat, to path: String) {
+    let size = CGSize(width: side, height: side)
+    renderStackLayer(layer, size: size,
+                     placement: Placement(frame: size, bboxHeightFraction: 0.46,
+                                          centre: CGPoint(x: side / 2, y: side / 2)),
+                     to: path)
 }
 
 // MARK: - Text (Top Shelf only)
@@ -462,6 +483,22 @@ for (px, name) in [(16, "all_16x16"), (32, "all_32x32"), (32, "all_32x32 1"),
                    (1024, "store")] {
     renderSquareIcon(side: CGFloat(px), pal: .brand, glowAlpha: 0.34,
                      to: "\(appIcon)/\(name).png")
+}
+
+// The fallback now-playing artwork, for a station that sends none: the icon's own square,
+// so the Lock Screen, Control Center and the Mac's Now Playing show the same mark as the
+// Home Screen. 300 points at every scale, as AudioPlayerService has always used.
+print("Now-playing fallback artwork")
+for (px, suffix) in [(300, "@1x"), (600, "@2x"), (900, "@3x")] {
+    renderSquareIcon(side: CGFloat(px), pal: .brand, glowAlpha: 0.34,
+                     to: "\(assets)/DefaultArtwork.imageset/artwork\(suffix).png")
+}
+
+print("visionOS app icon — solid image stack")
+for layer in ["Back", "Middle", "Front"] {
+    let dir = "\(assets)/AppIcon visionOS.solidimagestack/"
+        + "\(layer).solidimagestacklayer/Content.imageset"
+    renderVisionLayer(layer, side: 1024, to: "\(dir)/\(layer.lowercased()).png")
 }
 
 print("tvOS app icon — parallax stack")

@@ -499,71 +499,22 @@ class AudioPlayerService: NSObject, ObservableObject {
     
     private func setDefaultCommandCenterArtwork(nowPlayingInfo: [String: Any]) {
         var updatedInfo = nowPlayingInfo
-        updatedInfo[MPMediaItemPropertyArtwork] = Self.artwork(for: defaultArtworkImage())
+        updatedInfo[MPMediaItemPropertyArtwork] = Self.artwork(for: Self.defaultArtworkImage())
         nowPlayingInfoCenter?.nowPlayingInfo = updatedInfo
     }
 
-    #if os(iOS) || os(tvOS)
-    /// A gradient with the radio glyph over it, drawn once as a fallback for artwork DR
-    /// did not send.
-    private func defaultArtworkImage() -> PlatformImage {
-        let size = CGSize(width: 300, height: 300)
-        let renderer = UIGraphicsImageRenderer(size: size)
-
-        return renderer.image { context in
-            let gradient = CGGradient(colorsSpace: CGColorSpaceCreateDeviceRGB(),
-                                      colors: [UIColor.systemBlue.cgColor, UIColor.systemPurple.cgColor] as CFArray,
-                                      locations: [0.0, 1.0])!
-
-            context.cgContext.drawLinearGradient(gradient,
-                                                 start: CGPoint(x: 0, y: 0),
-                                                 end: CGPoint(x: size.width, y: size.height),
-                                                 options: [])
-
-            let iconSize: CGFloat = 120
-            let iconRect = CGRect(x: (size.width - iconSize) / 2,
-                                  y: (size.height - iconSize) / 2,
-                                  width: iconSize,
-                                  height: iconSize)
-
-            let iconConfig = UIImage.SymbolConfiguration(pointSize: iconSize, weight: .medium)
-            let radioIcon = UIImage(systemName: "antenna.radiowaves.left.and.right", withConfiguration: iconConfig)
-            radioIcon?.withTintColor(.white, renderingMode: .alwaysOriginal)
-                .draw(in: iconRect)
-        }
-    }
-    #elseif os(macOS)
-    /// A plain gradient square, drawn now, into a bitmap.
+    /// The brand mark, the white radio on red that is the app icon, as the fallback for
+    /// artwork DR did not send: the same image on every platform, rendered by
+    /// `Tools/RenderBrandAssets.swift` alongside the icon so the two cannot drift.
     ///
-    /// Not `NSImage(size:flipped:drawingHandler:)`. That draws later, whenever the image is
-    /// rendered — and MediaPlayer renders now-playing artwork on its own queue. The handler,
-    /// main-actor isolated by the project's default, then failed Swift's isolation check
-    /// there and the app trapped as it opened, before a window appeared. iOS's renderer
-    /// draws eagerly, which is why it never did.
+    /// An asset rather than drawn here. The Mac's image used to be drawn by
+    /// `NSImage(size:flipped:drawingHandler:)`, which draws whenever the image is rendered —
+    /// and MediaPlayer renders now-playing artwork on its own queue. The handler, main-actor
+    /// isolated by the project's default, failed Swift's isolation check there and the app
+    /// trapped as it opened. An asset has no handler to run.
     static func defaultArtworkImage() -> PlatformImage {
-        let pixels = 300
-        let size = NSSize(width: pixels, height: pixels)
-        guard let bitmap = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: pixels,
-                                            pixelsHigh: pixels, bitsPerSample: 8,
-                                            samplesPerPixel: 4, hasAlpha: true, isPlanar: false,
-                                            colorSpaceName: .deviceRGB, bytesPerRow: 0,
-                                            bitsPerPixel: 0),
-              let context = NSGraphicsContext(bitmapImageRep: bitmap) else {
-            return NSImage(size: size)
-        }
-        NSGraphicsContext.saveGraphicsState()
-        NSGraphicsContext.current = context
-        NSGradient(starting: .systemBlue, ending: .systemPurple)?
-            .draw(in: NSRect(origin: .zero, size: size), angle: -45)
-        NSGraphicsContext.restoreGraphicsState()
-
-        let image = NSImage(size: size)
-        image.addRepresentation(bitmap)
-        return image
+        PlatformImage(named: "DefaultArtwork") ?? PlatformImage()
     }
-
-    private func defaultArtworkImage() -> PlatformImage { Self.defaultArtworkImage() }
-    #endif
     
     private func updateSkipCommandsEnabled() {
         commandCenter?.skipBackwardCommand.isEnabled = canSeek
