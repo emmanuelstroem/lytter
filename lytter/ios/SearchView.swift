@@ -121,7 +121,7 @@ private struct SearchBrowseView: View {
 
                 section("All Stations", groups: stations) { EmptyView() }
             }
-            .padding(.horizontal, 16)
+            .pageMargins()
             .padding(.bottom, 100) // Space for the mini player
         }
         #if os(iOS)

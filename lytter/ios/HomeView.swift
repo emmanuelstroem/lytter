@@ -106,7 +106,7 @@ struct HomeView: View {
                             }
                         }
                     }
-                    .padding(.horizontal, 16)
+                    .pageMargins()
                     .padding(.bottom, 100) // Space for bottom tab bar
                 }
                 // A chip chosen from far down — *See all* under the last shelf — would
