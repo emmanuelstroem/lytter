@@ -37,6 +37,21 @@ final class SettingsAndSearchUITests: XCTestCase {
         shot("settings")
     }
 
+    /// About ends Settings: the version, links to the privacy policy and support pages the
+    /// App Store listing points at, and the line that says Lytter is not DR's own app.
+    @MainActor
+    func testAboutSaysLytterIsIndependentOfDR() throws {
+        launch()
+        openSettings()
+
+        let support = app.buttons["Support"]
+        scrollUntilHittable(support)
+        XCTAssertTrue(app.buttons["Privacy Policy"].exists, "About has no Privacy Policy link")
+        XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH 'Lytter is an independent app'"))
+                        .firstMatch.exists, "Settings does not say Lytter is independent of DR")
+        shot("about")
+    }
+
     /// A region can be chosen in Settings, from every district the catalogue lists, and
     /// "Not Chosen" forgets it (F50). Before, the only way to set one was to find P4.
     @MainActor

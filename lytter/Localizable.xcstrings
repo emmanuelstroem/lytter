@@ -210,6 +210,17 @@
         }
       }
     },
+    "About" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Om"
+          }
+        }
+      }
+    },
     "Add Show to Favourites" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -819,6 +830,17 @@
       },
       "shouldTranslate" : false
     },
+    "Lytter is an independent app. It is not made or endorsed by DR. Programmes, logos and artwork belong to DR." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lytter er en uafhængig app. Den er hverken lavet eller godkendt af DR. Programmer, logoer og billeder tilhører DR."
+          }
+        }
+      }
+    },
     "Never" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1311,6 +1333,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Position"
+          }
+        }
+      }
+    },
+    "Privacy Policy" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Privatlivspolitik"
           }
         }
       }
@@ -1997,6 +2030,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Stopper radioen, når programmet slutter."
+          }
+        }
+      }
+    },
+    "Support" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Support"
           }
         }
       }

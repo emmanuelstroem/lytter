@@ -42,11 +42,7 @@ struct iOSSettingsView: View {
                     Text("Say “Play P3” — Siri learns that Lytter is where you listen to the radio. With the app's name there is more: “Stop Lytter in 30 minutes”, “Stop Lytter after this programme”, “What's on Lytter?”. The same actions are in the Shortcuts app.")
                 }
 
-                Section {
-                    LabeledContent("Version") {
-                        Text(verbatim: Bundle.main.versionDescription)
-                    }
-                }
+                AboutSection()
             }
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.large)

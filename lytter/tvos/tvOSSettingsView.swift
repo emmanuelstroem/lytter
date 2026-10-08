@@ -28,13 +28,7 @@ struct tvOSSettingsView: View {
                     Text("Hold the Siri button on the remote and say “Play P3”.")
                 }
 
-                Section {
-                    LabeledContent("Version") {
-                        Text(verbatim: Bundle.main.versionDescription)
-                    }
-                    // A row that cannot take focus is a row the list cannot scroll to.
-                    .focusable()
-                }
+                AboutSection()
             }
             .navigationTitle("Settings")
         }

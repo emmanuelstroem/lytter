@@ -157,9 +157,13 @@ final class TVScrollingUITests: XCTestCase {
         launch(favourites: ["p1"], recentlyPlayed: ["p2"], region: "Fyn")
         openSection("Settings")
 
-        XCTAssertTrue(moveFocus(.down, until: { $0.label.hasPrefix("Version") }, maxPresses: 12),
+        // The last row is About's line saying Lytter is not DR's. It was a footer at first,
+        // and sat below the last row where the remote could not scroll to it.
+        XCTAssertTrue(moveFocus(.down, until: { $0.label.hasPrefix("Lytter is an independent app") },
+                                maxPresses: 16),
                       "pressing down never reached the last row; focus is on \(focusedLabel)")
         XCTAssertTrue(isOnScreen(focused), "the last row has focus but is off screen")
+        shot("settings-bottom")
     }
 
     /// Settings' Region picker (F50) pushes a list of every district plus "Not Chosen".
