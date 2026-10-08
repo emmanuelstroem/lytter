@@ -33,7 +33,12 @@ final class PlayerDynamicTypeUITests: XCTestCase {
 
         let card = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'P1'")).firstMatch
         XCTAssertTrue(card.waitForExistence(timeout: 20), "no P1 card on Home")
-        card.tap()   // opens the full player
+        // A card plays the station; the full player opens from the mini player, as a
+        // listener opens it.
+        card.tap()
+        let miniPlayer = app.descendants(matching: .any)["miniPlayer"]
+        XCTAssertTrue(miniPlayer.waitForExistence(timeout: 20), "no mini player after playing P1")
+        miniPlayer.tap()
 
         let title = app.staticTexts["player.title"]
         // Generous: the first launch after a build can take a while to present the sheet.
