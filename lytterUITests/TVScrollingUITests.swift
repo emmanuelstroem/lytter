@@ -342,6 +342,72 @@ final class TVScrollingUITests: XCTestCase {
         XCTAssertNotEqual(scrolled, back, "clicking up did not scroll the description back")
     }
 
+    // MARK: - Back
+
+    /// Menu goes Home from every other destination, and only from Home leaves the app, as
+    /// in the TV and Music apps. Not a scrolling surface either, but walking the sidebar is
+    /// what these tests already know how to do.
+    @MainActor
+    func testBackGoesHomeFromEverySection() throws {
+        // Recently Played heads Home, and no other destination has one.
+        launch(recentlyPlayed: ["p3"])
+        let home = app.staticTexts["Recently Played"]
+
+        for name in ["Search", "DR", "Settings"] {
+            openSection(name)
+            XCTAssertTrue(home.waitForNonExistence(timeout: 5), "\(name) did not open")
+            press(.menu)
+            shot("back-from-\(name)")
+            XCTAssertTrue(home.waitForExistence(timeout: 5), "Menu from \(name) did not go Home")
+        }
+
+        // From the sidebar too, while it is open on another destination: there the system
+        // would leave the app.
+        openSection("Settings")
+        XCTAssertTrue(moveFocus(.left, until: { $0.label == "Settings" }, maxPresses: 4),
+                      "could not move into the sidebar; focus is on \(focusedLabel)")
+        press(.menu)
+        shot("back-from-sidebar")
+        XCTAssertTrue(home.waitForExistence(timeout: 5), "Menu from the sidebar did not go Home")
+
+        // Now Playing, reached the way a viewer does: by playing something.
+        XCTAssertTrue(moveFocus(.right, until: { $0.label.hasPrefix("P3") }), "could not reach P3")
+        press(.select)
+        XCTAssertTrue(home.waitForNonExistence(timeout: 5), "playing P3 did not open Now Playing")
+        press(.menu)
+        shot("back-from-now-playing")
+        XCTAssertTrue(home.waitForExistence(timeout: 5), "Menu from Now Playing did not go Home")
+
+        // Home's Menu is the system's: it opens the sidebar, and the next one leaves.
+        press(.menu)
+        if focusedLabel == "Home" { press(.menu) }
+        XCTAssertTrue(leftTheApp(), "Menu on Home should leave the app")
+    }
+
+    /// A pushed screen is closed first: Menu in Settings' Region list goes back to Settings,
+    /// and only the next Menu goes Home.
+    @MainActor
+    func testBackFromRegionListReturnsToSettingsFirst() throws {
+        launch(recentlyPlayed: ["p3"], region: "Fyn")
+        let home = app.staticTexts["Recently Played"]
+        openSection("Settings")
+
+        XCTAssertTrue(moveFocus(.down, until: { $0.label.hasPrefix("Region") }, maxPresses: 8),
+                      "could not reach the Region row; focus is on \(focusedLabel)")
+        press(.select)
+        let district = app.buttons["Østjylland"]
+        XCTAssertTrue(district.waitForExistence(timeout: 5), "the region list did not open")
+
+        press(.menu)
+        shot("back-from-region-list")
+        XCTAssertTrue(district.waitForNonExistence(timeout: 5), "Menu did not close the region list")
+        XCTAssertTrue(app.buttons["Region"].exists, "Menu should return to Settings")
+        XCTAssertFalse(home.exists, "Menu from the region list went past Settings")
+
+        press(.menu)
+        XCTAssertTrue(home.waitForExistence(timeout: 5), "Menu from Settings did not go Home")
+    }
+
     // MARK: - Helpers
     //
     // @MainActor: XCUIApplication and XCUIElement are main-actor API under Swift 6. The
@@ -430,6 +496,23 @@ final class TVScrollingUITests: XCTestCase {
         attachment.name = name
         attachment.lifetime = .deleteOnSuccess
         add(attachment)
+    }
+
+    /// Whether the Apple TV home screen has come to the front. After Menu leaves the app,
+    /// XCUITest can go on reporting the app in front (F35) — for over ten seconds here — so
+    /// the home screen's own state is asked too.
+    @MainActor
+    private func leftTheApp(timeout: TimeInterval = 10) -> Bool {
+        let homeScreen = XCUIApplication(bundleIdentifier: "com.apple.HeadBoard")
+        let deadline = Date().addingTimeInterval(timeout)
+        while Date() < deadline {
+            if app.state != .runningForeground || homeScreen.state == .runningForeground {
+                return true
+            }
+            usleep(250_000)
+        }
+        shot("still-in-the-app")
+        return false
     }
 
     @MainActor
