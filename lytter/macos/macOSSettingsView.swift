@@ -18,6 +18,7 @@ struct macOSSettingsView: View {
     var body: some View {
         Form {
             SettingsSections(preferences: preferences, channels: channels)
+            AboutSection()
         }
         .formStyle(.grouped)
         .frame(width: 460)
