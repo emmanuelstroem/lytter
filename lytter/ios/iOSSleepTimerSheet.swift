@@ -5,7 +5,7 @@
 
 import SwiftUI
 
-#if os(iOS)
+#if os(iOS) || os(visionOS)
 /// Picks when playback should stop.
 ///
 /// "End of programme" is offered because it is the one a listener actually wants on live

@@ -109,7 +109,7 @@ struct PlayerInfoView: View {
             // It shares a `SharedChannel`, which carries a SharePlay activity as well as
             // the text: that is what puts SharePlay at the top of the share sheet, as in
             // Music.
-            #if os(iOS) || os(macOS)
+            #if os(iOS) || os(macOS) || os(visionOS)
             if let channel {
                 ShareLink(
                     item: SharedChannel(activity: RadioShareActivity(channel: channel),
@@ -126,7 +126,7 @@ struct PlayerInfoView: View {
         }
     }
     
-    #if os(iOS) || os(macOS)
+    #if os(iOS) || os(macOS) || os(visionOS)
     private var sharePreview: SharePreview<Image, Never> {
         SharePreview(
             title,

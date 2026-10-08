@@ -5,7 +5,7 @@
 
 import SwiftUI
 
-#if os(iOS)
+#if os(iOS) || os(visionOS)
 /// A horizontally scrolling row of channels under a heading.
 ///
 /// Every row on the home screen is one of these — Favourites, Recently Played, and one per
@@ -246,6 +246,7 @@ struct ChannelShelfCard: View {
             }
         }
         .buttonStyle(.plain)
+        .cardHoverEffect(cornerRadius: style.metrics.cornerRadius)
         .accessibilityElement(children: .ignore)
         // Composed, not a phrase: Text(verbatim:)'s equivalent for an accessibility
         // label, so "%@, %@" does not land in the catalog for a translator to puzzle over.

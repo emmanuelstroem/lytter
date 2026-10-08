@@ -8,7 +8,7 @@
 import SwiftUI
 import os
 
-#if os(iOS)
+#if os(iOS) || os(visionOS)
 /// Home, under a row of chips: *For you* · *All* · one per broadcaster (F54c).
 ///
 /// *All* is what the Radio tab was, so there is no Radio tab: one place lists stations,
@@ -242,7 +242,14 @@ private struct HomeScopeChips: View {
             button.buttonStyle(.borderedProminent)
         } else {
             // Neutral rather than the accent: one purple chip says which is chosen.
+            #if os(visionOS)
+            // On glass the untinted bordered chip is already neutral. Tinted with the
+            // primary colour, which is white there, it came out white on white; left to
+            // inherit, it took the window's purple, and every chip looked chosen.
+            button.buttonStyle(.bordered).tint(nil)
+            #else
             button.buttonStyle(.bordered).tint(Color.primary)
+            #endif
         }
     }
 

@@ -211,7 +211,7 @@ final class ScheduleTemplateStore {
         let base = files.containerURL(forSecurityApplicationGroupIdentifier: AppGroup.identifier)?
             .appendingPathComponent("Library/Caches", isDirectory: true)
             ?? files.urls(for: .cachesDirectory, in: .userDomainMask).first
-        #elseif os(iOS)
+        #elseif os(iOS) || os(visionOS)
         let base = files.containerURL(forSecurityApplicationGroupIdentifier: AppGroup.identifier)?
             .appendingPathComponent("Library/Application Support", isDirectory: true)
             ?? files.urls(for: .applicationSupportDirectory, in: .userDomainMask).first

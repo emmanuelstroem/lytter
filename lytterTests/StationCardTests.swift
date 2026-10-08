@@ -11,8 +11,8 @@ import AppKit
 #endif
 @testable import lytter
 
-// The same platforms as StationCard itself, which visionOS does not compile.
-#if os(iOS) || os(tvOS) || os(macOS)
+// The same platforms as StationCard itself.
+#if os(iOS) || os(tvOS) || os(macOS) || os(visionOS)
 /// A station's name is set at one size on every card and never shrinks to fit, so that "P1"
 /// and "P4 - Nordjylland" in the same row are the same size. That only works if every name
 /// DR broadcasts fits across every card at that size. These measure it.
@@ -90,7 +90,7 @@ struct StationCardTests {
         }
     }
 
-    #if os(iOS)
+    #if os(iOS) || os(visionOS)
     /// The phone's playing badge sits in the card's corner, so its curve has to share the
     /// card's centre: its radius is the card's, less the inset (AGENTS.md, Concentricity).
     @Test(arguments: [StationCardStyle.featured, .standard])

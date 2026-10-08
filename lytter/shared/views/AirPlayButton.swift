@@ -102,7 +102,8 @@ struct AirPlayButtonView: View {
             .accessibilityLabel("AirPlay")
         #else
         // No AirPlay picker on macOS yet -- output routing there is a menu-bar affair,
-        // not a view. Reserves the space rather than disappearing, so a row of controls
+        // not a view -- nor on visionOS, which has no AVRoutePickerView: there it is
+        // Control Centre's. Reserves the space rather than disappearing, so a row of controls
         // around it does not visibly shift once a macOS equivalent exists to fill it.
         Color.clear
             .frame(width: size, height: size, alignment: .center)

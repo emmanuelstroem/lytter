@@ -5,7 +5,7 @@
 
 import SwiftUI
 
-#if os(iOS)
+#if os(iOS) || os(visionOS)
 /// Picks which regional variant of a station to play.
 ///
 /// A plain `List` rather than a stack of capsules. This is a chooser, and the system already

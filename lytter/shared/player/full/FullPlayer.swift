@@ -20,7 +20,7 @@ struct FullPlayerSheet: View {
     @ObservedObject var selectionState: SelectionState
 
     var body: some View {
-        #if os(iOS)
+        #if os(iOS) || os(visionOS)
         iOSFullPlayerSheet(serviceManager: serviceManager, selectionState: selectionState)
         #endif
     }

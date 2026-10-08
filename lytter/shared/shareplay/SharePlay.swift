@@ -27,7 +27,7 @@ import os
 #if canImport(GroupActivities)
 import GroupActivities
 #endif
-#if os(iOS) || os(macOS)
+#if os(iOS) || os(macOS) || os(visionOS)
 import CoreTransferable
 #endif
 
@@ -216,7 +216,7 @@ final class SharePlayCoordinator: ObservableObject {
 }
 #endif
 
-#if os(iOS) || os(macOS)
+#if os(iOS) || os(macOS) || os(visionOS)
 /// What the player's share button shares.
 ///
 /// Handing the share sheet a `GroupActivityTransferRepresentation` is what puts SharePlay

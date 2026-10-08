@@ -8,7 +8,7 @@
 import SwiftUI
 import os
 
-#if os(iOS)
+#if os(iOS) || os(visionOS)
 struct iOSFullPlayerSheet: View {
     @ObservedObject var serviceManager: DRServiceManager
     @ObservedObject var selectionState: SelectionState

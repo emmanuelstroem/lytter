@@ -69,7 +69,7 @@ class DRServiceManager: ObservableObject {
     let userPreferences = UserPreferencesService()
     /// When favourite shows are on (F33). Views observe it directly.
     let showSchedule = ShowScheduleService()
-    #if os(iOS) || os(macOS)
+    #if os(iOS) || os(macOS) || os(visionOS)
     /// Reminders before favourite shows start (F51). tvOS shows no notifications but badges.
     private let showReminders = ShowReminderScheduler()
     #endif
@@ -1098,7 +1098,7 @@ class DRServiceManager: ObservableObject {
     /// setting's new value while it is changing — @Published publishes before it changes.
     @discardableResult
     func rescheduleShowReminders(enabled: Bool? = nil) -> Task<Void, Never> {
-        #if os(iOS) || os(macOS)
+        #if os(iOS) || os(macOS) || os(visionOS)
         #if DEBUG
         // UI tests never touch the simulator's real notifications.
         if UITestFixtures.isActive { return Task {} }

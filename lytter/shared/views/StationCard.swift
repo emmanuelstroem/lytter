@@ -5,7 +5,7 @@
 
 import SwiftUI
 
-#if os(iOS) || os(tvOS) || os(macOS)
+#if os(iOS) || os(tvOS) || os(macOS) || os(visionOS)
 /// How prominent a card is.
 ///
 /// Apple Music does this too: the top row is larger and captions its artwork, the rows below

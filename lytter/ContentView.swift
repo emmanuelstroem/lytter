@@ -20,7 +20,59 @@ struct ContentView: View {
     @EnvironmentObject var deepLinkHandler: DeepLinkHandler
     
     var body: some View {
+        #if os(iOS) || os(visionOS)
+        tabs
         #if os(iOS)
+        // Screen Off (F43): watches this window for interaction while playing. Not on
+        // visionOS, which has no screen to black out.
+        .background(ScreenOffInstaller(serviceManager: serviceManager))
+        #endif
+        // Deep links resolve here, not per-screen.
+        //
+        // The same .onChange used to be copy-pasted onto HomeView, SearchView and
+        // the Radio tab. Only the selected tab's view is alive, so a link arriving while
+        // the Shortcuts tab was showing was observed by nobody and silently dropped —
+        // and if more than one had been alive, the channel would have been played once
+        // per copy. ContentView outlives every tab.
+        .onChange(of: deepLinkHandler.shouldNavigateToChannel) { _, shouldNavigate in
+            if shouldNavigate { resolveDeepLink() }
+        }
+        .onChange(of: serviceManager.availableChannels.count) { _, count in
+            // A link opened from cold arrives before the catalogue. This is the retry.
+            if count > 0 { resolveDeepLink() }
+        }
+        // Presented here, not from the mini player: see SelectionState.isShowingFullPlayer.
+        .sheet(isPresented: $selectionState.isShowingFullPlayer) {
+            FullPlayerSheet(serviceManager: serviceManager, selectionState: selectionState)
+        }
+
+    #elseif os(tvOS)
+        tvOSHomeView(
+            serviceManager: serviceManager,
+            selectionState: selectionState,
+            deepLinkHandler: deepLinkHandler
+        )
+        .environmentObject(serviceManager)
+        .environmentObject(selectionState)
+        .background(ScreenOffInstaller(serviceManager: serviceManager))
+        .onOpenURL { url in
+            deepLinkHandler.handleDeepLink(url)
+        }
+
+    #elseif os(macOS)
+        macOSContentView(
+            serviceManager: serviceManager,
+            selectionState: selectionState,
+            deepLinkHandler: deepLinkHandler
+        )
+        .environmentObject(serviceManager)
+        .environmentObject(selectionState)
+
+    #endif
+    }
+
+    #if os(iOS)
+    private var tabs: some View {
         ZStack {
             // Main TabView with TabBarMinimizeBehavior
             if #available(iOS 26.0, *) {
@@ -82,53 +134,15 @@ struct ContentView: View {
                     .frame(alignment: .bottom)
             }
         }
-        // Screen Off (F43): watches this window for interaction while playing.
-        .background(ScreenOffInstaller(serviceManager: serviceManager))
-        // Deep links resolve here, not per-screen.
-        //
-        // The same .onChange used to be copy-pasted onto HomeView, SearchView and
-        // the Radio tab. Only the selected tab's view is alive, so a link arriving while
-        // the Shortcuts tab was showing was observed by nobody and silently dropped —
-        // and if more than one had been alive, the channel would have been played once
-        // per copy. ContentView outlives every tab.
-        .onChange(of: deepLinkHandler.shouldNavigateToChannel) { _, shouldNavigate in
-            if shouldNavigate { resolveDeepLink() }
-        }
-        .onChange(of: serviceManager.availableChannels.count) { _, count in
-            // A link opened from cold arrives before the catalogue. This is the retry.
-            if count > 0 { resolveDeepLink() }
-        }
-        // Presented here, not from the mini player: see SelectionState.isShowingFullPlayer.
-        .sheet(isPresented: $selectionState.isShowingFullPlayer) {
-            FullPlayerSheet(serviceManager: serviceManager, selectionState: selectionState)
-        }
-
-    #elseif os(tvOS)
-        tvOSHomeView(
-            serviceManager: serviceManager,
-            selectionState: selectionState,
-            deepLinkHandler: deepLinkHandler
-        )
-        .environmentObject(serviceManager)
-        .environmentObject(selectionState)
-        .background(ScreenOffInstaller(serviceManager: serviceManager))
-        .onOpenURL { url in
-            deepLinkHandler.handleDeepLink(url)
-        }
-
-    #elseif os(macOS)
-        macOSContentView(
-            serviceManager: serviceManager,
-            selectionState: selectionState,
-            deepLinkHandler: deepLinkHandler
-        )
-        .environmentObject(serviceManager)
-        .environmentObject(selectionState)
-
-    #endif
     }
+    #elseif os(visionOS)
+    private var tabs: some View {
+        visionOSContentView(serviceManager: serviceManager, selectionState: selectionState,
+                            selectedTabIndex: $selectedTabIndex)
+    }
+    #endif
 
-    #if os(iOS)
+    #if os(iOS) || os(visionOS)
     /// Acts on a pending deep link, if the catalogue can resolve it yet.
     private func resolveDeepLink() {
         guard let identifier = deepLinkHandler.pendingChannelId else { return }

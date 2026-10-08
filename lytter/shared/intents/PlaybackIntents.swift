@@ -3,7 +3,7 @@
 //  lytter
 //
 
-#if os(iOS)
+#if os(iOS) || os(visionOS)
 import AppIntents
 
 // The App Intents (F15), on iPhone. Each phrase has to name the app — App Shortcuts

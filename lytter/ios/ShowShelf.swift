@@ -5,7 +5,7 @@
 
 import SwiftUI
 
-#if os(iOS)
+#if os(iOS) || os(visionOS)
 /// Favourite shows on Home, under Favourites (F33): each show's artwork and title, and one
 /// line saying when it is next on.
 ///
@@ -73,6 +73,7 @@ struct ShowShelf: View {
             .frame(width: metrics.width, alignment: .leading)
         }
         .buttonStyle(.plain)
+        .cardHoverEffect(cornerRadius: metrics.cornerRadius)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text(verbatim: "\(show.title), \(caption)"))
         .accessibilityHint(action.accessibilityHint)

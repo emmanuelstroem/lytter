@@ -5,7 +5,7 @@
 
 import SwiftUI
 
-#if os(iOS) || os(tvOS) || os(macOS)
+#if os(iOS) || os(tvOS) || os(macOS) || os(visionOS)
 /// Backdrop for a caption sitting on artwork.
 ///
 /// Liquid Glass where the OS has it, an `.ultraThinMaterial` below that — the same shape
@@ -79,18 +79,28 @@ struct CaptionBackdrop: View {
 
     @ViewBuilder
     private var glass: some View {
+        #if os(visionOS)
+        // visionOS has its own glass and no `glassEffect`; the tinted material is the same
+        // band there.
+        tintedMaterial
+        #else
         if #available(iOS 26.0, tvOS 26.0, macOS 26.0, *) {
             Rectangle().fill(.clear)
                 .glassEffect(.clear.tint(.black.opacity(Self.tint)), in: .rect)
         } else {
-            // The same tint, by hand. Before 26 there is no Liquid Glass, and an untinted
-            // material is a flat bar rather than tinted glass — which is how the tvOS cards
-            // came out when first checked on a tvOS 18 box. Tinting the fallback keeps the
-            // band recognisably the same thing on an older system.
-            Rectangle()
-                .fill(.ultraThinMaterial)
-                .overlay(Color.black.opacity(Self.tint))
+            tintedMaterial
         }
+        #endif
+    }
+
+    /// The same tint, by hand. Before 26 there is no Liquid Glass, and an untinted
+    /// material is a flat bar rather than tinted glass — which is how the tvOS cards
+    /// came out when first checked on a tvOS 18 box. Tinting the fallback keeps the
+    /// band recognisably the same thing on an older system.
+    private var tintedMaterial: some View {
+        Rectangle()
+            .fill(.ultraThinMaterial)
+            .overlay(Color.black.opacity(Self.tint))
     }
 }
 

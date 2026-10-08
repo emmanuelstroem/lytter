@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-#if os(iOS)
+#if os(iOS) || os(visionOS)
 // MARK: - Search View
 /// The Search tab, laid out the way Music's is.
 ///
@@ -73,7 +73,10 @@ struct SearchView: View {
                 }
             }
             .listStyle(.plain)
+            #if os(iOS)
+            // visionOS's keyboard floats apart from the window and has no such option.
             .scrollDismissesKeyboard(.immediately)
+            #endif
             .contentMargins(.bottom, 100, for: .scrollContent) // Space for the mini player
         }
     }
@@ -121,7 +124,9 @@ private struct SearchBrowseView: View {
             .padding(.horizontal, 16)
             .padding(.bottom, 100) // Space for the mini player
         }
+        #if os(iOS)
         .scrollDismissesKeyboard(.immediately)
+        #endif
     }
 
     private func section(_ title: LocalizedStringKey, groups: [GroupedChannel],

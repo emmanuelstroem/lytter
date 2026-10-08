@@ -7,7 +7,7 @@
 
 import CryptoKit
 import Foundation
-#if os(iOS) || os(tvOS)
+#if os(iOS) || os(tvOS) || os(visionOS)
 import UIKit
 #elseif os(macOS)
 import AppKit
@@ -70,7 +70,7 @@ final class ImageCacheService {
         // No macOS equivalent: the system does not send a memory-warning notification to
         // background-agent-less Mac apps the way it does on iOS/tvOS. The memory cache is
         // still bounded by totalCostLimit there, just never proactively cleared early.
-        #if os(iOS) || os(tvOS)
+        #if os(iOS) || os(tvOS) || os(visionOS)
         NotificationCenter.default.addObserver(
             self, selector: #selector(clearMemoryCache),
             name: UIApplication.didReceiveMemoryWarningNotification, object: nil)
