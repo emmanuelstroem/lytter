@@ -8,7 +8,7 @@
 import Foundation
 import AVFoundation
 import Combine
-#if os(iOS) || os(tvOS)
+#if os(iOS) || os(tvOS) || os(visionOS)
 import UIKit
 #elseif os(macOS)
 import AppKit
@@ -71,7 +71,7 @@ class AudioPlayerService: NSObject, ObservableObject {
     // different system entirely (Core Audio device selection), not a per-app session with
     // interruptions and routes. Guarded rather than shimmed: there is no macOS screen yet
     // to show an AirPlay indicator on, so there is nothing this needs to stand in for.
-    #if os(iOS) || os(tvOS)
+    #if os(iOS) || os(tvOS) || os(visionOS)
     @Published var isAirPlayActive = false
     @Published var currentAirPlayRoute: AVAudioSessionRouteDescription?
     #endif
@@ -87,7 +87,7 @@ class AudioPlayerService: NSObject, ObservableObject {
     override init() {
         super.init()
         setupCommandCenter()
-        #if os(iOS) || os(tvOS)
+        #if os(iOS) || os(tvOS) || os(visionOS)
         setupAudioInterruptionHandling()
         #endif
             // Allow screen sleep by default on app launch
@@ -111,7 +111,7 @@ class AudioPlayerService: NSObject, ObservableObject {
     
     // MARK: - Audio Interruption Handling
 
-    #if os(iOS) || os(tvOS)
+    #if os(iOS) || os(tvOS) || os(visionOS)
     private func setupAudioInterruptionHandling() {
         // Observe audio session interruptions
         NotificationCenter.default.addObserver(
@@ -212,7 +212,7 @@ class AudioPlayerService: NSObject, ObservableObject {
         // MARK: - Screen Sleep Control
     
     private func updateIdleTimer() {
-        #if os(iOS) || os(tvOS)
+        #if os(iOS) || os(tvOS) || os(visionOS)
         UIApplication.shared.isIdleTimerDisabled = preventScreenSleep
         #endif
         // No macOS branch: preventing App Nap / display sleep there is a different
@@ -222,7 +222,7 @@ class AudioPlayerService: NSObject, ObservableObject {
     
         // MARK: - AirPlay Support
 
-    #if os(iOS) || os(tvOS)
+    #if os(iOS) || os(tvOS) || os(visionOS)
     private func setupAirPlayMonitoring() {
             // Monitor route changes
         NotificationCenter.default.addObserver(
@@ -578,7 +578,7 @@ class AudioPlayerService: NSObject, ObservableObject {
             // There is no need to wait: the item has to load over the network before
             // readyToPlay calls play(), and the session queue is done long before that.
         activateSession(context: "play")
-        #if os(iOS) || os(tvOS)
+        #if os(iOS) || os(tvOS) || os(visionOS)
         if !audioSessionSetup {
             setupAirPlayMonitoring()
             audioSessionSetup = true
@@ -784,7 +784,7 @@ class AudioPlayerService: NSObject, ObservableObject {
     private func activateSession(longFormAudio: Bool = false,
                                  context: StaticString,
                                  then: (@MainActor @Sendable (Bool) -> Void)? = nil) {
-        #if os(iOS) || os(tvOS)
+        #if os(iOS) || os(tvOS) || os(visionOS)
         sessionQueue.async {
             var activated = true
             do {
@@ -806,7 +806,7 @@ class AudioPlayerService: NSObject, ObservableObject {
 
     /// Releases the session on `sessionQueue`, so other apps' audio can come back.
     private func deactivateSession() {
-        #if os(iOS) || os(tvOS)
+        #if os(iOS) || os(tvOS) || os(visionOS)
         sessionQueue.async {
             do {
                 try AVAudioSession.sharedInstance()

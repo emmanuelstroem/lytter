@@ -3,7 +3,7 @@
 //  lytter
 //
 
-#if os(iOS)
+#if os(iOS) || os(visionOS)
 import AppIntents
 
 /// A channel, as the Shortcuts app's actions see it (F15).

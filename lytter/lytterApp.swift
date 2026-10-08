@@ -19,12 +19,12 @@ struct lytterApp: App {
     @StateObject private var sharePlay = SharePlayCoordinator()
     @Environment(\.scenePhase) private var scenePhase
 
-    #if os(iOS) || os(tvOS)
+    #if os(iOS) || os(tvOS) || os(visionOS)
     /// Answers Siri's media intent, "Play P3" (F15).
     @UIApplicationDelegateAdaptor(LytterAppDelegate.self) private var appDelegate
     #endif
 
-    #if os(iOS) || os(macOS)
+    #if os(iOS) || os(macOS) || os(visionOS)
     init() {
         // Before the first scene, so a reminder tapped to launch the app is not missed (F51).
         ReminderNotificationDelegate.shared.install()
@@ -51,7 +51,7 @@ struct lytterApp: App {
                 .onOpenURL { url in
                     deepLinkHandler.handleDeepLink(url)
                 }
-                #if os(iOS) || os(macOS)
+                #if os(iOS) || os(macOS) || os(visionOS)
                 // A tapped show reminder plays its channel, the way a link does (F51).
                 .task {
                     ReminderNotificationDelegate.shared.onOpen = { url in
@@ -67,7 +67,7 @@ struct lytterApp: App {
                 }
                 .onChange(of: scenePhase) { _, phase in
                     serviceManager.setAppActive(phase == .active)
-                    #if os(iOS) || os(tvOS)
+                    #if os(iOS) || os(tvOS) || os(visionOS)
                     // Booked on the way out, so tomorrow's schedule is fetched even if the
                     // app is not opened again before then (F33).
                     if phase == .background { ShowScheduleRefresh.schedule() }
@@ -76,7 +76,7 @@ struct lytterApp: App {
                 #if os(macOS)
                 .task { ShowScheduleRefresh.start() }
                 #endif
-                #if os(iOS) || os(macOS)
+                #if os(iOS) || os(macOS) || os(visionOS)
                 // Shortcuts saved before App Intents (F15) carry a "PlayChannelActivity".
                 // Nothing donates those any more, but a listener's saved ones should keep
                 // working: they go the way a link does, retry and all.
@@ -88,7 +88,12 @@ struct lytterApp: App {
                 }
                 #endif
         }
-        #if os(iOS) || os(tvOS)
+        #if os(visionOS)
+        // Room for Home's shelves without scrolling sideways at once. Only the size a
+        // window opens at; it can still be resized.
+        .defaultSize(width: 1180, height: 820)
+        #endif
+        #if os(iOS) || os(tvOS) || os(visionOS)
         .backgroundTask(.appRefresh(ShowScheduleRefresh.identifier)) {
             await ShowScheduleRefresh.run()
         }

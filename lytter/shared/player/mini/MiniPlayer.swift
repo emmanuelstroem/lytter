@@ -210,16 +210,33 @@ struct MiniPlayerComponents: View {
                         Image(systemName: serviceManager.isPlaying ? "pause.fill" : "play.fill")
                             .font(.system(size: 16, weight: .medium))
                             .foregroundStyle(Color.primary)
+                            #if os(visionOS)
+                            .frame(width: 36, height: 36)
+                            #else
                             .frame(width: 32, height: 32)
+                            #endif
                     }
+                    #if os(visionOS)
+                    // visionOS draws a platter behind the button, and at the ornament's end it
+                    // meets the corner the artwork meets at the other: the same size, inset
+                    // and radius as the artwork, so both share the ornament's curve. Its own
+                    // capsule was rounder than the corner around it.
+                    .buttonBorderShape(.roundedRectangle(radius: 10))
+                    #endif
                     .disabled(playingChannel == nil && serviceManager.availableChannels.isEmpty)
                     .accessibilityLabel(serviceManager.isPlaying ? "Pause" : "Play")
                 }
             }
             .frame(alignment: .trailing)
         }
+        #if os(visionOS)
+        // In visionOS's ornament the artwork meets the glass's corner, so it is inset the
+        // same on every side; the ornament's radius is this plus the artwork's.
+        .padding(10)
+        #else
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
+        #endif
         .frame(maxWidth: .infinity)
     }
 }

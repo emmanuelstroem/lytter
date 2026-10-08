@@ -5,7 +5,7 @@
 
 import SwiftUI
 
-#if os(iOS)
+#if os(iOS) || os(visionOS)
 /// Today's schedule for a channel, presented from the full player's list button.
 ///
 /// The button previously did nothing. A radio app's most obvious "what else is there"

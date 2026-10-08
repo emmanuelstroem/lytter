@@ -5,7 +5,7 @@
 
 import SwiftUI
 
-#if os(iOS)
+#if os(iOS) || os(visionOS)
 /// The page background shared by every iOS screen.
 ///
 /// Home, Radio, Search and the full player each carried their own copy of the same
@@ -16,8 +16,15 @@ import SwiftUI
 /// Semantically this is the same gradient: `systemBackground` is black in dark mode, so
 /// dark mode looks as it always did. In light mode it is white, shading to the grey of
 /// `secondarySystemBackground`.
+///
+/// Nothing on visionOS. A window there is glass, and it is the glass that keeps the page
+/// legible against whatever room it floats in; painting over it would turn the window into
+/// an opaque slab.
 struct AppBackground: View {
     var body: some View {
+        #if os(visionOS)
+        Color.clear
+        #else
         LinearGradient(
             colors: [
                 Color(.systemBackground),
@@ -27,6 +34,7 @@ struct AppBackground: View {
             endPoint: .bottom
         )
         .ignoresSafeArea()
+        #endif
     }
 }
 
@@ -39,6 +47,8 @@ struct AppBackground: View {
 /// A gradient of the page background rather than a bar: a hard edge across the top would
 /// read as a navigation bar that does nothing, which is what was removed in the first
 /// place. This fades out before the content starts.
+///
+/// Nothing on visionOS, which has no status bar for content to pass beneath.
 struct StatusBarScrim: View {
 
     /// Tall enough to cover the status bar on any iPhone and fade out below it.
@@ -52,6 +62,7 @@ struct StatusBarScrim: View {
     private let height: CGFloat = 110
 
     var body: some View {
+        #if !os(visionOS)
         LinearGradient(
             stops: [
                 .init(color: Color(.systemBackground), location: 0),
@@ -65,6 +76,7 @@ struct StatusBarScrim: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .ignoresSafeArea(edges: .top)
         .allowsHitTesting(false)
+        #endif
     }
 }
 

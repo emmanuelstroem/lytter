@@ -58,7 +58,7 @@ struct SettingsSections: View {
         }
         #endif
 
-        #if os(iOS) || os(macOS)
+        #if os(iOS) || os(macOS) || os(visionOS)
         ShowRemindersSection(preferences: preferences)
         #endif
 
@@ -168,7 +168,7 @@ private struct BroadcastersSection: View {
     }
 }
 
-#if os(iOS) || os(macOS)
+#if os(iOS) || os(macOS) || os(visionOS)
 /// Reminders before favourite shows start (F51). Not on tvOS, which shows no notifications.
 ///
 /// Permission is asked when the toggle is first switched on, not at launch. Refused, the
@@ -216,7 +216,7 @@ private struct ShowRemindersSection: View {
     }
 
     private static var notificationSettingsURL: URL? {
-        #if os(iOS)
+        #if os(iOS) || os(visionOS)
         URL(string: UIApplication.openNotificationSettingsURLString)
         #else
         URL(string: "x-apple.systempreferences:com.apple.Notifications-Settings.extension")

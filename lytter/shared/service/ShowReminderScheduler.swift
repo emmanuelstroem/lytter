@@ -5,7 +5,7 @@
 
 import Foundation
 import os
-#if os(iOS) || os(macOS)
+#if os(iOS) || os(macOS) || os(visionOS)
 import UserNotifications
 
 /// What the reminder pass needs from the notification centre, so that the pass can be

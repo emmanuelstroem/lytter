@@ -6,7 +6,7 @@
 import AppIntents
 import SwiftUI
 
-#if os(iOS)
+#if os(iOS) || os(visionOS)
 /// The Settings tab.
 ///
 /// A grouped `Form`, as the Settings app and every system app's own settings are, so that
@@ -27,10 +27,15 @@ struct iOSSettingsView: View {
 
                 Section {
                     SiriAccessRow()
+                    #if os(iOS)
+                    // Not on visionOS: the button is drawn by another process, and the
+                    // Form's scrolling does not clip it there — scrolled out of view, it
+                    // went on showing below the window's bottom edge.
                     ShortcutsLink()
                         .shortcutsLinkStyle(.automaticOutline)
                         .frame(maxWidth: .infinity)
                         .listRowBackground(Color.clear)
+                    #endif
                 } header: {
                     Text("Siri & Shortcuts")
                 } footer: {

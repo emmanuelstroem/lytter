@@ -5,7 +5,7 @@
 
 import SwiftUI
 
-#if os(iOS)
+#if os(iOS) || os(visionOS)
 /// The Radio tab's inline search field.
 ///
 /// Lifted out of `ChannelView.swift` when that file was deleted — `ChannelView` and

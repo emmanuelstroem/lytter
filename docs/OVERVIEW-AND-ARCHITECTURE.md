@@ -13,7 +13,8 @@ and which track is on air right now, and integrates with the system playback sur
 |---|---|
 | Bundle ID | `com.eopio.lytter` |
 | Shipping platforms | iOS (17.6+) and tvOS (17.6+) |
-| Declared but not implemented | macOS 14.6+, visionOS 26.0+ |
+| Declared but not implemented | macOS 14.6+ |
+| visionOS (26.0+) | The iPhone's screens in a glass window (`lytter/visionos/`); no CarPlay, widgets, Screen Off or AirPlay picker |
 | UI | 100% SwiftUI, with UIKit/TVUIKit escape hatches |
 | Dependencies | None — no SPM, CocoaPods or Carthage |
 | Backend | DR's public API at `api.dr.dk/radio/v4` (no auth today) |

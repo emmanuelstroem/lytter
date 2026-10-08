@@ -83,10 +83,10 @@
 				Info.plist,
 			);
 			platformFiltersByRelativePath = {
-				AppShortcuts.xcstrings = (ios, );
-				ios/DistrictSelectionSheet.swift = (ios, );
-				ios/HomeView.swift = (ios, );
-				ios/SearchView.swift = (ios, );
+				AppShortcuts.xcstrings = (ios, xros, );
+				ios/DistrictSelectionSheet.swift = (ios, xros, );
+				ios/HomeView.swift = (ios, xros, );
+				ios/SearchView.swift = (ios, xros, );
 			};
 			target = 14B52D262E44D1AB00E8476E /* lytter */;
 		};

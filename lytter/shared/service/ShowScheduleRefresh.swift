@@ -5,7 +5,7 @@
 
 import Foundation
 import os
-#if os(iOS) || os(tvOS)
+#if os(iOS) || os(tvOS) || os(visionOS)
 import BackgroundTasks
 #endif
 
@@ -22,7 +22,7 @@ import BackgroundTasks
 enum ShowScheduleRefresh {
     static let identifier = "com.eopio.lytter.show-schedule"
 
-    #if os(iOS) || os(tvOS)
+    #if os(iOS) || os(tvOS) || os(visionOS)
     /// Asks for the next refresh at or after the coming 05:05. Submitting again replaces the
     /// request, so this is safe to call whenever the app leaves the foreground.
     static func schedule(now: Date = Date()) {
