@@ -40,7 +40,7 @@ struct SettingsSections: View {
             Text("When off, stations show their colour and name instead of programme artwork, which uses less data on a slow connection.")
         }
 
-        #if os(iOS) || os(tvOS)
+        #if os(iOS)
         Section {
             Picker("Screen Off", selection: Binding(
                 get: { preferences.screenOffDelay },
@@ -50,11 +50,7 @@ struct SettingsSections: View {
                 }
             }
         } footer: {
-            #if os(tvOS)
-            Text("While something is playing, the screen goes black after this long without a press. The sound carries on, and the next press only brings the screen back.")
-            #else
             Text("While something is playing, the screen goes black after this long without a touch. The sound carries on, and the next touch only brings the screen back.")
-            #endif
         }
         #endif
 

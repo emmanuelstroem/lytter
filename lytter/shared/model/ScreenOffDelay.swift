@@ -7,8 +7,8 @@ import Foundation
 
 /// How long the app waits, while playing, before blacking out the screen (F43).
 ///
-/// For a radio left playing on a TV, or a phone on a stand: after this long without a touch
-/// or a press the screen goes black and the sound carries on. The first touch after that
+/// For a phone left playing on a stand: after this long without a touch the screen goes
+/// black and the sound carries on. iOS only — tvOS leaves this to the system's screensaver. The first touch after that
 /// only brings the screen back — see `ScreenOffController`.
 ///
 /// Stored as its number of seconds, so the raw values are part of the stored format.

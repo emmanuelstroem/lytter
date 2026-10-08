@@ -3,7 +3,7 @@
 //  lytter
 //
 
-#if os(iOS) || os(tvOS)
+#if os(iOS)
 import Combine
 import SwiftUI
 import UIKit
@@ -11,14 +11,20 @@ import UIKit.UIGestureRecognizerSubclass
 
 /// Blacks the screen out while playing, after a spell without interaction (F43).
 ///
-/// For a radio left playing on a TV, or a phone on a stand. The sound carries on; the first
-/// touch or press afterwards only brings the screen back, and does not reach whatever it
-/// landed on — nobody waking a black screen means to press the button under their thumb.
+/// For a phone left playing on a stand. The sound carries on; the first touch afterwards
+/// only brings the screen back, and does not reach whatever it landed on — nobody waking a
+/// black screen means to press the button under their thumb.
+///
+/// Not on tvOS. There a press goes to the focused view, and the curtain has nothing that
+/// takes focus, so presses went to the app hidden underneath: Select did nothing visible,
+/// and each Back stepped out of a screen the viewer could not see, until the app was left.
+/// The system's own screensaver already covers a TV left playing — the idle timer is never
+/// disabled — so tvOS leaves it to that.
 ///
 /// The black is a window of its own above the app's, not an overlay in the view tree. An
 /// overlay sits under any sheet, and the full player — the screen most likely to be left
 /// up — is a sheet. A window covers everything, and while it is the key window it is also
-/// what receives the next touch or press, which is how that first one is kept from the app.
+/// what receives the next touch, which is how that first one is kept from the app.
 ///
 /// `preventScreenSleep` in `AudioPlayerService` is a different thing: it stops the system
 /// sleeping, and is left alone. This only decides what the screen shows while it is awake.
@@ -128,8 +134,7 @@ private final class ActivityRecogniser: UIGestureRecognizer {
 /// The black, in a window above the app's.
 ///
 /// It handles every touch and press it is sent and passes none on: the first one wakes
-/// the screen and is otherwise swallowed. On tvOS that includes Menu, which would
-/// otherwise leave the app from a screen the viewer cannot see.
+/// the screen and is otherwise swallowed.
 private final class CurtainWindow: UIWindow {
     private let onWake: () -> Void
 
