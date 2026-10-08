@@ -2293,17 +2293,6 @@
         }
       }
     },
-    "While something is playing, the screen goes black after this long without a press. The sound carries on, and the next press only brings the screen back." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "da" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mens der spiller noget, bliver skærmen sort efter så lang tid uden et tryk. Lyden fortsætter, og det næste tryk tænder kun skærmen igen."
-          }
-        }
-      }
-    },
     "While something is playing, the screen goes black after this long without a touch. The sound carries on, and the next touch only brings the screen back." : {
       "extractionState" : "manual",
       "localizations" : {

@@ -57,7 +57,6 @@ struct ContentView: View {
         )
         .environmentObject(serviceManager)
         .environmentObject(selectionState)
-        .background(ScreenOffInstaller(serviceManager: serviceManager))
         .onOpenURL { url in
             deepLinkHandler.handleDeepLink(url)
         }
