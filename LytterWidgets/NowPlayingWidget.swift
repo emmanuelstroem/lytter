@@ -279,16 +279,14 @@ private struct Artwork: View {
                 .scaledToFill()
                 .accessibilityHidden(true)
         } else {
-            let colour = StationPalette.color(stationName: snapshot.stationName,
-                                              stationKey: snapshot.stationKey)
-            LinearGradient(colors: [colour, colour.opacity(0.6)],
-                           startPoint: .topLeading, endPoint: .bottomTrailing)
+            // Flat, like the app's placeholder: the name's colour is chosen against this one.
+            StationPalette.color(stationName: snapshot.stationName, stationKey: snapshot.stationKey)
                 .overlay {
                     Text(verbatim: snapshot.stationName)
                         .font(.system(size: 18, weight: .heavy, design: .rounded))
                         .minimumScaleFactor(0.4)
                         .lineLimit(1)
-                        .foregroundStyle(Color.white)
+                        .foregroundStyle(StationPalette.textColor(stationName: snapshot.stationName))
                         .padding(4)
                 }
                 .accessibilityHidden(true)
@@ -298,8 +296,8 @@ private struct Artwork: View {
 
 /// "**P4** København": the station, and its district in the same size but lighter.
 ///
-/// Rather than "P4 - København", which at headline size does not fit beside a logo in a
-/// medium widget. Without the dash it reads as one name, and the weight says which part is
+/// Rather than "P4 - København", which at headline size does not fit beside the
+/// broadcaster's name in a medium widget. Without the dash it reads as one name, and the weight says which part is
 /// the station. A long district shrinks a little before it is cut short.
 struct ChannelName {
     let station: String
@@ -316,8 +314,8 @@ struct ChannelName {
     }
 }
 
-/// The broadcaster's mark and the channel on one line — DR LYD's logo beside "**P4**
-/// København" — and what is on beneath. Nothing says "Paused": the button already does.
+/// The broadcaster's mark and the channel on one line — "DR" beside "**P4** København" —
+/// and what is on beneath. Nothing says "Paused": the button already does.
 struct StationTitles: View {
     let broadcaster: String
     let name: ChannelName
@@ -350,35 +348,18 @@ struct StationTitles: View {
     }
 }
 
-/// Who broadcasts the channel: DR LYD's logo for DR, which is all the app plays today, and
-/// the broadcaster's name for one with no logo here.
+/// Who broadcasts the channel, by name: "DR".
 ///
-/// In full colour even in the tinted and clear Home Screen styles, where a picture would
-/// otherwise be drawn as a flat grey square. The Lock Screen draws in one colour whatever
-/// the widget asks, so its widgets spell the name instead.
+/// Text, not DR LYD's logo, which the widgets showed until the app stopped carrying DR's
+/// artwork (S11); the Lock Screen's widgets already spelled the name, since they draw in
+/// one colour whatever they are given.
 struct BroadcasterMark: View {
     let name: String
 
     var body: some View {
-        if name == "DR" {
-            logo
-                .frame(width: 20, height: 20)
-                .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
-                .accessibilityLabel(Text(verbatim: name))
-        } else {
-            Text(verbatim: name)
-                .font(.caption2.weight(.bold))
-                .foregroundStyle(Color.secondary)
-        }
-    }
-
-    @ViewBuilder private var logo: some View {
-        let image = Image("DRLydLogo").resizable()
-        if #available(iOS 18.0, *) {
-            image.widgetAccentedRenderingMode(.fullColor)
-        } else {
-            image
-        }
+        Text(verbatim: name)
+            .font(.caption2.weight(.bold))
+            .foregroundStyle(Color.secondary)
     }
 }
 

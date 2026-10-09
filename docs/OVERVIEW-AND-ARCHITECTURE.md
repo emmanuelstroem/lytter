@@ -46,7 +46,6 @@ lytter.xcodeproj          objectVersion 77, folder-synced groups (Xcode 16+)
 │       └── shareplay/            SharePlay
 ├── LytterWidgets/                widget extension (Now Playing, Favourites, Control Centre)
 ├── WidgetShared/                 compiled into the app and the widgets: snapshot, app group
-├── SharedAssets/                 station logos, shared by the app and the widgets
 ├── TopShelfExtension/            tvOS Top Shelf provider (own models + client)
 ├── lytterTests/                  unit tests (Swift Testing)
 ├── lytterUITests/                UI tests, incl. tvOS remote-driven scrolling
@@ -209,7 +208,7 @@ Adaptive rather than fixed-interval: after fetching the current track,
   tested; the delegate only draws it. The `carplay-audio` entitlement is in
   `lytter-simulator.entitlements` alone until Apple grants it — see the roadmap.
 - Widgets and a Control Centre control (F18), in the `LytterWidgets`
-  extension: Now Playing, and Favourites, the pinned stations' logos a tap from playing. The
+  extension: Now Playing, and Favourites, the pinned stations' tiles a tap from playing. The
   app's `ListeningSurfaces` writes a `NowPlayingSnapshot` and a `FavouriteStations` list
   into the app group whenever the station, its programme, play/pause or the favourites
   change, and asks WidgetKit to redraw; the extension only reads it, and never asks DR for anything. What the snapshot
@@ -217,9 +216,9 @@ Adaptive rather than fixed-interval: after fetching the current track,
   tested. `WidgetShared/` is compiled into both targets: the snapshot, its store, the
   station palette, the favourites list, and the two intents (`ToggleListeningIntent`,
   `PlayFavouriteIntent`), which the system runs in the app because the app contains them
-  too. DR LYD's logo and the channels' logos are in `SharedAssets/Logos.xcassets`, compiled
-  into both the app and the extension, so either can show them; see `ChannelLogo` in
-  `FavouritesWidget.swift` for how DR's print files were prepared.
+  too. A station is drawn as its name, in the system font, on its colour — DR's colours,
+  from `StationPalette` — and the broadcaster as its name: the app ships no DR logo or
+  other DR artwork (S11).
 
 ### tvOS
 

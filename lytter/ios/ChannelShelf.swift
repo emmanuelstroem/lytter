@@ -178,26 +178,16 @@ struct ChannelShelfCard: View {
         currentProgramme?.programmeName ?? String(localized: "Live")
     }
 
-    private var artwork: some View {
-        CachedAsyncImage(url: artworkURL,
-                         maxPixelSize: ImageCacheService.thumbnailMaxPixelSize) { image in
-            image.resizable().aspectRatio(contentMode: .fill)
-        } placeholder: {
-            // The caption already names the station.
-            StationArtworkPlaceholder(channel: channel, showsName: false)
-        }
-        .frame(width: style.metrics.width, height: style.metrics.height)
-        .clipped()
-    }
-
-    /// The station, and on a featured card what is on it, over the artwork.
+    /// The artwork with the station, and on a featured card what is on it, over its foot;
+    /// or with no picture, the station's name across the whole card.
     ///
     /// The chevron says the card asks rather than plays; without it the sheet arrives
     /// unannounced. Added here rather than self-hiding, together with the spacer that pushes
     /// it over: an always-present `Spacer(minLength:)` costs the name width even when no
     /// chevron follows it.
-    private var caption: some View {
-        StationCard.Caption(title: title, subtitle: subtitle, metrics: style.metrics) {
+    private var face: some View {
+        StationCardFace(channel: channel, artworkURL: artworkURL, title: title,
+                        subtitle: subtitle, metrics: style.metrics) {
             if opensPicker {
                 Spacer(minLength: 4)
                 StationCard.PickerCue(metrics: style.metrics)
@@ -206,8 +196,7 @@ struct ChannelShelfCard: View {
     }
 
     private var featuredCard: some View {
-        artwork
-            .overlay(alignment: .bottom) { caption }
+        face
             .overlay(alignment: .topTrailing) { if isPlaying { playingBadge } }
             .clipShape(RoundedRectangle(cornerRadius: style.metrics.cornerRadius,
                                         style: .continuous))
@@ -220,8 +209,7 @@ struct ChannelShelfCard: View {
     /// its smaller shelves, and the reason these cards are taller than they are wide.
     private var standardCard: some View {
         VStack(alignment: .leading, spacing: 6) {
-            artwork
-                .overlay(alignment: .bottom) { caption }
+            face
                 .overlay(alignment: .topTrailing) { if isPlaying { playingBadge } }
                 .clipShape(RoundedRectangle(cornerRadius: style.metrics.cornerRadius,
                                             style: .continuous))

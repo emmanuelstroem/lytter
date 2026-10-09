@@ -68,15 +68,9 @@ What is left is listed below. Three gaps are not entries of their own:
         template silently — never an error on screen. A unit test decodes a saved page
         as a fixture, which catches decoding mistakes; it cannot catch DR changing the
         site.
-- [ ] **F53. Show the channel's logo when Show Images is off.** With the setting off (F43),
-      every picture is replaced by `StationArtworkPlaceholder`: the station's colour and name.
-      DR's own logos for P1–P8 and DR LYD now sit in `SharedAssets/Logos.xcassets`, compiled
-      into the app as well as the widgets (F18), so the placeholder can draw `DRP1Logo` for P1
-      and so on, keeping the colour and name only for a channel with no logo. A P4 or P5
-      district needs its district beside the logo, as the Favourites widget's tiles have it,
-      since every district shares the one logo. The logos are 120-point bitmaps, sized for
-      widgets: sharp up to card size on iPhone, but tvOS's larger cards would want them
-      re-exported larger from DR's files (see `ChannelLogo` in `FavouritesWidget.swift`).
+- [x] **F53. Show the channel's logo when Show Images is off.** Withdrawn 2026-10-09: the
+      app no longer carries DR's logos (S11). With the setting off, the placeholder is the
+      station's name on DR's colour for it, the same as the widgets' tiles.
 - [ ] **F14. Add a README.** Nineteen commits and no entry point for a reader.
       Checked 2026-10-04: not started; there is still no README.
 - [ ] **F49. Read the DR API version from a file the app fetches, not only from the
@@ -109,9 +103,9 @@ What is left is listed below. Three gaps are not entries of their own:
 - [ ] **F18. Widgets on the Mac.** iPhone and iPad have them (2026-10-06): the
       `LytterWidgets` extension draws a Now Playing widget (small and medium, and the Lock
       Screen's rectangular, circular and inline), a Favourites widget (the pinned stations as
-      their logos, four or twelve, each a tap from playing) and a Control Centre play/pause from iOS 18.
+      tiles in their colours, four or twelve, each a tap from playing) and a Control Centre play/pause from iOS 18.
       All of them read what the app writes into the app group; the extension never asks
-      DR. The broadcaster is shown with DR LYD's logo — see S11. No Live Activity: the system's Now Playing already fills the Lock Screen and the
+      DR. The broadcaster is named in text; the app carries no DR logo (S11). No Live Activity: the system's Now Playing already fills the Lock Screen and the
       Dynamic Island for an audio app, and one of the app's own would only double it.
       Remaining: the Mac's desktop and Notification Centre widgets, which need the extension
       built for macOS and the app group's container to be the one the sandboxed app writes.
@@ -149,7 +143,7 @@ What is left is listed below. Three gaps are not entries of their own:
       - Then the first commercial broadcaster: its stream and metadata APIs, and its terms
         (as S11 is for DR). It needs a disk cache of its own — DR's holds the whole catalogue
         today — and, if it has schedules, channel slugs that cannot collide with DR's, which
-        favourite shows key on. `BroadcasterMark` in the widgets chooses DR's logo by name.
+        favourite shows key on. `BroadcasterMark` in the widgets spells the broadcaster's name.
 - [ ] **F19. iPhone Duo support.** See [IPHONE-DUO.md](IPHONE-DUO.md).
       Checked 2026-10-04: not started beyond those notes.
 - [ ] **F21. CarPlay — ask Apple for the entitlement.** The CarPlay scene is built
@@ -188,8 +182,6 @@ What is left is listed below. Three gaps are not entries of their own:
 - [ ] **S11. Document the DR API posture.** The app consumes an undocumented public API,
       hardcodes 24 DR stream URLs, and displays DR-supplied artwork and trademarks. Confirm
       terms of use and attribution requirements before submitting to the App Store.
-      The widgets show DR LYD's logo beside each channel (F18), from DR's own logo pack;
-      confirm that use is allowed, and on what terms.
       Also settle whether the app may read the radio guide at `www.dr.dk/lyd/oversigt`
       for the week ahead (F52): it is DR's website rather than their API, and F52 waits
       on the answer.
@@ -199,6 +191,10 @@ What is left is listed below. Three gaps are not entries of their own:
       "documentary evidence" of rights, and the app uses DR's logos (5.2.1). The request
       to DR is drafted in [APP-STORE.md § 9](APP-STORE.md#9-the-request-to-dr); not yet
       sent. Meanwhile Settings ends with About, which says Lytter is independent of DR.
+      2026-10-09: the logos are gone. The widgets showed DR's logos for P1–P8 and DR LYD;
+      every station is now its name in the system font on DR's colour for it, and the
+      broadcaster its name. What remains of DR's is the streams, the programme data and
+      artwork, and the colours — a colour is not protected the way artwork is.
 
 ---
 
