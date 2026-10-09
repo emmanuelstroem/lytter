@@ -1,0 +1,13 @@
+# Keeps the workflows' actions current. One weekly PR for all of them, so a release of
+# several actions together lands as one change.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]
+    commit-message:
+      prefix: ci
