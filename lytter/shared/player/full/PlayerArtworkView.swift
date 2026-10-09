@@ -11,18 +11,15 @@ struct PlayerArtworkView: View {
     let channel: DRChannel?
     let currentProgram: DREpisode?
     let channelColor: Color
-    let channelIcon: String
     
     init(
         channel: DRChannel?,
         currentProgram: DREpisode?,
-        channelColor: Color,
-        channelIcon: String
+        channelColor: Color
     ) {
         self.channel = channel
         self.currentProgram = currentProgram
         self.channelColor = channelColor
-        self.channelIcon = channelIcon
     }
     
     var body: some View {
@@ -53,28 +50,18 @@ struct PlayerArtworkView: View {
         }
     }
     
-    private var textColor: Color {
-        channel.map { StationPalette.textColor(stationName: $0.name) } ?? .white
-    }
-
+    /// With no programme picture: the station's name across its colour, as every card
+    /// draws a station with no picture — nothing else, so it reads at a glance.
     private var placeholderView: some View {
         GeometryReader { geometry in
-            // Flat, like every station placeholder: the text colour is chosen against the
-            // station's colour itself (`StationPalette.textColor`).
-            RoundedRectangle(cornerRadius: min(geometry.size.width, geometry.size.height) * 0.05)
-                .fill(channelColor)
-                .overlay {
-                    VStack(spacing: min(geometry.size.width, geometry.size.height) * 0.04) {
-                        Image(systemName: channelIcon)
-                            .font(.system(size: min(geometry.size.width, geometry.size.height) * 0.2, weight: .medium))
-                            .foregroundColor(textColor)
-                        
-                        Text(channel?.title ?? "Unknown Channel")
-                            .font(.system(size: min(geometry.size.width, geometry.size.height) * 0.08, weight: .bold))
-                            .foregroundColor(textColor)
-                            .multilineTextAlignment(.center)
-                    }
+            Group {
+                if let channel {
+                    StationNameTile(name: channel.name, stationKey: channel.stationKey)
+                } else {
+                    channelColor
                 }
+            }
+            .clipShape(RoundedRectangle(cornerRadius: min(geometry.size.width, geometry.size.height) * 0.05))
         }
     }
 }
@@ -83,8 +70,7 @@ struct PlayerArtworkView: View {
     PlayerArtworkView(
         channel: DRChannel(id: "p1", title: "DR P1", slug: "p1", type: "radio", presentationUrl: nil),
         currentProgram: nil,
-        channelColor: .purple,
-        channelIcon: "antenna.radiowaves.left.and.right"
+        channelColor: .purple
     )
     .frame(width: 300, height: 300)
 } 

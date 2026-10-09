@@ -26,9 +26,7 @@ struct StationNameTile: View {
                     VStack(spacing: width * 0.02) {
                         // The station's own name: a proper noun, not for the catalogue.
                         Text(verbatim: name)
-                            .font(.system(size: width * 0.36, weight: .heavy))
-                            .minimumScaleFactor(0.3)
-                            .lineLimit(1)
+                            .stationTileName(width: width)
                         ForEach(details, id: \.self) { detail in
                             Text(verbatim: detail)
                                 .font(.system(size: max(11, width * 0.085), weight: .semibold))
@@ -37,7 +35,7 @@ struct StationNameTile: View {
                         }
                     }
                     .foregroundStyle(StationPalette.textColor(stationName: name))
-                    .padding(width * 0.08)
+                    .padding(width * StationTileType.paddingShare)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
             }
