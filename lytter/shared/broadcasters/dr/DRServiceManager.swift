@@ -838,24 +838,26 @@ class DRServiceManager: ObservableObject {
 
     // MARK: - Last Played Channel Management
     
+    /// Loads the station last played, paused, so the mini player and the full player both
+    /// show it and play resumes it.
+    ///
+    /// However long ago it was played. It used to be only within a day — but the mini player
+    /// shows the last station whatever its age, so after a day away it said "P1" and opened
+    /// onto "No Channel Playing". Stopping forgets it, for both.
     private func restoreLastPlayedChannel() {
         // Only restore if we have available channels and no current playback
         guard !availableChannels.isEmpty && playingChannel == nil else { return }
-        
+
         // Find the last played channel in available channels
         if let lastPlayedChannel = userPreferences.findLastPlayedChannel(in: availableChannels) {
-            // Only restore if it was played recently (within 24 hours)
-            if userPreferences.isLastPlayedRecent(within: 24) {
-                // Set the playing channel but don't start playback automatically
-                // This will populate the mini player with the last played channel
-                playingChannel = lastPlayedChannel
-                
-                // Get current program for the restored channel
-                currentLiveProgram = getCurrentProgram(for: lastPlayedChannel)
-                
-                // Update Command Center with restored channel info
-                audioPlayer.updateCommandCenterInfo(channel: lastPlayedChannel, program: currentLiveProgram, track: currentTrack)
-            }
+            // Set the playing channel but don't start playback automatically
+            playingChannel = lastPlayedChannel
+
+            // Get current program for the restored channel
+            currentLiveProgram = getCurrentProgram(for: lastPlayedChannel)
+
+            // Update Command Center with restored channel info
+            audioPlayer.updateCommandCenterInfo(channel: lastPlayedChannel, program: currentLiveProgram, track: currentTrack)
         }
     }
     

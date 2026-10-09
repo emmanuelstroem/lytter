@@ -378,11 +378,4 @@ class UserPreferencesService: ObservableObject {
         lastPlayedChannel = nil
         lastPlayedTimestamp = nil
     }
-    
-    // MARK: - Check if Last Played is Recent
-    func isLastPlayedRecent(within hours: Int = 24) -> Bool {
-        guard let timestamp = lastPlayedTimestamp else { return false }
-        let timeInterval = TimeInterval(hours * 3600)
-        return Date().timeIntervalSince(timestamp) < timeInterval
-    }
-} 
+}
