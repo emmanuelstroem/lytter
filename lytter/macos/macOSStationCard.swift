@@ -131,27 +131,19 @@ struct macOSStationCard: View {
         }
     }
 
+    /// Artwork with the caption over it, or with no picture the station's name across the
+    /// whole card (`StationCardFace`).
     private var cardImage: some View {
-        CachedAsyncImage(url: serviceManager.artworkURL(for: channel),
-                         maxPixelSize: ImageCacheService.thumbnailMaxPixelSize) { image in
-            image.resizable().aspectRatio(contentMode: .fill)
-        } placeholder: {
-            // The caption already names the station.
-            StationArtworkPlaceholder(channel: channel, showsName: false)
-        }
-        .frame(width: metrics.width, height: metrics.height)
-        .clipped()
-        .overlay(alignment: .bottom) {
-            StationCard.Caption(title: title, subtitle: subtitle, metrics: metrics) {
-                if opensPicker {
-                    StationCard.PickerCue(metrics: metrics)
-                } else if isPlaying, Self.marksPlayingBesideName(style) {
-                    // Beside the name, not badged onto the artwork — Music marks the
-                    // playing item in its caption and leaves the picture alone.
-                    PlayingMark()
-                        .font(.system(size: metrics.accessoryFontSize))
-                        .foregroundStyle(.secondary)
-                }
+        StationCardFace(channel: channel, artworkURL: serviceManager.artworkURL(for: channel),
+                        title: title, subtitle: subtitle, metrics: metrics) {
+            if opensPicker {
+                StationCard.PickerCue(metrics: metrics)
+            } else if isPlaying, Self.marksPlayingBesideName(style) {
+                // Beside the name, not badged onto the artwork — Music marks the
+                // playing item in its caption and leaves the picture alone.
+                PlayingMark()
+                    .font(.system(size: metrics.accessoryFontSize))
+                    .foregroundStyle(.secondary)
             }
         }
         .clipShape(RoundedRectangle(cornerRadius: metrics.cornerRadius, style: .continuous))

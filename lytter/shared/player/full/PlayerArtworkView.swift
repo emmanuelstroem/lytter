@@ -53,29 +53,25 @@ struct PlayerArtworkView: View {
         }
     }
     
+    private var textColor: Color {
+        channel.map { StationPalette.textColor(stationName: $0.name) } ?? .white
+    }
+
     private var placeholderView: some View {
         GeometryReader { geometry in
+            // Flat, like every station placeholder: the text colour is chosen against the
+            // station's colour itself (`StationPalette.textColor`).
             RoundedRectangle(cornerRadius: min(geometry.size.width, geometry.size.height) * 0.05)
-                .fill(
-                    LinearGradient(
-                        colors: [
-                            channelColor.opacity(0.9),
-                            channelColor.opacity(0.7),
-                            channelColor.opacity(0.5)
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
+                .fill(channelColor)
                 .overlay {
                     VStack(spacing: min(geometry.size.width, geometry.size.height) * 0.04) {
                         Image(systemName: channelIcon)
                             .font(.system(size: min(geometry.size.width, geometry.size.height) * 0.2, weight: .medium))
-                            .foregroundColor(.white)
+                            .foregroundColor(textColor)
                         
                         Text(channel?.title ?? "Unknown Channel")
                             .font(.system(size: min(geometry.size.width, geometry.size.height) * 0.08, weight: .bold))
-                            .foregroundColor(.white)
+                            .foregroundColor(textColor)
                             .multilineTextAlignment(.center)
                     }
                 }

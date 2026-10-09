@@ -38,30 +38,23 @@ extension DRChannel {
 ///
 /// What every artwork slot shows with Show Images off, and while a picture is loading. The
 /// name is left off where a caption already says it — on a shelf card it would be printed
-/// twice.
+/// twice. With the name it is the station's `StationNameTile`.
+///
+/// Flat, as DR's colours are: the name's colour is chosen for contrast against the colour
+/// itself, and a gradient towards transparent would darken it on a dark background — P4's
+/// amber, faded over black, is too dark for its near-black name.
 struct StationArtworkPlaceholder: View {
     let channel: DRChannel?
     var showsName = true
 
     var body: some View {
-        let colour = channel?.stationColor ?? .purple
-        LinearGradient(colors: [colour, colour.opacity(0.6)],
-                       startPoint: .topLeading, endPoint: .bottomTrailing)
-            .overlay {
-                if showsName, let channel {
-                    GeometryReader { proxy in
-                        let side = min(proxy.size.width, proxy.size.height)
-                        // The station's own name: a proper noun, not for the catalogue.
-                        Text(verbatim: channel.name)
-                            .font(.system(size: side * 0.3, weight: .heavy, design: .rounded))
-                            .minimumScaleFactor(0.3)
-                            .lineLimit(1)
-                            .foregroundStyle(Color.white)
-                            .padding(side * 0.08)
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    }
-                }
+        Group {
+            if showsName, let channel {
+                StationNameTile(name: channel.name, stationKey: channel.stationKey)
+            } else {
+                channel?.stationColor ?? .purple
             }
-            .accessibilityHidden(true)
+        }
+        .accessibilityHidden(true)
     }
 }

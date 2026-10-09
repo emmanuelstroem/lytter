@@ -6,7 +6,8 @@ one bundle ID (`com.eopio.lytter`), so it is one purchase everywhere (universal 
 
 ## 0. The blocker: DR's permission
 
-Lytter plays DR's streams and shows DR's logos and artwork. That DR is free to listen to
+Lytter plays DR's streams and shows DR's programme information and artwork. It uses no
+DR logos: each station is its name on DR's colour for it. That DR is free to listen to
 does not make it free to redistribute: App Review rejects radio apps under guideline
 5.2.3 (and 5.2.1/5.2.2 for third-party trademarks and services) and asks for
 "documentary evidence … that you have all necessary rights or permissions". DR has an app
@@ -169,7 +170,7 @@ matching localisation.
   > There is no account and no in-app purchase. Content is in Danish; the app's interface
   > is in English and Danish.
   >
-  > DR's permission to stream its stations and show its logos is attached.
+  > DR's permission to stream its stations and show their programme information is attached.
   >
   > To try it: tap any station card to play. The mini player opens the full player, with
   > the schedule and the sleep timer. Favourites: long-press a station. Siri: Settings →
@@ -195,7 +196,8 @@ rights department); don't guess an address. Danish first, English below for the 
 > Før jeg lægger appen i App Store, vil jeg gerne have DR's skriftlige tilladelse til:
 >
 > 1. at afspille DR's radiokanaler live i appen,
-> 2. at vise programdata, programbilleder og kanallogoer (P1–P8 og DR LYD), og
+> 2. at vise programdata og programbilleder. Appen bruger ingen af DR's logoer: hver
+>    kanal vises med sit navn i appens egen skrift på kanalens farve, og
 > 3. at bruge DR's navn i beskrivelsen i App Store.
 >
 > Har DR krav til kreditering, ordlyd eller logobrug, retter jeg mig naturligvis efter
@@ -219,7 +221,8 @@ rights department); don't guess an address. Danish first, English below for the 
 > Before publishing it on the App Store, I would like DR's written permission:
 >
 > 1. to play DR's radio stations live in the app,
-> 2. to show programme data, programme artwork and station logos (P1–P8 and DR LYD), and
+> 2. to show programme data and programme artwork. The app uses none of DR's logos: each
+>    station is shown as its name, in the app's own type, on the station's colour, and
 > 3. to use DR's name in the App Store description.
 >
 > If DR has requirements for credit, wording or logo use, I will follow them. I would also

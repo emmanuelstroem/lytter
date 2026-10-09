@@ -144,11 +144,6 @@
 			path = WidgetShared;
 			sourceTree = "<group>";
 		};
-		F1800000000000000000000F /* SharedAssets */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = SharedAssets;
-			sourceTree = "<group>";
-		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -202,7 +197,6 @@
 				147066102E47F55200574321 /* TopShelfExtension */,
 				F18000000000000000000005 /* LytterWidgets */,
 				F18000000000000000000007 /* WidgetShared */,
-				F1800000000000000000000F /* SharedAssets */,
 				14CA66FD2E46CF01001C4592 /* Frameworks */,
 				14B52D282E44D1AB00E8476E /* Products */,
 				14CA689E2E46D200001C4592 /* Recovered References */,
@@ -279,7 +273,6 @@
 			fileSystemSynchronizedGroups = (
 				14B52D292E44D1AB00E8476E /* lytter */,
 				F18000000000000000000007 /* WidgetShared */,
-				F1800000000000000000000F /* SharedAssets */,
 			);
 			name = lytter;
 			packageProductDependencies = (
@@ -349,7 +342,6 @@
 			fileSystemSynchronizedGroups = (
 				F18000000000000000000005 /* LytterWidgets */,
 				F18000000000000000000007 /* WidgetShared */,
-				F1800000000000000000000F /* SharedAssets */,
 			);
 			name = LytterWidgets;
 			packageProductDependencies = (

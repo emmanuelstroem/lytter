@@ -7,7 +7,7 @@ import AppIntents
 import SwiftUI
 import WidgetKit
 
-/// The stations the listener has pinned, as their logos, one tap from playing (F18).
+/// The stations the listener has pinned, as tiles in their colours, one tap from playing (F18).
 ///
 /// Four on the small and medium widgets, twelve on the large, in pinned order. Tapping one
 /// plays it; tapping the one playing pauses it. Drawn from what the app writes; nothing
@@ -77,8 +77,8 @@ struct FavouritesWidgetView: View {
     let entry: FavouritesEntry
     @Environment(\.widgetFamily) private var family
 
-    /// Square tiles, because the logos are: two by two on the small widget, a row of four on
-    /// the medium, three rows of four on the large.
+    /// Square tiles: two by two on the small widget, a row of four on the medium, three rows
+    /// of four on the large.
     private var columns: Int { family == .systemSmall ? 2 : 4 }
     private var rows: Int {
         switch family {
@@ -150,11 +150,11 @@ private struct FavouritesHeader: View {
     }
 }
 
-/// One station: its logo, with the logo's black band carried on below it. A district's
-/// name is printed in that strip, since every P4 district shares the P4 logo; a national
-/// channel's strip is left empty, so that every tile is the same size.
+/// One station: its tile, with a dark strip below it. A district's name is printed in
+/// the strip, since every P4 district shares the P4 tile; a national channel's strip is
+/// left empty, so that every tile is the same size.
 ///
-/// The strip, not a label over the logo: at widget size the logo has no free corner, and a
+/// The strip, not a label over the tile: at widget size the tile has no free corner, and a
 /// label there covered the station's number. A tap plays the station, or pauses it if it is
 /// the one playing.
 private struct FavouriteTile: View {
@@ -172,14 +172,14 @@ private struct FavouriteTile: View {
 
     var body: some View {
         Button(intent: PlayFavouriteIntent(channelID: station.channelID)) {
-            // Sized from the tile's width: the logo a square of it, the strip the rest.
+            // Sized from the tile's width: the tile a square of it, the strip the rest.
             Color.clear
                 .aspectRatio(1 / (1 + Self.stripShare), contentMode: .fit)
                 .overlay {
                     GeometryReader { proxy in
                         let side = proxy.size.width
                         VStack(spacing: 0) {
-                            ChannelLogo(station: station)
+                            StationTile(station: station)
                                 .frame(width: side, height: side)
                             DistrictStrip(name: station.district)
                                 .frame(width: side, height: max(proxy.size.height - side, 0))
@@ -204,52 +204,39 @@ private struct FavouriteTile: View {
     }
 }
 
-/// The station's logo, in DR's own colours whatever the Home Screen's tint. A station with
-/// no logo here gets its colour and name, as the app draws it with Show Images off.
+/// The station's tile: its name, in the system font, on its colour — DR's own colour for a
+/// DR station (`StationPalette`), whatever the Home Screen's tint.
 ///
-/// The `DRP*Logo` assets (`DRP1Logo` for P1) are DR's print logos, prepared for the screen: their CMYK
-/// colours converted to sRGB through ColorSync, Illustrator's editing data dropped (715 KB
-/// to under 5 KB each), and the page shrunk from 800 to 120 points. Xcode renders the
-/// bitmaps at that size, and an 800-point page made 2400-pixel images, ~23 MB each in
-/// memory against a widget's ~30 MB. No vector copy is kept, for the same reason.
-private struct ChannelLogo: View {
+/// Drawn, not a picture. These were DR's logos (P1–P8, with "DR" in a band beneath),
+/// shipped as assets; the app now carries no DR artwork, only the colours (S11).
+///
+/// The cost: in the tinted and clear Home Screen styles the system keeps full colour only
+/// for images (`widgetAccentedRenderingMode(.fullColor)`), so there the tiles are tinted
+/// with everything else, and told apart by their names.
+private struct StationTile: View {
     let station: FavouriteStations.Station
 
-    /// DR's national stations, by the name the directory gives them.
-    private static let logos: Set<String> = ["p1", "p2", "p3", "p4", "p5", "p6", "p8"]
-
     var body: some View {
-        let key = station.stationName.lowercased()
-        if Self.logos.contains(key) {
-            let image = Image("DR\(station.stationName.uppercased())Logo").resizable()
-            if #available(iOS 18.0, *) {
-                image.widgetAccentedRenderingMode(.fullColor)
-            } else {
-                image
-            }
-        } else {
-            let colour = StationPalette.color(stationName: station.stationName,
-                                              stationKey: station.stationKey)
-            LinearGradient(colors: [colour, colour.opacity(0.65)],
-                           startPoint: .topLeading, endPoint: .bottomTrailing)
-                .overlay {
+        StationPalette.color(stationName: station.stationName, stationKey: station.stationKey)
+            .overlay {
+                GeometryReader { proxy in
                     Text(verbatim: station.stationName)
-                        .font(.system(.headline, design: .rounded).weight(.heavy))
-                        .minimumScaleFactor(0.5)
+                        .font(.system(size: proxy.size.width * 0.4, weight: .heavy))
+                        .minimumScaleFactor(0.4)
                         .lineLimit(1)
-                        .foregroundStyle(Color.white)
-                        .padding(4)
+                        .foregroundStyle(StationPalette.textColor(stationName: station.stationName))
+                        .padding(proxy.size.width * 0.08)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
-        }
+            }
     }
 }
 
-/// The logo's black band, continued: "København" for a district, empty for the rest.
+/// The strip beneath a tile: "København" for a district, empty for the rest.
 private struct DistrictStrip: View {
     let name: String?
 
-    /// The band's own black — DR's 100% K, as ColorSync converts it to sRGB (#1A1919) — so
-    /// the strip reads as part of the logo, with no seam where they meet.
+    /// Near-black (#1A1919), the colour the strip has always been.
     static let black = Color(.sRGB, red: 0.1036, green: 0.0992, blue: 0.0975)
 
     var body: some View {

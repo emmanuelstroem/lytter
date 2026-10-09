@@ -20,11 +20,11 @@ nonisolated struct FavouriteStations: Codable, Equatable, Sendable {
         let channelID: String
         let broadcaster: String
         /// "P4 - København": a favourite is one particular district. For VoiceOver; the tile
-        /// itself is the station's logo.
+        /// itself shows only the station's name.
         let channelName: String
         let stationName: String
-        /// "København", for a channel that is a district: the one word on its tile, since
-        /// every P4 district shares the P4 logo.
+        /// "København", for a channel that is a district: the one word under its tile, since
+        /// every P4 district shares the P4 tile.
         let district: String?
         let stationKey: String
 

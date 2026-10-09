@@ -150,45 +150,35 @@ struct tvOSStationCard: View {
         return symbols
     }
 
-    /// The button's label: artwork, and the caption over it.
+    /// The button's label: artwork and the caption over it, or with no picture the
+    /// station's name across the whole card (`StationCardFace`).
     ///
     /// Deliberately unclipped and unshaped. The card button style rounds and clips its own
     /// label, so shaping it here would put a second curve inside the system's and the two
     /// would not share a centre. The caption meets the bottom edge with no inset, so the
     /// system's clip is its corner too.
     private var face: some View {
-        artwork
-            .overlay(alignment: .bottom) { caption }
-            .accessibilityElement(children: .ignore)
-            .accessibilityLabel(Text(verbatim: "\(title), \(subtitle)"))
+        StationCardFace(channel: channel, artworkURL: serviceManager.artworkURL(for: channel),
+                        title: title, subtitle: subtitle, metrics: metrics) {
+            accessory
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text(verbatim: "\(title), \(subtitle)"))
     }
 
-    private var caption: some View {
-        StationCard.Caption(title: title, subtitle: subtitle, metrics: metrics) {
-            // Beside the name, where Music marks the playing item, rather than badged onto
-            // the artwork. The name's size leaves room for it on the longest station.
-            if isPlaying {
-                PlayingMark()
-                    .font(.system(size: metrics.accessoryFontSize))
-                    .foregroundStyle(Color.accentColor)
-            }
-            if opensPicker {
-                Spacer(minLength: 4)
-                StationCard.PickerCue(metrics: metrics)
-            }
+    @ViewBuilder
+    private var accessory: some View {
+        // Beside the name, where Music marks the playing item, rather than badged onto
+        // the artwork. The name's size leaves room for it on the longest station.
+        if isPlaying {
+            PlayingMark()
+                .font(.system(size: metrics.accessoryFontSize))
+                .foregroundStyle(Color.accentColor)
         }
-    }
-
-    private var artwork: some View {
-        CachedAsyncImage(url: serviceManager.artworkURL(for: channel),
-                         maxPixelSize: ImageCacheService.thumbnailMaxPixelSize) { image in
-            image.resizable().aspectRatio(contentMode: .fill)
-        } placeholder: {
-            // The caption already names the station.
-            StationArtworkPlaceholder(channel: channel, showsName: false)
+        if opensPicker {
+            Spacer(minLength: 4)
+            StationCard.PickerCue(metrics: metrics)
         }
-        .frame(width: metrics.width, height: metrics.height)
-        .clipped()
     }
 }
 #endif
