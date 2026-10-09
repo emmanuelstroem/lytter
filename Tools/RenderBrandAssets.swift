@@ -5,18 +5,10 @@
 // dial, on a red field. It is defined in a unit square and drawn with CoreGraphics, so it stays
 // vector-exact at every size rather than being upscaled from a master PNG.
 //
-// Depth comes from a single light source above and slightly in front, the way Apple's
-// own icons are lit. Every element responds to it:
-//
-//   body      vertical gradient, specular sheen, a rim light along the top edge,
-//             darkening along the bottom, and a contact shadow on the background
-//   antenna   cylindrical shading across its short axis, bright on the upper edge
-//   bars      raised, each with its own shadow on the body and a top rim
-//   dial      shaded as a sphere — highlight up and left, terminator lower right
-//
-// Shadows between elements are baked for the flat icons. They are NOT baked for the
-// tvOS parallax stack, where the layers move independently and the system draws the
-// inter-layer shadows itself; those layers get material shading only.
+// The radio is flat: solid white, its bars and dial solid red, with no shading, sheen,
+// rim light or shadow. Shaded, the white's highlights washed over the red and the bars
+// read pink rather than red. Only the field keeps its light — a gradient and a soft glow
+// — as AppIcon.icon's automatic gradient does.
 //
 // Usage: swift Tools/RenderBrandAssets.swift <repo-root>
 
@@ -42,21 +34,18 @@ func black(_ a: Double) -> CGColor { srgb(0, 0, 0, a) }
 /// turn replaced one on maroon; the red field reads as red at every size, which the
 /// earlier dark field never did, and needs no light/dark compromise to do it.
 struct Palette {
-    var bodyTop, bodyBottom, antenna: CGColor
-    var controlTop, controlBottom: CGColor
+    var body, control: CGColor
     var fieldTop, fieldBottom, glow: CGColor
 
     /// The red is DR's own, from DR's colour system: "DR rød" #FF001E (Pantone 185), the
-    /// `.icon`'s fill. The gradients around it are not new colours but mixes of it with
-    /// two of DR's documented steps — #FD3A3A, the light "accessibility light red", for
-    /// the lit tops, and #55001B, a dark step, for the shaded bottoms — so the field stays
-    /// that one red, lit, rather than drifting towards orange as #FF2600 did.
+    /// `.icon`'s fill, and the bars and dial are that red, flat. The field's gradient is
+    /// not new colours but mixes of it with two of DR's documented steps — #FD3A3A, the
+    /// light "accessibility light red", at the top, and #55001B, a dark step, at the
+    /// bottom — so the field stays that one red, lit, rather than drifting towards orange
+    /// as #FF2600 did.
     static let brand = Palette(
-        bodyTop:       srgb(1.000, 1.000, 1.000),
-        bodyBottom:    srgb(0.957, 0.929, 0.918),
-        antenna:       srgb(0.980, 0.965, 0.957),
-        controlTop:    srgb(0.996, 0.125, 0.178),   // #FE202D: DR rød, 55% to #FD3A3A
-        controlBottom: srgb(0.833, 0.000, 0.115),   // #D4001D: DR rød, 25% to #55001B
+        body:          srgb(1.000, 1.000, 1.000),
+        control:       srgb(1.000, 0.000, 0.118),   // #FF001E: DR rød itself
         fieldTop:      srgb(0.997, 0.091, 0.162),   // #FE1729: DR rød, 40% to #FD3A3A
         fieldBottom:   srgb(0.880, 0.000, 0.116),   // #E0001D: DR rød, 18% to #55001B
         glow:          srgb(0.994, 0.421, 0.421))   // #FE6B6B: #FD3A3A, 25% to white
@@ -65,11 +54,8 @@ struct Palette {
     /// #CC001D, DR rød 30% of the way to #55001B. Still DR's red, but not a bright square
     /// on a dark Home Screen.
     static let dark = Palette(
-        bodyTop:       brand.bodyTop,
-        bodyBottom:    brand.bodyBottom,
-        antenna:       brand.antenna,
-        controlTop:    srgb(0.900, 0.000, 0.116),   // #E6001E: 15% to #55001B
-        controlBottom: srgb(0.633, 0.000, 0.111),   // #A2001C: 55%
+        body:          brand.body,
+        control:       srgb(0.800, 0.000, 0.114),   // #CC001D: 30% to #55001B, as the field
         fieldTop:      srgb(0.800, 0.000, 0.114),   // #CC001D: 30%
         fieldBottom:   srgb(0.587, 0.000, 0.110),   // #96001C: 62%
         glow:          srgb(0.996, 0.102, 0.167))   // #FE1A2B: DR rød, 45% to #FD3A3A
@@ -77,11 +63,8 @@ struct Palette {
     /// Greyscale: a dark field and a light radio, so the user's tint lands on the radio
     /// the way it lands on the white glass of the `.icon`.
     static let tinted = Palette(
-        bodyTop:       srgb(0.980, 0.980, 0.980),
-        bodyBottom:    srgb(0.855, 0.855, 0.855),
-        antenna:       srgb(0.920, 0.920, 0.920),
-        controlTop:    srgb(0.520, 0.520, 0.520),
-        controlBottom: srgb(0.330, 0.330, 0.330),
+        body:          srgb(0.980, 0.980, 0.980),
+        control:       srgb(0.420, 0.420, 0.420),
         fieldTop:      srgb(0.090, 0.090, 0.090),
         fieldBottom:   srgb(0.018, 0.018, 0.018),
         glow:          srgb(0.550, 0.550, 0.550))
@@ -168,129 +151,30 @@ func clipped(_ ctx: CGContext, to path: CGPath, _ body: () -> Void) {
     ctx.saveGState(); ctx.addPath(path); ctx.clip(); body(); ctx.restoreGState()
 }
 
-/// A light catching the top edge of a shape: a stroke along the path, faded out
-/// below so it only reads on the lit side.
-func rimLight(_ ctx: CGContext, path: CGPath, bounds: CGRect, width: CGFloat,
-              alpha: Double) {
-    clipped(ctx, to: path) {
-        ctx.saveGState()
-        ctx.addPath(path)
-        ctx.setStrokeColor(white(alpha))
-        ctx.setLineWidth(width * 2)  // half is clipped away by the path
-        ctx.replacePathWithStrokedPath()
-        ctx.clip()
-        grad(ctx, [white(alpha), white(0)], [0, 1],
-             from: CGPoint(x: bounds.midX, y: bounds.minY),
-             to: CGPoint(x: bounds.midX, y: bounds.minY + bounds.height * 0.55))
-        ctx.restoreGState()
-    }
-}
-
 // MARK: - Elements
 
-func drawAntenna(_ ctx: CGContext, _ p: Placement, _ pal: Palette, shadows: Bool) {
+func drawAntenna(_ ctx: CGContext, _ p: Placement, _ pal: Palette) {
     let a = p.pt(Mark.antA.x, Mark.antA.y), b = p.pt(Mark.antB.x, Mark.antB.y)
-    let w = p.len(Mark.antWidth)
-    let path = capsule(a, b, w)
-
-    if shadows {
-        ctx.saveGState()
-        ctx.setShadow(offset: CGSize(width: 0, height: p.len(0.006)),
-                      blur: p.len(0.010), color: black(0.45))
-        ctx.addPath(path); ctx.setFillColor(pal.antenna); ctx.fillPath()
-        ctx.restoreGState()
-    }
-
-    // Cylindrical shading across the short axis: bright on the upper-left edge.
-    let dx = b.x - a.x, dy = b.y - a.y
-    let len = max(hypot(dx, dy), 0.0001)
-    let perp = CGPoint(x: -dy / len, y: dx / len)
-    let mid = CGPoint(x: (a.x + b.x) / 2, y: (a.y + b.y) / 2)
-    clipped(ctx, to: path) {
-        ctx.setFillColor(pal.antenna)
-        ctx.fill(path.boundingBox.insetBy(dx: -w, dy: -w))
-        grad(ctx, [white(0.42), white(0.0), black(0.30)], [0, 0.45, 1],
-             from: CGPoint(x: mid.x - perp.x * w / 2, y: mid.y - perp.y * w / 2),
-             to: CGPoint(x: mid.x + perp.x * w / 2, y: mid.y + perp.y * w / 2))
-    }
+    ctx.addPath(capsule(a, b, p.len(Mark.antWidth)))
+    ctx.setFillColor(pal.body); ctx.fillPath()
 }
 
-func drawBody(_ ctx: CGContext, _ p: Placement, _ pal: Palette, shadows: Bool) {
-    let rect = p.bodyRect, path = p.bodyPath
-
-    if shadows {
-        ctx.saveGState()
-        ctx.setShadow(offset: CGSize(width: 0, height: p.len(0.022)),
-                      blur: p.len(0.042), color: black(0.55))
-        ctx.addPath(path); ctx.setFillColor(pal.bodyBottom); ctx.fillPath()
-        ctx.restoreGState()
-    }
-
-    clipped(ctx, to: path) {
-        grad(ctx, [pal.bodyTop, pal.bodyBottom], [0, 1],
-             from: CGPoint(x: rect.midX, y: rect.minY),
-             to: CGPoint(x: rect.midX, y: rect.maxY))
-
-        // Specular sheen, up and to the left of centre.
-        radial(ctx, [white(0.20), white(0.06), white(0)], [0, 0.5, 1],
-               centre: CGPoint(x: rect.midX - rect.width * 0.16,
-                               y: rect.minY + rect.height * 0.10),
-               radius: rect.width * 0.72)
-
-        // The face turns away from the light along the bottom.
-        grad(ctx, [black(0), black(0.26)], [0, 1],
-             from: CGPoint(x: rect.midX, y: rect.maxY - rect.height * 0.32),
-             to: CGPoint(x: rect.midX, y: rect.maxY))
-    }
-    rimLight(ctx, path: path, bounds: rect, width: p.len(0.0035), alpha: 0.55)
+func drawBody(_ ctx: CGContext, _ p: Placement, _ pal: Palette) {
+    ctx.addPath(p.bodyPath)
+    ctx.setFillColor(pal.body); ctx.fillPath()
 }
 
-func drawControls(_ ctx: CGContext, _ p: Placement, _ pal: Palette, shadows: Bool) {
-    // Bars — raised strips, each casting onto the body.
+func drawControls(_ ctx: CGContext, _ p: Placement, _ pal: Palette) {
+    ctx.setFillColor(pal.control)
     let h = p.len(Mark.barH)
     for y in [Mark.bar1Y, Mark.bar2Y] {
         let a = p.pt(Mark.barX0, y), b = p.pt(Mark.barX1, y)
-        let path = capsule(CGPoint(x: a.x + h / 2, y: a.y),
-                           CGPoint(x: b.x - h / 2, y: b.y), h)
-        let box = path.boundingBox
-
-        if shadows {
-            ctx.saveGState()
-            ctx.setShadow(offset: CGSize(width: 0, height: p.len(0.005)),
-                          blur: p.len(0.009), color: black(0.38))
-            ctx.addPath(path); ctx.setFillColor(pal.controlBottom); ctx.fillPath()
-            ctx.restoreGState()
-        }
-        clipped(ctx, to: path) {
-            grad(ctx, [pal.controlTop, pal.controlBottom], [0, 1],
-                 from: CGPoint(x: box.midX, y: box.minY),
-                 to: CGPoint(x: box.midX, y: box.maxY))
-        }
-        rimLight(ctx, path: path, bounds: box, width: p.len(0.0022), alpha: 0.75)
+        ctx.addPath(capsule(CGPoint(x: a.x + h / 2, y: a.y),
+                            CGPoint(x: b.x - h / 2, y: b.y), h))
+        ctx.fillPath()
     }
-
-    // Dial — shaded as a sphere rather than a flat disc.
     let c = p.pt(Mark.dial.x, Mark.dial.y), r = p.len(Mark.dialR)
-    let box = CGRect(x: c.x - r, y: c.y - r, width: 2 * r, height: 2 * r)
-    let disc = CGPath(ellipseIn: box, transform: nil)
-
-    if shadows {
-        ctx.saveGState()
-        ctx.setShadow(offset: CGSize(width: 0, height: p.len(0.008)),
-                      blur: p.len(0.016), color: black(0.42))
-        ctx.addPath(disc); ctx.setFillColor(pal.controlBottom); ctx.fillPath()
-        ctx.restoreGState()
-    }
-    clipped(ctx, to: disc) {
-        ctx.setFillColor(pal.controlBottom); ctx.fill(box)
-        // Key light from up and to the left; terminator falls to the lower right.
-        radial(ctx, [pal.controlTop, pal.controlTop, pal.controlBottom], [0, 0.35, 1],
-               centre: CGPoint(x: c.x - r * 0.34, y: c.y - r * 0.38), radius: r * 1.68)
-        // Bounce light along the lower-right edge keeps it from going dead.
-        radial(ctx, [white(0.30), white(0)], [0, 1],
-               centre: CGPoint(x: c.x + r * 0.52, y: c.y + r * 0.56), radius: r * 0.78)
-    }
-    rimLight(ctx, path: disc, bounds: box, width: p.len(0.0028), alpha: 0.80)
+    ctx.fillEllipse(in: CGRect(x: c.x - r, y: c.y - r, width: 2 * r, height: 2 * r))
 }
 
 // MARK: - Fields
@@ -358,9 +242,9 @@ func renderSquareIcon(side: CGFloat, pal: Palette, glowAlpha: Double, to path: S
     drawField(ctx, size: size, pal: pal,
               glowAt: CGPoint(x: p.bodyRect.midX, y: p.bodyRect.midY),
               glowRadius: side * 0.62, glowAlpha: glowAlpha)
-    drawAntenna(ctx, p, pal, shadows: true)
-    drawBody(ctx, p, pal, shadows: true)
-    drawControls(ctx, p, pal, shadows: true)
+    drawAntenna(ctx, p, pal)
+    drawBody(ctx, p, pal)
+    drawControls(ctx, p, pal)
     writePNG(ctx, to: path, opaque: true)
 }
 
@@ -376,10 +260,10 @@ func renderStackLayer(_ layer: String, size: CGSize, placement p: Placement, to 
                   glowAt: CGPoint(x: p.bodyRect.midX, y: p.bodyRect.midY),
                   glowRadius: size.width * 0.62, glowAlpha: 0.34)
     case "Middle":
-        drawAntenna(ctx, p, pal, shadows: false)
-        drawBody(ctx, p, pal, shadows: false)
+        drawAntenna(ctx, p, pal)
+        drawBody(ctx, p, pal)
     case "Front":
-        drawControls(ctx, p, pal, shadows: false)
+        drawControls(ctx, p, pal)
     default: fatalError("unknown layer \(layer)")
     }
     writePNG(ctx, to: path, opaque: layer == "Back")
@@ -445,14 +329,14 @@ func renderTopShelf(size: CGSize, to path: String) {
     drawField(ctx, size: size, pal: pal,
               glowAt: CGPoint(x: p.bodyRect.midX, y: p.bodyRect.midY),
               glowRadius: size.width * 0.46, glowAlpha: 0.34)
-    drawAntenna(ctx, p, pal, shadows: true)
-    drawBody(ctx, p, pal, shadows: true)
-    drawControls(ctx, p, pal, shadows: true)
+    drawAntenna(ctx, p, pal)
+    drawBody(ctx, p, pal)
+    drawControls(ctx, p, pal)
 
     // Capitals centred on the body, which is where the eye puts the mark's centre —
     // not on its bounding box, which the antenna stretches upward.
     let capHeight = NSFont.systemFont(ofSize: titleSize, weight: .bold).capHeight
-    drawText(ctx, "Lytter", size: titleSize, weight: .bold, color: pal.bodyTop,
+    drawText(ctx, "Lytter", size: titleSize, weight: .bold, color: pal.body,
              at: CGPoint(x: lockupX + markW + gap, y: p.bodyRect.midY + capHeight / 2),
              tracking: tracking)
     writePNG(ctx, to: path, opaque: true)

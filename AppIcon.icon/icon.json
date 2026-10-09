@@ -15,7 +15,6 @@
   "groups": [
     {
       "blend-mode": "normal",
-      "blur-material": 0.5,
       "hidden": false,
       "layers": [
         {
@@ -94,18 +93,17 @@
       "lighting": "individual",
       "name": "Front",
       "shadow": {
-        "kind": "neutral",
+        "kind": "none",
         "opacity": 0.5
       },
-      "specular": true,
+      "specular": false,
       "translucency": {
-        "enabled": true,
+        "enabled": false,
         "value": 0.5
       }
     },
     {
       "blend-mode": "normal",
-      "blur-material": 0.5,
       "hidden": false,
       "layers": [
         {
@@ -126,17 +124,16 @@
       ],
       "name": "Middle",
       "shadow": {
-        "kind": "neutral",
+        "kind": "none",
         "opacity": 0.5
       },
-      "specular": true,
+      "specular": false,
       "translucency": {
         "enabled": false,
         "value": 0.5
       }
     },
     {
-      "blur-material": 0.5,
       "hidden": false,
       "layers": [
         {
@@ -159,10 +156,10 @@
       ],
       "name": "Back",
       "shadow": {
-        "kind": "neutral",
+        "kind": "none",
         "opacity": 0.5
       },
-      "specular": true,
+      "specular": false,
       "translucency": {
         "enabled": false,
         "value": 0.5
