@@ -37,6 +37,24 @@
         }
       }
     },
+    "NSHumanReadableCopyright" : {
+      "comment" : "Copyright (human-readable): shown in the Mac's About window. A name and a year, the same in every language.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "© 2026 Emmanuel Opio"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "© 2026 Emmanuel Opio"
+          }
+        }
+      }
+    },
     "NSSiriUsageDescription" : {
       "comment" : "Privacy - Siri Usage Description: shown when the app asks for Siri access.",
       "extractionState" : "extracted_with_value",
