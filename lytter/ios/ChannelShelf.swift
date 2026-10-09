@@ -144,27 +144,20 @@ struct ChannelShelfCard: View {
         group.channels.contains { DRServiceManager.isAudible($0, loaded: loaded, isPlaying: isPlaying) }
     }
 
-    /// How far the playing badge sits in from the card's top-right corner, and the badge's
-    /// own corner radius: half the card's radius each, so the two curves share a centre
-    /// (AGENTS.md, Concentricity). 6 and 6 on the standard card, 7 and 7 on the featured.
-    static func playingBadgeInset(_ style: ChannelShelfStyle) -> CGFloat {
-        style.metrics.cornerRadius / 2
-    }
-
-    /// The playing mark in the card's top-right corner, on dark glass so that it reads over
-    /// any artwork. In the corner rather than beside the name, which had no room for it on
-    /// the standard card for the longest districts.
+    /// The playing mark in the card's top-right corner, in the colour of the station's name,
+    /// across the card from the picker's chevron and as far in. In the corner rather than
+    /// beside the name, which had no room for it on the standard card for the longest
+    /// districts.
+    ///
+    /// Bare, with no glass behind it: the tile's picture only ever moves its colour away
+    /// from the name's (`StationTileArtwork`), so the mark reads wherever the name does.
     private var playingBadge: some View {
-        let inset = Self.playingBadgeInset(style)
-        return PlayingMark()
+        PlayingMark()
             .font(.system(size: style.metrics.accessoryFontSize))
             // Concrete: inside a Button a hierarchical style resolves against the tint.
-            .foregroundStyle(Color.accentColor)
-            .padding(inset)
-            .background(.ultraThinMaterial,
-                        in: RoundedRectangle(cornerRadius: inset, style: .continuous))
-            .environment(\.colorScheme, .dark)
-            .padding(inset)
+            .foregroundStyle(StationPalette.textColor(stationName: channel.name))
+            .padding(.horizontal, style.metrics.horizontalPadding)
+            .padding(.vertical, style.metrics.verticalPadding)
     }
 
     /// What is on now — for a group, whatever the listener's region, or failing that the
@@ -178,8 +171,8 @@ struct ChannelShelfCard: View {
         currentProgramme?.programmeName ?? String(localized: "Live")
     }
 
-    /// The artwork with the station, and on a featured card what is on it, over its foot;
-    /// or with no picture, the station's name across the whole card.
+    /// The station's name across the whole card, and on a featured card what is on it, with
+    /// the programme's picture showing through (`StationCardFace`).
     ///
     /// The chevron says the card asks rather than plays; without it the sheet arrives
     /// unannounced. Added here rather than self-hiding, together with the spacer that pushes

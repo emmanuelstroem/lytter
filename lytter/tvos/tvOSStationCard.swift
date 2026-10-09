@@ -150,13 +150,13 @@ struct tvOSStationCard: View {
         return symbols
     }
 
-    /// The button's label: artwork and the caption over it, or with no picture the
-    /// station's name across the whole card (`StationCardFace`).
+    /// The button's label: the station's name across the whole card, with the programme's
+    /// picture showing through (`StationCardFace`).
     ///
     /// Deliberately unclipped and unshaped. The card button style rounds and clips its own
     /// label, so shaping it here would put a second curve inside the system's and the two
-    /// would not share a centre. The caption meets the bottom edge with no inset, so the
-    /// system's clip is its corner too.
+    /// would not share a centre. The tile fills the label to its edges, so the system's clip
+    /// is its corner too.
     private var face: some View {
         StationCardFace(channel: channel, artworkURL: serviceManager.artworkURL(for: channel),
                         title: title, subtitle: subtitle, metrics: metrics) {

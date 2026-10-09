@@ -131,8 +131,8 @@ struct macOSStationCard: View {
         }
     }
 
-    /// Artwork with the caption over it, or with no picture the station's name across the
-    /// whole card (`StationCardFace`).
+    /// The station's name across the whole card, with the programme's picture showing
+    /// through (`StationCardFace`).
     private var cardImage: some View {
         StationCardFace(channel: channel, artworkURL: serviceManager.artworkURL(for: channel),
                         title: title, subtitle: subtitle, metrics: metrics) {

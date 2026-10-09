@@ -47,7 +47,12 @@ nonisolated enum StationPalette {
 
     /// What the station's name is written in, on `color(stationName:stationKey:)`.
     static func textColor(stationName: String) -> Color {
-        national[stationName.lowercased()]?.darkText == true ? Color(rgb: darkText) : .white
+        hasDarkText(stationName: stationName) ? Color(rgb: darkText) : .white
+    }
+
+    /// Whether the station's name is written in near-black rather than white.
+    static func hasDarkText(stationName: String) -> Bool {
+        national[stationName.lowercased()]?.darkText == true
     }
 
     private static func stableSeed(_ text: String) -> Int {
