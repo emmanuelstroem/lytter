@@ -74,6 +74,31 @@ struct StationPaletteTests {
         #expect(measured <= room, "\(station) is \(measured) wide on a tile with \(room) of room")
     }
 
+    /// The programme's picture shows through a tile only away from the name's colour: it
+    /// darkens under a white name and lightens under a near-black one, so wherever the
+    /// picture is darkest or lightest the name reads at least as well as on the plain colour.
+    /// Checked at full strength against black and white, the picture's extremes.
+    @Test(arguments: StationPalette.national.keys.sorted())
+    func artworkOnlyMovesTheColourAwayFromTheName(station: String) throws {
+        let entry = try #require(StationPalette.national[station])
+        let text = entry.darkText ? StationPalette.darkText : 0xFFFFFF
+        let blend = StationTileArtwork.blendMode(stationName: station)
+        func blended(_ backdrop: UInt32, _ picture: UInt32) -> UInt32 {
+            func channel(_ shift: UInt32) -> UInt32 {
+                let (b, p) = (Double((backdrop >> shift) & 0xFF) / 255, Double((picture >> shift) & 0xFF) / 255)
+                let value = blend == .multiply ? b * p : blend == .screen ? 1 - (1 - b) * (1 - p) : p
+                return UInt32((value * 255).rounded()) << shift
+            }
+            return channel(16) | channel(8) | channel(0)
+        }
+        let flat = Self.contrast(entry.rgb, text)
+        for picture: UInt32 in [0x000000, 0x808080, 0xFFFFFF] {
+            let tile = blended(entry.rgb, picture)
+            #expect(Self.contrast(tile, text) >= flat - 0.01,
+                    "\(station): a \(String(picture, radix: 16)) picture brings the name to \(Self.contrast(tile, text))")
+        }
+    }
+
     /// The logos went with the assets that held them; nothing in the app draws DR's.
     @Test(arguments: ["DRLydLogo", "DRP1Logo", "DRP3Logo", "DRP8Logo"])
     func noDRLogoShips(name: String) {

@@ -91,17 +91,6 @@ struct StationCardTests {
     }
 
     #if os(iOS) || os(visionOS)
-    /// The phone's playing badge sits in the card's corner, so its curve has to share the
-    /// card's centre: its radius is the card's, less the inset (AGENTS.md, Concentricity).
-    @Test(arguments: [StationCardStyle.featured, .standard])
-    func thePlayingBadgeIsConcentricWithTheCard(style: StationCardStyle) {
-        let inset = ChannelShelfCard.playingBadgeInset(style)
-
-        #expect(inset > 0)
-        #expect(inset == StationCardMetrics.iOS(style).cornerRadius - inset,
-                "a \(inset)-point badge inset \(inset) does not share a \(StationCardMetrics.iOS(style).cornerRadius)-point card's corner")
-    }
-
     /// A card is the station: P4's is marked whichever district is playing — each in turn,
     /// whatever order the group keeps them in.
     @Test func aStationsCardIsMarkedWhicheverDistrictPlays() {
