@@ -26,20 +26,6 @@ struct iOSFullPlayerSheet: View {
         currentChannel?.stationColor ?? .purple
     }
     
-    private var channelIcon: String {
-        guard let currentChannel = currentChannel else {
-            return "antenna.radiowaves.left.and.right"
-        }
-        
-        // Get the current program and use its category-based icon
-        if let currentProgram = serviceManager.getCurrentProgram(for: currentChannel) {
-            return currentProgram.categoryIcon
-        }
-        
-        // Fallback to default radio icon if no current program
-        return "antenna.radiowaves.left.and.right"
-    }
-    
     private var infoTitle: String {
         guard let currentChannel = currentChannel else { return String(localized: "No Channel") }
         
@@ -93,8 +79,7 @@ struct iOSFullPlayerSheet: View {
                         PlayerArtworkView(
                             channel: currentChannel,
                             currentProgram: serviceManager.getCurrentProgram(for: currentChannel),
-                            channelColor: channelColor,
-                            channelIcon: channelIcon
+                            channelColor: channelColor
                         )
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)

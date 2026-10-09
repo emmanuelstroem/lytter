@@ -221,11 +221,9 @@ private struct StationTile: View {
             .overlay {
                 GeometryReader { proxy in
                     Text(verbatim: station.stationName)
-                        .font(.system(size: proxy.size.width * 0.4, weight: .heavy))
-                        .minimumScaleFactor(0.4)
-                        .lineLimit(1)
+                        .stationTileName(width: proxy.size.width)
                         .foregroundStyle(StationPalette.textColor(stationName: station.stationName))
-                        .padding(proxy.size.width * 0.08)
+                        .padding(proxy.size.width * StationTileType.paddingShare)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
             }

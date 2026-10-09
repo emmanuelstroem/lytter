@@ -55,6 +55,25 @@ struct StationPaletteTests {
         #expect(p2.red == 1 && p2.green == 1 && p2.blue == 1)
     }
 
+    /// Every DR name fits across its tile at full size, inside the padding, so none is
+    /// shrunk to fit and every tile's name is the same size as its neighbours'. Measured
+    /// on a 100-point tile; the type scales with the tile, so the share holds at any size.
+    @Test(arguments: StationPalette.national.keys.sorted())
+    func nameFitsItsTileAtFullSize(station: String) {
+        let width: CGFloat = 100
+        let size = StationTileType.size(forWidth: width)
+        #if canImport(UIKit)
+        let font = UIFont.systemFont(ofSize: size, weight: .heavy)
+        #else
+        let font = NSFont.systemFont(ofSize: size, weight: .heavy)
+        #endif
+        let measured = (station.uppercased() as NSString).size(withAttributes: [
+            .font: font, .kern: size * StationTileType.trackingShare,
+        ]).width
+        let room = width * (1 - 2 * StationTileType.paddingShare)
+        #expect(measured <= room, "\(station) is \(measured) wide on a tile with \(room) of room")
+    }
+
     /// The logos went with the assets that held them; nothing in the app draws DR's.
     @Test(arguments: ["DRLydLogo", "DRP1Logo", "DRP3Logo", "DRP8Logo"])
     func noDRLogoShips(name: String) {
