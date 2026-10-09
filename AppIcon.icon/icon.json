@@ -2,13 +2,13 @@
   "fill-specializations": [
     {
       "value": {
-        "automatic-gradient": "srgb:1.00000,0.14913,0.00000,1.00000"
+        "automatic-gradient": "srgb:1.00000,0.00000,0.11765,1.00000"
       }
     },
     {
       "appearance": "dark",
       "value": {
-        "automatic-gradient": "srgb:0.80000,0.10000,0.02000,1.00000"
+        "automatic-gradient": "srgb:0.80000,0.00000,0.11412,1.00000"
       }
     }
   ],
@@ -31,13 +31,13 @@
           "fill-specializations": [
             {
               "value": {
-                "solid": "srgb:1.00000,0.14913,0.00000,1.00000"
+                "solid": "srgb:1.00000,0.00000,0.11765,1.00000"
               }
             },
             {
               "appearance": "dark",
               "value": {
-                "solid": "srgb:0.80000,0.10000,0.02000,1.00000"
+                "solid": "srgb:0.80000,0.00000,0.11412,1.00000"
               }
             }
           ]
@@ -55,13 +55,13 @@
           "fill-specializations": [
             {
               "value": {
-                "solid": "srgb:1.00000,0.14913,0.00000,1.00000"
+                "solid": "srgb:1.00000,0.00000,0.11765,1.00000"
               }
             },
             {
               "appearance": "dark",
               "value": {
-                "solid": "srgb:0.80000,0.10000,0.02000,1.00000"
+                "solid": "srgb:0.80000,0.00000,0.11412,1.00000"
               }
             }
           ]
@@ -79,13 +79,13 @@
           "fill-specializations": [
             {
               "value": {
-                "solid": "srgb:1.00000,0.14913,0.00000,1.00000"
+                "solid": "srgb:1.00000,0.00000,0.11765,1.00000"
               }
             },
             {
               "appearance": "dark",
               "value": {
-                "solid": "srgb:0.80000,0.10000,0.02000,1.00000"
+                "solid": "srgb:0.80000,0.00000,0.11412,1.00000"
               }
             }
           ]

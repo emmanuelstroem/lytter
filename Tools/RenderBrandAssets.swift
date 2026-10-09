@@ -46,27 +46,33 @@ struct Palette {
     var controlTop, controlBottom: CGColor
     var fieldTop, fieldBottom, glow: CGColor
 
+    /// The red is DR's own, from DR's colour system: "DR rød" #FF001E (Pantone 185), the
+    /// `.icon`'s fill. The gradients around it are not new colours but mixes of it with
+    /// two of DR's documented steps — #FD3A3A, the light "accessibility light red", for
+    /// the lit tops, and #55001B, a dark step, for the shaded bottoms — so the field stays
+    /// that one red, lit, rather than drifting towards orange as #FF2600 did.
     static let brand = Palette(
         bodyTop:       srgb(1.000, 1.000, 1.000),
         bodyBottom:    srgb(0.957, 0.929, 0.918),
         antenna:       srgb(0.980, 0.965, 0.957),
-        controlTop:    srgb(1.000, 0.310, 0.125),
-        controlBottom: srgb(0.796, 0.098, 0.000),
-        fieldTop:      srgb(1.000, 0.231, 0.078),
-        fieldBottom:   srgb(0.851, 0.110, 0.000),
-        glow:          srgb(1.000, 0.478, 0.302))
+        controlTop:    srgb(0.996, 0.125, 0.178),   // #FE202D: DR rød, 55% to #FD3A3A
+        controlBottom: srgb(0.833, 0.000, 0.115),   // #D4001D: DR rød, 25% to #55001B
+        fieldTop:      srgb(0.997, 0.091, 0.162),   // #FE1729: DR rød, 40% to #FD3A3A
+        fieldBottom:   srgb(0.880, 0.000, 0.116),   // #E0001D: DR rød, 18% to #55001B
+        glow:          srgb(0.994, 0.421, 0.421))   // #FE6B6B: #FD3A3A, 25% to white
 
     /// The same mark on a deeper red, for dark appearance — the matching `.icon` fill is
-    /// srgb(0.80, 0.10, 0.02). Still red, but not a bright square on a dark Home Screen.
+    /// #CC001D, DR rød 30% of the way to #55001B. Still DR's red, but not a bright square
+    /// on a dark Home Screen.
     static let dark = Palette(
         bodyTop:       brand.bodyTop,
         bodyBottom:    brand.bodyBottom,
         antenna:       brand.antenna,
-        controlTop:    srgb(0.850, 0.180, 0.060),
-        controlBottom: srgb(0.620, 0.060, 0.000),
-        fieldTop:      srgb(0.820, 0.120, 0.030),
-        fieldBottom:   srgb(0.560, 0.055, 0.010),
-        glow:          srgb(0.960, 0.300, 0.140))
+        controlTop:    srgb(0.900, 0.000, 0.116),   // #E6001E: 15% to #55001B
+        controlBottom: srgb(0.633, 0.000, 0.111),   // #A2001C: 55%
+        fieldTop:      srgb(0.800, 0.000, 0.114),   // #CC001D: 30%
+        fieldBottom:   srgb(0.587, 0.000, 0.110),   // #96001C: 62%
+        glow:          srgb(0.996, 0.102, 0.167))   // #FE1A2B: DR rød, 45% to #FD3A3A
 
     /// Greyscale: a dark field and a light radio, so the user's tint lands on the radio
     /// the way it lands on the white glass of the `.icon`.
