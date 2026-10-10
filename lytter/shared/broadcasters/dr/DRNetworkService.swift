@@ -193,8 +193,8 @@ class DRNetworkService {
     // MARK: - Fetch Index Points (Currently Playing Tracks)
     func fetchIndexPoints(for channelSlug: String) async throws -> DRIndexPointsResponse {
         #if DEBUG
-        // No live tracks for fixture channels, and no network during UI tests.
-        if UITestFixtures.isActive { throw NetworkError.invalidResponse }
+        // No network during UI tests; a fixture track only when one is asked for.
+        if UITestFixtures.isActive { return try UITestFixtures.indexPoints(for: channelSlug) }
         #endif
         let url = try endpoint(DRAPIConfig.indexpointsLive, channelSlug)
         let (data, response) = try await session.data(for: makeRequest(for: url))

@@ -95,9 +95,43 @@ enum UITestFixtures {
                     index: 0,
                     start: now.addingTimeInterval(-30 * 60),
                     end: now.addingTimeInterval(30 * 60),
-                    title: "\(channel.name) Fixture: Et langt program",
+                    title: hasLongTitles
+                        ? "\(channel.name) \(longProgrammeTitle)"
+                        : "\(channel.name) Fixture: Et langt program",
                     description: longDescription)
         }
+    }
+
+    // MARK: - Long titles
+
+    /// Whether the programmes on air carry titles wider than any phone, with a track on air
+    /// whose artist and title are as long, from `LYTTER_UITEST_LONG_TITLES`. Off unless asked
+    /// for, so every other test sees the short titles it was written against.
+    static var hasLongTitles: Bool {
+        isActive && ProcessInfo.processInfo.environment["LYTTER_UITEST_LONG_TITLES"] == "1"
+    }
+
+    static let longProgrammeTitle =
+        "Morgenhyrderne med Søren og Mette direkte fra Aarhus hele formiddagen"
+    static let longTrackArtist = "Christopher Rasmussen & The Copenhagen Philharmonic"
+    static let longTrackTitle = "A Very Long Song Title That Keeps Going (Extended Radio Edit)"
+
+    /// What `/indexpoints/live` would answer for a channel: one track, on air now, when the
+    /// long titles are asked for.
+    static func indexPoints(for slug: String, now: Date = Date()) throws -> DRIndexPointsResponse {
+        guard hasLongTitles, let channel = channels.first(where: { $0.slug == slug }) else {
+            throw NetworkError.invalidResponse
+        }
+        let track = DRTrack(type: "Music", durationMilliseconds: 60 * 60 * 1000,
+                            playedTime: formatter.string(from: now.addingTimeInterval(-60)),
+                            musicUrl: "", trackUrn: "urn:fixture:track:\(slug)",
+                            classical: false,
+                            roles: [DRTrackRole(artistUrn: "urn:fixture:artist",
+                                                role: "Hovedkunstner", name: longTrackArtist,
+                                                musicUrl: "")],
+                            title: longTrackTitle, description: longTrackArtist)
+        return DRIndexPointsResponse(type: "IndexPoints", channel: channel, totalSize: 1,
+                                     items: [track], id: "urn:fixture:indexpoints:\(slug)")
     }
 
     /// Today's schedule for one channel: more programmes than the schedule sheet shows at
