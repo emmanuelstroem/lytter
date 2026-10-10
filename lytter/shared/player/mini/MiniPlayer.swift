@@ -180,9 +180,6 @@ struct MiniPlayerComponents: View {
                         }
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    // Text styles now, so the bar follows Dynamic Type — but it is a fixed-height
-                    // bar, so it stops growing where the system's own compact bars do.
-                    .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
                 }
             }
             .contentShape(Rectangle())
@@ -213,8 +210,10 @@ struct MiniPlayerComponents: View {
                             serviceManager.playChannel(firstChannel)
                         }
                     }) {
+                        // A text style, 16pt by default, so the glyph grows with the text
+                        // beside it rather than being left behind at the larger sizes.
                         Image(systemName: serviceManager.isPlaying ? "pause.fill" : "play.fill")
-                            .font(.system(size: 16, weight: .medium))
+                            .font(.callout.weight(.medium))
                             .foregroundStyle(Color.primary)
                             #if os(visionOS)
                             .frame(width: 36, height: 36)
@@ -231,10 +230,24 @@ struct MiniPlayerComponents: View {
                     #endif
                     .disabled(playingChannel == nil && serviceManager.availableChannels.isEmpty)
                     .accessibilityLabel(serviceManager.isPlaying ? "Pause" : "Play")
+                    // Past the cap below, touch and hold shows the control enlarged, as
+                    // the system's own bars do.
+                    .accessibilityShowsLargeContentViewer {
+                        Label(serviceManager.isPlaying ? "Pause" : "Play",
+                              systemImage: serviceManager.isPlaying ? "pause.fill" : "play.fill")
+                    }
+                    .accessibilityIdentifier("miniPlayer.playPause")
                 }
             }
             .frame(alignment: .trailing)
         }
+        // Text styles, so the bar follows Dynamic Type, its controls as well as its text —
+        // but it is a fixed-height bar, so it stops growing where the system's own compact
+        // bars do. On iOS 26 the tab bar's accessory caps it there already; this is for
+        // visionOS's ornament and the floating bar before iOS 26. The artwork stays as it
+        // is: on visionOS it shares the ornament's corner. AirPlay does too:
+        // AVRoutePickerView draws its own glyph, at one size whatever its frame.
+        .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
         #if os(visionOS)
         // In visionOS's ornament the artwork meets the glass's corner, so it is inset the
         // same on every side; the ornament's radius is this plus the artwork's.

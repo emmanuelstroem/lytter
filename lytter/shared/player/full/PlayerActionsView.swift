@@ -47,13 +47,16 @@ struct PlayerActionsView: View {
                         onQuoteTap?()
                     }) {
                         Image(systemName: "info.circle")
-                            .font(.system(size: min(geometry.size.width, geometry.size.height) * 0.3, weight: .medium))
+                            .font(Self.glyphFont)
                             .foregroundStyle(Color.secondary)
-                        // The glyph is about 19pt; the target is the HIG's 44pt minimum.
+                        // The target is the HIG's 44pt minimum, whatever the glyph's size.
                         .frame(minWidth: 44, minHeight: 44)
                         .contentShape(Rectangle())
                     }
                     .accessibilityLabel("Programme information")
+                    .accessibilityShowsLargeContentViewer {
+                        Label("Programme information", systemImage: "info.circle")
+                    }
                 }
                 Spacer()
                 
@@ -74,13 +77,16 @@ struct PlayerActionsView: View {
                         onListTap?()
                     }) {
                         Image(systemName: "list.bullet")
-                            .font(.system(size: min(geometry.size.width, geometry.size.height) * 0.3, weight: .medium))
+                            .font(Self.glyphFont)
                             .foregroundStyle(Color.secondary)
-                        // The glyph is about 19pt; the target is the HIG's 44pt minimum.
+                        // The target is the HIG's 44pt minimum, whatever the glyph's size.
                         .frame(minWidth: 44, minHeight: 44)
                         .contentShape(Rectangle())
                     }
                     .accessibilityLabel("Today's schedule")
+                    .accessibilityShowsLargeContentViewer {
+                        Label("Today's schedule", systemImage: "list.bullet")
+                    }
                 }
                 Spacer()
                 if showSleepButton {
@@ -89,15 +95,19 @@ struct PlayerActionsView: View {
                         onSleepTap?()
                     }) {
                         Image(systemName: isRunning ? "moon.zzz.fill" : "moon.zzz")
-                            .font(.system(size: min(geometry.size.width, geometry.size.height) * 0.3, weight: .medium))
+                            .font(Self.glyphFont)
                             // Tinted while running: the only indication on this screen
                             // that playback is going to stop by itself.
                             .foregroundStyle(isRunning ? Color.accentColor : Color.secondary)
-                        // The glyph is about 19pt; the target is the HIG's 44pt minimum.
+                        // The target is the HIG's 44pt minimum, whatever the glyph's size.
                         .frame(minWidth: 44, minHeight: 44)
                         .contentShape(Rectangle())
                     }
                     .accessibilityLabel("Sleep timer")
+                    .accessibilityShowsLargeContentViewer {
+                        Label("Sleep timer", systemImage: isRunning ? "moon.zzz.fill" : "moon.zzz")
+                    }
+                    .accessibilityIdentifier("player.sleep")
                     .accessibilityValue(
                         sleepTimerMinutesRemaining.map { String(localized: "\($0) minutes remaining") }
                             ?? String(localized: "Off")
@@ -106,8 +116,19 @@ struct PlayerActionsView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .padding(.horizontal, geometry.size.width * 0.12)
+            // The glyphs follow Dynamic Type, as far as the first accessibility size: there
+            // they are 28pt, the row's height less a margin, and the text above has the
+            // screen's height to grow into where this row has its own. Past that, touch
+            // and hold shows each control enlarged. Not AirPlay: AVRoutePickerView draws its
+            // own glyph, at one size whatever its frame.
+            .dynamicTypeSize(...DynamicTypeSize.accessibility1)
         }
     }
+
+    /// The body text's style, 17pt by default: the size these glyphs were drawn at when
+    /// they were a share of the row's height, which left them as they were at every
+    /// text size.
+    private static let glyphFont = Font.body.weight(.medium)
 }
 
 #Preview {
