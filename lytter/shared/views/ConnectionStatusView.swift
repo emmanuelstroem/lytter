@@ -69,6 +69,8 @@ struct ConnectionBanner: View {
         return problem
     }
 
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
     var body: some View {
         if let problem {
             content(for: problem)
@@ -90,35 +92,27 @@ struct ConnectionBanner: View {
         return problem.message(hasContent: !serviceManager.availableChannels.isEmpty)
     }
 
+    /// One row — icon, text, Try Again — unless the text is at an accessibility size. There
+    /// the row is too narrow for all three: the title truncated to "Could…" and the button
+    /// broke mid-word, "Try Agai / n". So the button goes under the text, in its column.
     private func content(for problem: ConnectionProblem) -> some View {
-        HStack(spacing: Metrics.spacing) {
-            Image(systemName: problem.systemImage)
-                .font(Metrics.iconFont)
-                .foregroundStyle(.orange)
-                .accessibilityHidden(true)
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text(problem.title)
-                    .font(Metrics.titleFont)
-                    .foregroundStyle(.primary)
-                Text(message(for: problem))
-                    .font(Metrics.messageFont)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            .accessibilityElement(children: .combine)
-
-            Spacer(minLength: 0)
-
-            if showsRetry {
-                Button("Try Again") { serviceManager.retry() }
-                    #if !os(tvOS)
-                    .buttonStyle(.bordered)
-                    .controlSize(.small)
-                    #endif
-                    // The button sits `Metrics.padding` in from the banner's corners, which
-                    // leaves next to nothing of the radius for it: a capsule (AGENTS.md).
-                    .buttonBorderShape(.capsule)
+        Group {
+            if dynamicTypeSize.isAccessibilitySize {
+                HStack(alignment: .top, spacing: Metrics.spacing) {
+                    icon(for: problem)
+                    VStack(alignment: .leading, spacing: Metrics.spacing) {
+                        text(for: problem)
+                        retryButton
+                    }
+                    Spacer(minLength: 0)
+                }
+            } else {
+                HStack(spacing: Metrics.spacing) {
+                    icon(for: problem)
+                    text(for: problem)
+                    Spacer(minLength: 0)
+                    retryButton
+                }
             }
         }
         .padding(Metrics.padding)
@@ -126,6 +120,41 @@ struct ConnectionBanner: View {
         .background(.regularMaterial,
                     in: RoundedRectangle(cornerRadius: Metrics.radius, style: .continuous))
         .accessibilityIdentifier("connection.banner")
+    }
+
+    private func icon(for problem: ConnectionProblem) -> some View {
+        Image(systemName: problem.systemImage)
+            .font(Metrics.iconFont)
+            .foregroundStyle(.orange)
+            .accessibilityHidden(true)
+    }
+
+    private func text(for problem: ConnectionProblem) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(problem.title)
+                .font(Metrics.titleFont)
+                .foregroundStyle(.primary)
+                .fixedSize(horizontal: false, vertical: true)
+            Text(message(for: problem))
+                .font(Metrics.messageFont)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .accessibilityElement(children: .combine)
+    }
+
+    @ViewBuilder
+    private var retryButton: some View {
+        if showsRetry {
+            Button("Try Again") { serviceManager.retry() }
+                #if !os(tvOS)
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+                #endif
+                // The button sits `Metrics.padding` in from the banner's corners, which
+                // leaves next to nothing of the radius for it: a capsule (AGENTS.md).
+                .buttonBorderShape(.capsule)
+        }
     }
 
     private enum Metrics {

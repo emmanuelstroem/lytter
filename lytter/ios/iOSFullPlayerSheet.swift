@@ -73,111 +73,21 @@ struct iOSFullPlayerSheet: View {
             AppBackground()
             
             if let currentChannel = currentChannel {
-                VStack(spacing: 0) {
-                    // Artwork: a square as wide as the player, or as tall as what is left
-                    // once everything below has the room it needs. The two halves used to
-                    // split the height evenly, and on a shorter iPhone the lower half needs
-                    // more than half — its fixed rows and gaps came out of the artwork, which
-                    // on an iPhone SE shrank to a stamp. The square is the cap: on a taller
-                    // phone the artwork is no larger than before, and the gaps below take
-                    // the rest.
-                    PlayerArtworkView(
-                        channel: currentChannel,
-                        currentProgram: serviceManager.getCurrentProgram(for: currentChannel),
-                        channelColor: channelColor
-                    )
-                    .aspectRatio(1, contentMode: .fit)
-                    .frame(maxWidth: .infinity)
-                    .layoutPriority(1)
-
-                    // Everything else
-                    VStack(spacing: 0) {
-                        VStack(spacing: 30) {
-                            // Only what stops audio: offline, or this stream failing.
-                            ConnectionBanner(serviceManager: serviceManager, playbackOnly: true)
-                                .padding(.horizontal, 20)
-
-                            // Info Component
-                            // The share control lives inside PlayerInfoView.
-                            PlayerInfoView(
-                                title: infoTitle,
-                                subtitle: infoSubtitle,
-                                channel: currentChannel,
-                                serviceManager: serviceManager
-                            )
-
-                            Group {
-                                if serviceManager.onDemandEpisode != nil {
-                                    OnDemandProgressView(
-                                        position: serviceManager.onDemandPosition,
-                                        duration: serviceManager.onDemandDuration,
-                                        onSeek: { serviceManager.seekOnDemand(to: $0) }
-                                    )
-                                } else {
-                                    PlayerProgressView(
-                                        programme: serviceManager.getCurrentProgram(for: currentChannel),
-                                        secondsBehindLive: serviceManager.secondsBehindLive
-                                    )
-                                }
-                            }
-                            .padding(.horizontal, 20)
+                // Fixed when it fits, scrolling when it does not. At the largest text sizes
+                // on a small iPhone, with the connection banner up, the rows below the
+                // artwork need more than the screen's height; centred in too little, they
+                // spilled upwards over the top inset and the banner ran over the grab handle.
+                // The content is at least as tall as the screen, so the spacers and the
+                // artwork share out the room as before, and only grows past it when it must.
+                GeometryReader { viewport in
+                    ScrollView {
+                        AtLeastHeight(height: viewport.size.height) {
+                            player(for: currentChannel)
                         }
-
-                        // Flexible, with a floor: the fixed 30pt either side of these was
-                        // what a short screen could least afford.
-                        Spacer(minLength: 24)
-
-                        // Controls Component
-                        //
-                        // Skip and Live appear only when the stream has a DVR window
-                        // (DR's HLS streams); the ICY fallback has nothing to seek in.
-                        // A recording counts as behind live, so Live leaves it for the
-                        // channel and skip forward stays on.
-                        PlayerControlsView(
-                            isPlaying: serviceManager.isPlaying,
-                            showBackwardButton: serviceManager.canSeek,
-                            showForwardButton: serviceManager.canSeek,
-                            onBackwardTap: {
-                                serviceManager.skip(by: -AudioPlayerService.skipInterval)
-                            },
-                            onPlayPauseTap: {
-                                if let playingChannel = serviceManager.playingChannel {
-                                    serviceManager.togglePlayback(for: playingChannel)
-                                }
-                            },
-                            onForwardTap: {
-                                serviceManager.skip(by: AudioPlayerService.skipInterval)
-                            },
-                            isForwardEnabled: serviceManager.isBehindLive,
-                            onLiveTap: serviceManager.canSeek ? { serviceManager.seekToLive() } : nil,
-                            isBehindLive: serviceManager.isBehindLive
-                        )
-                        // Fixed heights for the two icon rows. Both size their symbols from
-                        // their own frame, and between the Spacers that frame was whatever was
-                        // left over — so larger Dynamic Type text above shrank the play
-                        // button and the action icons. The Spacers absorb the difference now.
-                        .frame(height: 96)
-
-                        Spacer(minLength: 16)
-
-                        // Actions Component
-                        PlayerActionsView(
-                            sleepTimerMinutesRemaining: sleepTimerMinutesRemaining,
-                            onQuoteTap: {
-                                showingDescriptionSheet = true
-                            },
-                            onListTap: {
-                                showingScheduleSheet = true
-                            },
-                            onSleepTap: {
-                                showingSleepSheet = true
-                            }
-                        )
-                        .frame(height: 56)
                     }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .scrollBounceBehavior(.basedOnSize)
+                    .accessibilityIdentifier("player.scroll")
                 }
-                .padding(.top, 40)
             } else {
                 // No channel playing
                 VStack(spacing: 20) {
@@ -222,6 +132,136 @@ struct iOSFullPlayerSheet: View {
                 .presentationDetents([.medium, .large])
             }
         }
+    }
+
+    /// The artwork, and every row under it.
+    private func player(for currentChannel: DRChannel) -> some View {
+        VStack(spacing: 0) {
+            // Artwork: a square as wide as the player, or as tall as what is left
+            // once everything below has the room it needs. The two halves used to
+            // split the height evenly, and on a shorter iPhone the lower half needs
+            // more than half — its fixed rows and gaps came out of the artwork, which
+            // on an iPhone SE shrank to a stamp. The square is the cap: on a taller
+            // phone the artwork is no larger than before, and the gaps below take
+            // the rest.
+            PlayerArtworkView(
+                channel: currentChannel,
+                currentProgram: serviceManager.getCurrentProgram(for: currentChannel),
+                channelColor: channelColor
+            )
+            .aspectRatio(1, contentMode: .fit)
+            .frame(maxWidth: .infinity)
+            .layoutPriority(1)
+
+            // Everything else
+            VStack(spacing: 0) {
+                VStack(spacing: 30) {
+                    // Only what stops audio: offline, or this stream failing.
+                    ConnectionBanner(serviceManager: serviceManager, playbackOnly: true)
+                        .padding(.horizontal, 20)
+
+                    // Info Component
+                    // The share control lives inside PlayerInfoView.
+                    PlayerInfoView(
+                        title: infoTitle,
+                        subtitle: infoSubtitle,
+                        channel: currentChannel,
+                        serviceManager: serviceManager
+                    )
+
+                    Group {
+                        if serviceManager.onDemandEpisode != nil {
+                            OnDemandProgressView(
+                                position: serviceManager.onDemandPosition,
+                                duration: serviceManager.onDemandDuration,
+                                onSeek: { serviceManager.seekOnDemand(to: $0) }
+                            )
+                        } else {
+                            PlayerProgressView(
+                                programme: serviceManager.getCurrentProgram(for: currentChannel),
+                                secondsBehindLive: serviceManager.secondsBehindLive
+                            )
+                        }
+                    }
+                    .padding(.horizontal, 20)
+                }
+
+                // Flexible, with a floor: the fixed 30pt either side of these was
+                // what a short screen could least afford.
+                Spacer(minLength: 24)
+
+                // Controls Component
+                //
+                // Skip and Live appear only when the stream has a DVR window
+                // (DR's HLS streams); the ICY fallback has nothing to seek in.
+                // A recording counts as behind live, so Live leaves it for the
+                // channel and skip forward stays on.
+                PlayerControlsView(
+                    isPlaying: serviceManager.isPlaying,
+                    showBackwardButton: serviceManager.canSeek,
+                    showForwardButton: serviceManager.canSeek,
+                    onBackwardTap: {
+                        serviceManager.skip(by: -AudioPlayerService.skipInterval)
+                    },
+                    onPlayPauseTap: {
+                        if let playingChannel = serviceManager.playingChannel {
+                            serviceManager.togglePlayback(for: playingChannel)
+                        }
+                    },
+                    onForwardTap: {
+                        serviceManager.skip(by: AudioPlayerService.skipInterval)
+                    },
+                    isForwardEnabled: serviceManager.isBehindLive,
+                    onLiveTap: serviceManager.canSeek ? { serviceManager.seekToLive() } : nil,
+                    isBehindLive: serviceManager.isBehindLive
+                )
+                // Fixed heights for the two icon rows. Both size their symbols from
+                // their own frame, and between the Spacers that frame was whatever was
+                // left over — so larger Dynamic Type text above shrank the play
+                // button and the action icons. The Spacers absorb the difference now.
+                .frame(height: 96)
+
+                Spacer(minLength: 16)
+
+                // Actions Component
+                PlayerActionsView(
+                    sleepTimerMinutesRemaining: sleepTimerMinutesRemaining,
+                    onQuoteTap: {
+                        showingDescriptionSheet = true
+                    },
+                    onListTap: {
+                        showingScheduleSheet = true
+                    },
+                    onSleepTap: {
+                        showingSleepSheet = true
+                    }
+                )
+                .frame(height: 56)
+            }
+            // No maxHeight: a frame that takes whatever height it is offered centres what
+            // does not fit in it, upwards as well as down. The spacers fill any spare room.
+            .frame(maxWidth: .infinity)
+        }
+        .padding(.top, 40)
+    }
+}
+
+/// Offers its content `height`, and is as tall as the content then asks for, or `height`
+/// if that is more. A `ScrollView` offers its content no height at all, and a flexible
+/// frame's minimum did not stop the player being laid out in the screen's height and
+/// centred in it, overflow and all.
+private struct AtLeastHeight: Layout {
+    let height: CGFloat
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let size = subviews.first?.sizeThatFits(ProposedViewSize(width: proposal.width,
+                                                                 height: height)) ?? .zero
+        return CGSize(width: proposal.width ?? size.width, height: max(height, size.height))
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews,
+                       cache: inout ()) {
+        subviews.first?.place(at: bounds.origin, proposal: ProposedViewSize(bounds.size))
     }
 }
 
