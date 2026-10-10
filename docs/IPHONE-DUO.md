@@ -119,9 +119,17 @@ phone layout.
       or let the system manage the inset.
 - [ ] **D3. Replace hardcoded `.frame(width:)` with relative sizing** in the ~30 places
       that use it, especially artwork and the mini player row.
-- [ ] **D4. Adopt Dynamic Type.** All typography is hardcoded `.system(size:)` today;
+- [x] **D4. Adopt Dynamic Type.** All typography is hardcoded `.system(size:)` today;
       the HIG asks that text sizes stay as consistent as possible while resizing.
       _(Overlaps with the accessibility work, F11.)_
+      *Done:* text uses text styles (F11, F11b), and since #110 so do the players'
+      controls, and the programme under a station's card wraps at the accessibility sizes.
+      The `.system(size:)` left on iOS are sized to the shape they sit in, on purpose: a
+      station's name across its card, sized so every name DR broadcasts fits; the
+      transport glyphs, sized by their row; glyphs on artwork and placeholders. Where a
+      control stops growing (the mini player past xxxLarge, the full player's action row
+      past the first accessibility size), touch and hold shows it enlarged. AirPlay does
+      not grow: AVRoutePickerView draws its own glyph, at one size.
 
 ### Phase 1 — make it adaptive
 

@@ -187,6 +187,7 @@ enum StationCard {
         /// Dynamic Type, so this stays 1 there. The name on the artwork does not scale: it
         /// sits in a fixed card, sized so that every name DR broadcasts fits.
         @ScaledMetric(relativeTo: .caption2) private var textScale: CGFloat = 1
+        @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
         var body: some View {
             // Concrete rather than hierarchical: this sits on the background, not on a
@@ -196,7 +197,10 @@ enum StationCard {
                     PlayingMark()
                 }
                 Text(text)
-                    .lineLimit(1)
+                    // One line, as Music's captions are. At the accessibility sizes a line
+                    // under a phone's card holds a word of a programme's name, if that —
+                    // "Fixtur…" — so there it wraps, as far as three lines.
+                    .lineLimit(dynamicTypeSize.isAccessibilitySize ? 3 : 1)
             }
             .font(.system(size: metrics.subtitleFontSize * textScale))
             .foregroundStyle(Color.secondaryOnPage)

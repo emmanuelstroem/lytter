@@ -83,7 +83,10 @@ struct ChannelGrid: View {
     let onChannelTap: (DRChannel) -> Void
 
     var body: some View {
-        LazyVGrid(columns: [GridItem(.adaptive(minimum: 148), spacing: 16)], spacing: 20) {
+        // Top-aligned, as the shelves are: at the accessibility sizes a caption that wraps makes
+        // its card taller than the one beside it, and centred, the cards' tiles fell out of line.
+        LazyVGrid(columns: [GridItem(.adaptive(minimum: 148), spacing: 16, alignment: .top)],
+                  spacing: 20) {
             ForEach(groups) { group in
                 ChannelShelfCard(group: group, serviceManager: serviceManager, onTap: onChannelTap)
             }

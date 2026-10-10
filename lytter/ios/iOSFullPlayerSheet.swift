@@ -215,10 +215,11 @@ struct iOSFullPlayerSheet: View {
                     onLiveTap: serviceManager.canSeek ? { serviceManager.seekToLive() } : nil,
                     isBehindLive: serviceManager.isBehindLive
                 )
-                // Fixed heights for the two icon rows. Both size their symbols from
-                // their own frame, and between the Spacers that frame was whatever was
-                // left over — so larger Dynamic Type text above shrank the play
-                // button and the action icons. The Spacers absorb the difference now.
+                // Fixed heights for the two icon rows. Between the Spacers their frames
+                // were whatever was left over, and the transport glyphs are sized from
+                // theirs — so larger Dynamic Type text above shrank the play button. The
+                // Spacers absorb the difference now. The action glyphs follow Dynamic
+                // Type themselves, up to a size this row holds.
                 .frame(height: 96)
 
                 Spacer(minLength: 16)
