@@ -89,6 +89,9 @@ it did here.
 pass all 42 UI tests; the 17 Pro Max passes the suites it touched, reordering included; the
 SE fails only B2's two, as here.
 
+The fix for B2 changed only `SettingsAndSearchUITests` and added one test to it. That suite
+now passes on the SE, the 17 Pro Max and both iPads.
+
 ---
 
 ## iPhone, small screens (SE, mini)
@@ -104,13 +107,22 @@ SE fails only B2's two, as here.
       player scroll when it does not fit, and keep it fixed when it does.
       *Fixed in #108:* the player scrolls when it does not fit and stays put when it
       does (`PlayerOverflowUITests`).
-- [ ] **B2. The mini player may cover the last rows of Settings. Investigate.**
+- [x] **B2. The mini player may cover the last rows of Settings. Investigate.**
       `SettingsAndSearchUITests.testChooseRegion` and `testRegionPickerListsEachDistrictOnce`
       fail on the SE alone: the Region picker never opens. In the failure snapshot the
       Region row sits at y 529–564 of 667, under the floating mini player (y ≈ 540–580), so
       the tap most likely lands on the mini player. Check whether Settings' list is inset
       for the mini player on every iPhone. If it is, the bug is in the test, which stops
       scrolling while the row is still under the bar.
+      *Fixed in the tests:* the list is inset, so the bug was in the test. On iOS 26
+      the system keeps the list clear of the bottom accessory without help: with its
+      100-point bottom margin taken out, Settings still ends 6 points above the mini
+      player. The margin is for iOS 17–18, where the mini player is an overlay.
+      `isHittable` counts a row the mini player floats over, so at launch the Region row
+      was "in reach" with no scrolling, and the tap opened the player. The tests now
+      scroll in short drags until the row is clear of the mini player and the tab bar.
+      `testSettingsEndsClearOfTheMiniPlayer` checks that the end of Settings scrolls
+      clear of it.
 
 ## iPhone, all sizes
 
