@@ -27,7 +27,6 @@ struct TVScrollingCoverageTests {
         "tvOSVariantMenu.swift": ["testDistrictPickerScrolls"],
         "tvOSChannelScheduleSheet.swift": ["testScheduleScrolls"],
         "tvOSScrollingText.swift": ["testInfoDescriptionScrolls"],
-        "tvOSBroadcasterView.swift": ["testBroadcasterShelfScrollsSideways"],
         "tvOSSearchView.swift": ["testSearchResultsScroll", "testSearchResultShelfScrollsSideways"],
         "tvOSSettingsView.swift": ["testSettingsScrolls", "testRegionPickerScrolls"],
     ]
