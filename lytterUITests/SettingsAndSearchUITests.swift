@@ -31,7 +31,7 @@ final class SettingsAndSearchUITests: XCTestCase {
                       "Settings has no Show Images switch")
 
         let link = app.buttons.matching(NSPredicate(format: "label CONTAINS[c] 'shortcuts'")).firstMatch
-        scrollUntilHittable(link)
+        scrollIntoReach(link)
         XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH 'Say “Play P3”'"))
                         .firstMatch.exists, "Settings does not say what to ask Siri")
         shot("settings")
@@ -45,11 +45,27 @@ final class SettingsAndSearchUITests: XCTestCase {
         openSettings()
 
         let support = app.buttons["Support"]
-        scrollUntilHittable(support)
+        scrollIntoReach(support)
         XCTAssertTrue(app.buttons["Privacy Policy"].exists, "About has no Privacy Policy link")
         XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH 'Lytter is an independent app'"))
                         .firstMatch.exists, "Settings does not say Lytter is independent of DR")
         shot("about")
+    }
+
+    /// Settings scrolls far enough for its last line to come out from under the mini
+    /// player: the list is inset for it (B2), as the other tabs are.
+    @MainActor
+    func testSettingsEndsClearOfTheMiniPlayer() throws {
+        launch()
+        openSettings()
+
+        let independence = app.staticTexts
+            .matching(NSPredicate(format: "label BEGINSWITH 'Lytter is an independent app'")).firstMatch
+        for _ in 0..<6 { app.swipeUp() }
+        XCTAssertTrue(independence.waitForExistence(timeout: 5), "Settings does not end with About")
+        XCTAssertLessThanOrEqual(independence.frame.maxY, bottomBarsTop,
+                                 "the end of Settings stays under the mini player")
+        shot("settings-end")
     }
 
     /// A region can be chosen in Settings, from every district the catalogue lists, and
@@ -59,7 +75,7 @@ final class SettingsAndSearchUITests: XCTestCase {
         launch(region: "Fyn")
         openSettings()
 
-        scrollUntilHittable(regionPicker)
+        scrollIntoReach(regionPicker)
         XCTAssertEqual(regionPicker.label, "Region, Fyn", "Settings does not show the remembered region")
 
         choose("København")
@@ -75,7 +91,7 @@ final class SettingsAndSearchUITests: XCTestCase {
         launch()
         openSettings()
 
-        scrollUntilHittable(regionPicker)
+        scrollIntoReach(regionPicker)
         regionPicker.tap()
         XCTAssertTrue(app.buttons["Østjylland"].waitForExistence(timeout: 5), "the picker did not open")
         shot("region-picker")
@@ -233,12 +249,42 @@ final class SettingsAndSearchUITests: XCTestCase {
             .matching(NSPredicate(format: "label BEGINSWITH %@", "\(title),")).firstMatch
     }
 
+    /// The top of whatever floats over the bottom of the page: the mini player, or the tab
+    /// bar when there is no mini player above it.
     @MainActor
-    private func scrollUntilHittable(_ element: XCUIElement) {
-        for _ in 0..<5 where !(element.exists && element.isHittable) {
-            app.swipeUp()
+    private var bottomBarsTop: CGFloat {
+        let miniPlayer = app.descendants(matching: .any).matching(identifier: "miniPlayer").firstMatch
+        let tabBar = app.tabBars.firstMatch
+        return [miniPlayer, tabBar].filter(\.exists).map(\.frame.minY).min()
+            ?? app.windows.firstMatch.frame.maxY
+    }
+
+    /// Whether a tap on the element reaches it. `isHittable` is not enough: it counts a row
+    /// the mini player floats over, and the tap opens the player instead (B2).
+    @MainActor
+    private func isInReach(_ element: XCUIElement) -> Bool {
+        element.exists && element.isHittable && element.frame.maxY <= bottomBarsTop
+    }
+
+    /// Scrolls up a little at a time until the element is clear of the bars at the bottom.
+    /// In short drags rather than swipes: a swipe carried a row sitting under the mini
+    /// player past the top of the screen on the iPhone SE.
+    @MainActor
+    private func scrollIntoReach(_ element: XCUIElement) {
+        var drags = 0
+        while drags < 12, !isInReach(element) {
+            dragUp()
+            drags += 1
         }
-        XCTAssertTrue(element.isHittable, "\(element) never came into reach")
+        XCTAssertTrue(isInReach(element), "\(element) never came clear of the mini player and tab bar")
+    }
+
+    /// Scrolls up by a fifth of the window, with no momentum.
+    @MainActor
+    private func dragUp() {
+        let start = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.6))
+        let end = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.4))
+        start.press(forDuration: 0.05, thenDragTo: end)
     }
 
     @MainActor
