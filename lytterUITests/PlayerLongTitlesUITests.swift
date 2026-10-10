@@ -44,7 +44,9 @@ final class PlayerLongTitlesUITests: XCTestCase {
         let heard = NSPredicate(format: "label CONTAINS 'Morgenhyrderne'")
         expectation(for: heard, evaluatedWith: title)
         waitForExpectations(timeout: 20)
-        let track = app.staticTexts
+        // The player's own line. Before iOS 26 the mini player stays in the tree behind the
+        // sheet, and its track line, which starts the same way, comes first.
+        let track = app.scrollViews["player.scroll"].staticTexts
             .matching(NSPredicate(format: "label BEGINSWITH 'Christopher Rasmussen'")).firstMatch
         XCTAssertTrue(track.exists, "no track line under the title")
 

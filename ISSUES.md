@@ -31,7 +31,7 @@ The smallest and largest of each kind, and the oldest OS that has a simulator ru
 | --- | --- | --- |
 | iPhone SE (3rd generation) | iOS 26.5 | Smallest iPhone screen, 375×667. Not created by default: `xcrun simctl create "iPhone SE (3rd generation)" com.apple.CoreSimulator.SimDeviceType.iPhone-SE-3rd-generation com.apple.CoreSimulator.SimRuntime.iOS-26-5` |
 | iPhone 17 Pro Max | iOS 26.5 | Largest iPhone screen |
-| iPhone 16e | iOS 18.5 | Oldest iOS with a runtime here; tests cannot run on it yet (B13) |
+| iPhone 16e | iOS 18.5 | Oldest iOS with a runtime here |
 | iPad mini (A17 Pro) | iOS 26.5 | Smallest iPad |
 | iPad Pro 13-inch (M5) | iOS 26.5 | Largest iPad |
 | My Mac | macOS 26 | |
@@ -92,6 +92,12 @@ SE fails only B2's two, as here.
 The fix for B2 changed only `SettingsAndSearchUITests` and added one test to it. That suite
 now passes on the SE, the 17 Pro Max and both iPads.
 
+With B13 the tests run on iOS 18.5 too, and the matrix ran in full. On the 16e (iOS 18.5)
+all 386 unit tests and 46 UI tests pass, after the two fixes B13 lists. The SE, the 17 Pro
+Max and both iPads pass every unit and UI test. Elsewhere only the known failures remain:
+B10's three on tvOS 18.5 and B12's four on Vision Pro. The Mac passes its 384 unit tests;
+its UI tests still cannot start (B8).
+
 ---
 
 ## iPhone, small screens (SE, mini)
@@ -123,6 +129,9 @@ now passes on the SE, the 17 Pro Max and both iPads.
       scroll in short drags until the row is clear of the mini player and the tab bar.
       `testSettingsEndsClearOfTheMiniPlayer` checks that the end of Settings scrolls
       clear of it.
+      *Then, with B13:* the margin did not work there. On iOS 18 a Form puts a bottom
+      content margin above its last footer, and the About line ended under the mini
+      player. It is safe-area padding now, which moves the footer too.
 
 ## iPhone, all sizes
 
@@ -212,13 +221,27 @@ itself: Search opened with its field folded away (B4).
 
 ## Every platform
 
-- [ ] **B13. No test can run on the older systems the app supports. Tooling.**
+- [x] **B13. No test can run on the older systems the app supports. Tooling.**
       The app supports iOS 17.6 and macOS 14.6, but `lytterTests` and `lytterUITests` are
       set to iOS 26.0 and macOS 26.0, so xcodebuild refuses to run them on anything older
       (*iOS Simulator 18.5 doesn't match lytterTests's iOS Simulator 26.0 deployment
       target*). Nothing has tested iOS 17–18 or macOS 14–15 automatically. Lower the test
       targets to match the app, then fix whatever then fails to compile against the older
       SDK. Checked by hand on iOS 18.5: the app launches, and Home draws as on iOS 26.
+      *Fixed:* both test targets are at iOS 17.6 and macOS 14.6, as the app is. One test
+      did not compile: `SharePlayTests.theShareSheetStillSharesTheText` reads the shared
+      text with `exported(as:)`, which is iOS 18.2 and macOS 15.2, so it is skipped
+      before those. On iOS 18.5 every unit test passed, and the UI tests found two bugs
+      that iOS 26 does not have:
+      - The end of Settings stayed under the mini player (B2, above).
+      - A scrolling title's accessibility frame took in the copy of the text at the end
+        of its scroll, far off the leading edge: VoiceOver outlined a box 1286 points wide
+        for a title in a 282-point column. `MarqueeText`'s element is now a clear overlay
+        in its own frame, with the drawn text hidden under it.
+        `PlayerLongTitlesUITests` also took the mini player's track line for the
+        player's, since before iOS 26 the mini player stays in the tree behind the sheet.
+      No macOS 14 or 15 is at hand, so the Mac side is untested still; the targets now
+      allow it.
 - [x] **B14. `testReorderingChangesHome` does not wait for the drop. Test.**
       It drags Testradio above DR in Settings, then goes straight to Home. On the 17 Pro
       Max its own screenshot shows the drag still in flight, Testradio lifted over DR, and

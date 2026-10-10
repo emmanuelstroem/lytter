@@ -109,10 +109,18 @@ public struct MarqueeText: View {
         .onDisappear {
             self.animate = false
         }
-        // One Text, in the marquee's own frame. Scrolling, it draws the text twice, and
-        // VoiceOver read both — and outlined the pair, one far off to the side.
-        .accessibilityRepresentation {
-            Text(verbatim: text).accessibilityIdentifier(accessibilityID)
+        // One element, in the marquee's own frame. Scrolling, it draws the text twice, and
+        // VoiceOver read both — and outlined the pair, one far off to the side. The element
+        // is a clear overlay, not the drawn text: before iOS 26 an element's frame takes in
+        // everything drawn under it, the first copy too, far off the leading edge at the end
+        // of its scroll, however it is masked or clipped.
+        .accessibilityHidden(true)
+        .overlay {
+            Color.clear
+                .accessibilityElement()
+                .accessibilityLabel(Text(verbatim: text))
+                .accessibilityAddTraits(.isStaticText)
+                .accessibilityIdentifier(accessibilityID)
         }
     }
     
@@ -202,9 +210,8 @@ extension MarqueeText {
         return view
     }
 
-    /// An identifier for UI tests. `.accessibilityIdentifier` from outside does not reach the
-    /// element: it lands on the view the representation replaces, whose frame takes in the
-    /// second copy of the text scrolling off to the side.
+    /// An identifier for UI tests, set on the marquee's one element. `.accessibilityIdentifier`
+    /// from outside lands on whatever wraps the marquee, not on the element itself.
     public func accessibilityID(_ identifier: String) -> Self {
         var view = self
         view.accessibilityID = identifier
