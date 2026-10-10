@@ -93,7 +93,13 @@ struct tvOSChannelScheduleSheet: View {
                         // Room for the focused row's highlight at the top and bottom.
                         .padding(.vertical, 8)
                     }
-
+                    // Where focus lands when it first comes into the list. On the list,
+                    // which exists only once the schedule has loaded, so the programme on
+                    // air is known by then. Setting the focus from code instead, a moment
+                    // after loading, worked on tvOS 26 and not on 18 (B10): there the sheet
+                    // was still presenting, the request was dropped, and the focus engine
+                    // then put focus on the first row of its own accord.
+                    .defaultFocus($focusedRow, onAirRow)
                 }
             }
             .padding(48)
@@ -103,13 +109,7 @@ struct tvOSChannelScheduleSheet: View {
             .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 28))
         }
         .onExitCommand { dismiss() }
-        .task {
-            await load()
-            // Set once the rows exist. `defaultFocus` is read when the sheet appears, before
-            // the schedule has loaded, and focus fell to the first programme of the day.
-            try? await Task.sleep(for: .milliseconds(150))
-            focusedRow = onAirRow
-        }
+        .task { await load() }
     }
 
     /// The row with its focus highlight: a button when there is a recording to play,

@@ -98,6 +98,9 @@ Max and both iPads pass every unit and UI test. Elsewhere only the known failure
 B10's three on tvOS 18.5 and B12's four on Vision Pro. The Mac passes its 384 unit tests;
 its UI tests still cannot start (B8).
 
+The fix for B10 changed only the tvOS schedule sheet, which no other platform compiles.
+Both Apple TVs now pass all 27 UI tests, tvOS 18.5 included.
+
 ---
 
 ## iPhone, small screens (SE, mini)
@@ -200,13 +203,20 @@ itself: Search opened with its field folded away (B4).
 
 ## Apple TV
 
-- [ ] **B10. On tvOS 18, the schedule opens on the first programme. Bug.**
+- [x] **B10. On tvOS 18, the schedule opens on the first programme. Bug.**
       The schedule sheet should open with the programme on air in focus. On tvOS 18.5 it
       opens on the day's first programme: three `TVScrollingUITests` fail
       (`testScheduleScrolls`, `testScheduleRowPinsItsShow`,
       `testScheduleCatchUpRowPlaysTheRecording`; *focus is on 1.03, Fixture-program 1*).
       All three pass on tvOS 26.5. The app supports tvOS 17.6 and up, so the initial
       focus or scroll position needs a path that works before tvOS 26.
+      *Fixed:* the sheet set focus from code 150 ms after loading. On tvOS 18 the sheet
+      is still presenting then, with nothing in it focused, and the request was dropped
+      without a word; about 370 ms later the focus engine placed focus itself, on the
+      first row. The list now names its default focus (`.defaultFocus`) instead. It
+      exists only once the schedule has loaded, so the programme on air is known when
+      the engine asks. Checked with the load slowed by two seconds as well, on tvOS 18.5
+      and 26.5.
 - [ ] **B11. Long track titles truncate on Now Playing. Decide.**
       `tvOSNowPlayingView` sets the track on one line. A television is wide, and a marquee
       there would need focus to scroll (AGENTS.md), so this may be intended.
