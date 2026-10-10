@@ -32,6 +32,9 @@ struct tvOSChannelScheduleSheet: View {
     /// Why the schedule could not be fetched; see the iOS sheet.
     @State private var failure: ConnectionProblem?
     @FocusState private var focusedRow: String?
+    /// The focused row's highlight: the colour of the artwork on air, as Now Playing's
+    /// backdrop is; a faint white until that has been read.
+    @State private var highlight: Color = .white.opacity(0.16)
 
     /// Where focus starts: what is on now, so the schedule opens where the listener is.
     private var onAirRow: String? {
@@ -110,6 +113,13 @@ struct tvOSChannelScheduleSheet: View {
         }
         .onExitCommand { dismiss() }
         .task { await load() }
+        .task {
+            // With no artwork to read, the station's colour, which is what its placeholder
+            // artwork is drawn in.
+            highlight = await ArtworkTint.of(
+                ArtworkTint.artworkURL(for: channel, serviceManager: serviceManager))?.accent
+                ?? channel.stationColor
+        }
     }
 
     /// The row with its focus highlight: a button when there is a recording to play,
@@ -122,7 +132,7 @@ struct tvOSChannelScheduleSheet: View {
                 // Inset on every side, so it shares no corner with the panel and is not
                 // bound to its radius.
                 RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(.white.opacity(focusedRow == episode.broadcastID ? 0.16 : 0))
+                    .fill(focusedRow == episode.broadcastID ? highlight : .clear)
             )
         if episode.isCatchUp(at: Date()) {
             Button {

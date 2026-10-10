@@ -448,8 +448,10 @@ final class TVScrollingUITests: XCTestCase {
         XCTAssertTrue(moveFocus(.left, until: { destinations.contains($0.label) }, maxPresses: 8),
                       "could not move into the sidebar; focus is on \(focusedLabel)")
         shot("in-sidebar")
+        // Up to the top first, then down to it. Down past the last entry leaves the sidebar
+        // for whatever card is below it, and from there up never comes back.
+        moveFocus(.up, until: { $0.label == "Search" }, maxPresses: 6)
         let reached = moveFocus(.down, until: { $0.label == name }, maxPresses: 6)
-            || moveFocus(.up, until: { $0.label == name }, maxPresses: 6)
         XCTAssertTrue(reached, "could not find \(name) in the sidebar; focus is on \(focusedLabel)")
         press(.select)
         sleep(2)

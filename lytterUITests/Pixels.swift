@@ -5,7 +5,7 @@
 
 import XCTest
 
-#if os(iOS)
+#if os(iOS) || os(tvOS)
 /// A screenshot as RGBA bytes, addressed in points.
 struct Pixels {
     let width: Int
@@ -43,6 +43,28 @@ struct Pixels {
     func crop(_ rect: CGRect) -> [Int] {
         let (xs, ys) = pixelRange(rect)
         return ys.flatMap { y in xs.map { x in luminance(x: x, y: y) } }
+    }
+
+    /// The average colour in `rect`, each channel 0–255.
+    func averageColor(in rect: CGRect) -> (red: Int, green: Int, blue: Int) {
+        let (xs, ys) = pixelRange(rect)
+        var sums = [0, 0, 0], count = 0
+        for y in ys {
+            for x in xs {
+                let i = (y * width + x) * 4
+                sums[0] += Int(bytes[i]); sums[1] += Int(bytes[i + 1]); sums[2] += Int(bytes[i + 2])
+                count += 1
+            }
+        }
+        guard count > 0 else { return (0, 0, 0) }
+        return (sums[0] / count, sums[1] / count, sums[2] / count)
+    }
+
+    /// How many pixels in `rect` differ from `other`'s by more than `threshold` in luminance.
+    /// Text moving through the rect changes many. Two frames of still text over a blurred
+    /// backdrop are not identical either, but they differ only faintly.
+    func changedPixels(in rect: CGRect, from other: Pixels, threshold: Int = 40) -> Int {
+        zip(crop(rect), other.crop(rect)).filter { abs($0 - $1) > threshold }.count
     }
 
     /// The spread of luminance in `rect`: near zero over plain background, large where

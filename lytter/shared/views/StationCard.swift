@@ -196,13 +196,28 @@ enum StationCard {
                 if showsPlayingMarker {
                     PlayingMark()
                 }
+                #if os(tvOS)
+                // Two lines, and room for two under every card so that a row's cards stay
+                // level: at the television's reading size one line held too little of a
+                // programme's name.
+                Text(text)
+                    .lineLimit(2, reservesSpace: true)
+                #else
                 Text(text)
                     // One line, as Music's captions are. At the accessibility sizes a line
                     // under a phone's card holds a word of a programme's name, if that —
                     // "Fixtur…" — so there it wraps, as far as three lines.
                     .lineLimit(dynamicTypeSize.isAccessibilitySize ? 3 : 1)
+                #endif
             }
+            #if os(tvOS)
+            // The platform's reading size. Derived from the card like the name, it came to
+            // 20 points, below the system's own caption size, and read as small print from
+            // across a room.
+            .font(.body)
+            #else
             .font(.system(size: metrics.subtitleFontSize * textScale))
+            #endif
             .foregroundStyle(Color.secondaryOnPage)
                 // A rounded card container clips text that starts flush at its edge —
                 // "Orientering" came out as "rientering". Six points on the phone's card,

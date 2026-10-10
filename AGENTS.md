@@ -37,7 +37,8 @@ cards. It is a design principle for this app, not a one-off fix.
 | tvOS channel card | 16 |
 | macOS featured station card | 10 |
 | macOS standard station card | 8 |
-| tvOS now-playing artwork | 24, badge 12 |
+| tvOS now-playing artwork | 24 |
+| tvOS now-playing artwork, dimmed | 12 — stands free on the backdrop |
 | tvOS panels | 28 |
 | Mini-player artwork | 10 |
 | visionOS mini-player ornament | 20 (artwork 10, inset 10 on every side) |
