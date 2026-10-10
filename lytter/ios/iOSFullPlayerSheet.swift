@@ -74,49 +74,59 @@ struct iOSFullPlayerSheet: View {
             
             if let currentChannel = currentChannel {
                 VStack(spacing: 0) {
-                    // Top VStack - Artwork Component
-                    VStack {
-                        PlayerArtworkView(
-                            channel: currentChannel,
-                            currentProgram: serviceManager.getCurrentProgram(for: currentChannel),
-                            channelColor: channelColor
-                        )
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    
-                    // Bottom VStack - All other components
-                    VStack(spacing: 30) {
-                        // Only what stops audio: offline, or this stream failing.
-                        ConnectionBanner(serviceManager: serviceManager, playbackOnly: true)
-                            .padding(.horizontal, 20)
+                    // Artwork: a square as wide as the player, or as tall as what is left
+                    // once everything below has the room it needs. The two halves used to
+                    // split the height evenly, and on a shorter iPhone the lower half needs
+                    // more than half — its fixed rows and gaps came out of the artwork, which
+                    // on an iPhone SE shrank to a stamp. The square is the cap: on a taller
+                    // phone the artwork is no larger than before, and the gaps below take
+                    // the rest.
+                    PlayerArtworkView(
+                        channel: currentChannel,
+                        currentProgram: serviceManager.getCurrentProgram(for: currentChannel),
+                        channelColor: channelColor
+                    )
+                    .aspectRatio(1, contentMode: .fit)
+                    .frame(maxWidth: .infinity)
+                    .layoutPriority(1)
 
-                        // Info Component
-                        // The share control lives inside PlayerInfoView.
-                        PlayerInfoView(
-                            title: infoTitle,
-                            subtitle: infoSubtitle,
-                            channel: currentChannel,
-                            serviceManager: serviceManager
-                        )
-                        
-                        Group {
-                            if serviceManager.onDemandEpisode != nil {
-                                OnDemandProgressView(
-                                    position: serviceManager.onDemandPosition,
-                                    duration: serviceManager.onDemandDuration,
-                                    onSeek: { serviceManager.seekOnDemand(to: $0) }
-                                )
-                            } else {
-                                PlayerProgressView(
-                                    programme: serviceManager.getCurrentProgram(for: currentChannel),
-                                    secondsBehindLive: serviceManager.secondsBehindLive
-                                )
+                    // Everything else
+                    VStack(spacing: 0) {
+                        VStack(spacing: 30) {
+                            // Only what stops audio: offline, or this stream failing.
+                            ConnectionBanner(serviceManager: serviceManager, playbackOnly: true)
+                                .padding(.horizontal, 20)
+
+                            // Info Component
+                            // The share control lives inside PlayerInfoView.
+                            PlayerInfoView(
+                                title: infoTitle,
+                                subtitle: infoSubtitle,
+                                channel: currentChannel,
+                                serviceManager: serviceManager
+                            )
+
+                            Group {
+                                if serviceManager.onDemandEpisode != nil {
+                                    OnDemandProgressView(
+                                        position: serviceManager.onDemandPosition,
+                                        duration: serviceManager.onDemandDuration,
+                                        onSeek: { serviceManager.seekOnDemand(to: $0) }
+                                    )
+                                } else {
+                                    PlayerProgressView(
+                                        programme: serviceManager.getCurrentProgram(for: currentChannel),
+                                        secondsBehindLive: serviceManager.secondsBehindLive
+                                    )
+                                }
                             }
+                            .padding(.horizontal, 20)
                         }
-                        .padding(.horizontal, 20)
-                        
-                        Spacer()
-                        
+
+                        // Flexible, with a floor: the fixed 30pt either side of these was
+                        // what a short screen could least afford.
+                        Spacer(minLength: 24)
+
                         // Controls Component
                         //
                         // Skip and Live appear only when the stream has a DVR window
@@ -147,9 +157,9 @@ struct iOSFullPlayerSheet: View {
                         // left over — so larger Dynamic Type text above shrank the play
                         // button and the action icons. The Spacers absorb the difference now.
                         .frame(height: 96)
-                        
-                        Spacer()
-                        
+
+                        Spacer(minLength: 16)
+
                         // Actions Component
                         PlayerActionsView(
                             sleepTimerMinutesRemaining: sleepTimerMinutesRemaining,
