@@ -80,6 +80,10 @@ The unit tests are Swift Testing, so they report separately from the XCTest UI t
 
 The unit-test target is not built for tvOS, so Apple TV runs only the UI tests.
 
+Since the baseline, #108 added four iOS UI tests (two on visionOS), for B1 and B3. They pass
+on every iPhone and iPad and on Vision Pro, and every other test it ran passed or failed as
+it did here.
+
 ---
 
 ## iPhone, small screens (SE, mini)
@@ -93,8 +97,8 @@ The unit-test target is not built for tvOS, so Apple TV runs only the UI tests.
       #106: it was there before that change too, and #106 made it smaller (the old layout
       also pushed the actions row off the bottom of the screen). A likely fix is to let the
       player scroll when it does not fit, and keep it fixed when it does.
-      *Fixed:* the player scrolls when it does not fit and stays put when it does
-      (`PlayerOverflowUITests`).
+      *Fixed in #108:* the player scrolls when it does not fit and stays put when it
+      does (`PlayerOverflowUITests`).
 - [ ] **B2. The mini player may cover the last rows of Settings. Investigate.**
       `SettingsAndSearchUITests.testChooseRegion` and `testRegionPickerListsEachDistrictOnce`
       fail on the SE alone: the Region picker never opens. In the failure snapshot the
@@ -113,8 +117,8 @@ The unit-test target is not built for tvOS, so Apple TV runs only the UI tests.
       Home, so it is likely there too, and on wider phones at the largest sizes. Stack the
       button under the text at accessibility sizes (`dynamicTypeSize.isAccessibilitySize`,
       or `ViewThatFits`).
-      *Fixed:* at accessibility sizes Try Again sits under the text, in its column
-      (`ConnectionBannerDynamicTypeUITests`).
+      *Fixed in #108:* at accessibility sizes Try Again sits under the text, in its
+      column (`ConnectionBannerDynamicTypeUITests`).
 
 ## iPad
 
