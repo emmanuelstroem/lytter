@@ -11,20 +11,23 @@ import SwiftUI
 /// One broadcaster's stations in a row, under its name — a sidebar entry under
 /// Broadcasters (F54c). Was the Radio tab, which listed every station; with
 /// `broadcasterID` nil it still does, for tvOS 17, whose tab bar cannot hold a section.
+///
+/// The broadcaster's shelf on Home, on a page of its own: the same `tvOSChannelShelf`, set
+/// out as Home sets out its list. It was built separately, and had drifted — a larger
+/// heading, other spacing, and the screen's horizontal safe area ignored, which put the
+/// heading and the first card 80 points nearer the edge of the screen than Home's.
+/// `TVBroadcasterPageUITests` holds the two to the same places.
 struct tvOSBroadcasterView: View {
     @ObservedObject var serviceManager: DRServiceManager
     @ObservedObject var selectionState: SelectionState
     /// The broadcaster to list; nil for every one shown.
     let broadcasterID: String?
-    // Sheet removed; districts are presented via Menu wrapping the channel card
-    
-    @FocusState private var focusedMenuChannelId: String?
 
     /// The heading: the broadcaster's name, or "Radio" for all of them.
-    private var title: Text {
-        guard let broadcasterID else { return Text("Radio") }
-        let name = serviceManager.visibleBroadcasters.first { $0.id == broadcasterID }?.name
-        return Text(verbatim: name ?? broadcasterID)
+    private var title: String {
+        guard let broadcasterID else { return String(localized: "Radio") }
+        return serviceManager.visibleBroadcasters.first { $0.id == broadcasterID }?.name
+            ?? broadcasterID
     }
 
     /// This view's channels: one broadcaster's, or all of them.
@@ -32,92 +35,47 @@ struct tvOSBroadcasterView: View {
         guard let broadcasterID else { return serviceManager.availableChannels }
         return serviceManager.availableChannels.filter { Broadcaster.supplying($0).id == broadcasterID }
     }
-    
-    /// One card per station, A to Z, as on the phone's broadcaster page (F54c). Favourites
-    /// used to lead, as themselves — which listed P4 twice, a pinned district and then the
-    /// station, out of order. They have Home's first shelf.
-    private var primaryChannels: [DRChannel] {
-        // `GroupedChannel` is shared, so tvOS and iOS agree on what a station is, and on
-        // the order, by construction rather than by two functions happening to agree.
-        GroupedChannel.grouped(from: channels).compactMap(\.representative)
-    }
-    
+
     var body: some View {
-        GeometryReader { geometry in
-            ZStack(alignment: .top) {
-                LinearGradient(colors: [.black, .black.opacity(0.95)], startPoint: .top, endPoint: .bottom)
-                    .ignoresSafeArea()
-                
-                VStack {
-                    VStack(alignment: .leading, spacing: 32) {
-                        // Section header — Music-app style
-                        title
-                            .font(.system(size: 52, weight: .bold))
-                            .foregroundStyle(.white)
-                            .padding(.horizontal, 60)
+        CatalogueStateView(serviceManager: serviceManager) {
+            // Home's list, without the scrolling: one shelf has nothing to scroll to.
+            VStack(alignment: .leading, spacing: 48) {
+                ConnectionBanner(serviceManager: serviceManager)
+                    .padding(.horizontal, 60)
 
-                        ConnectionBanner(serviceManager: serviceManager)
-                            .padding(.horizontal, 60)
-
-                        CatalogueStateView(serviceManager: serviceManager) {
-                            // Horizontal shelf — like the Music Home tab
-                            ScrollView(.horizontal, showsIndicators: false) {
-                                LazyHStack(alignment: .top, spacing: 40) {
-                                    ForEach(primaryChannels, id: \.id) { channel in
-                                        // The same card as Home and Search. Radio used to
-                                        // build its own, with its own variant overlay and
-                                        // its own focus bookkeeping; a station should not
-                                        // look or behave differently depending on which
-                                        // screen it is listed on.
-                                        let variants = channels
-                                            .filter { $0.stationKey == channel.stationKey }
-
-                                        tvOSStationCard(
-                                            group: GroupedChannel(channels: variants),
-                                            serviceManager: serviceManager,
-                                            onSelect: { picked in
-                                                serviceManager.playChannel(picked)
-                                                selectionState.selectChannel(picked)
-                                            }
-                                        )
-                                        .focused($focusedMenuChannelId, equals: channel.id)
-                                    }
-                                }
-                                .padding(.horizontal, 60)
-                                .padding(.top, 50)    // room for 1.1x scale overflow upward
-                                .padding(.bottom, 30)
-                                .focusSection()
-                            }
-                        }
+                // One card per station, A to Z, as on the phone's broadcaster page (F54c),
+                // and grouped as Home groups it, so a station looks and behaves the same
+                // wherever it is listed.
+                tvOSChannelShelf(
+                    title: title,
+                    groups: GroupedChannel.grouped(from: channels),
+                    serviceManager: serviceManager,
+                    onSelect: { picked in
+                        serviceManager.playChannel(picked)
+                        selectionState.selectChannel(picked)
                     }
-                    .padding(.top, 50)
-                    // While variants overlay is visible, block interaction and hide focus effects behind it
-                    .edgesIgnoringSafeArea(.horizontal)
-                    
-                }
-
+                )
             }
+            .padding(.vertical, 32)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         }
+        .background(Color.black.ignoresSafeArea())
         .onAppear {
             if serviceManager.availableChannels.isEmpty { serviceManager.loadChannels() }
         }
-        // District selection is handled inline via Menu; no sheet presentation
     }
-    
-    // Selection is handled inline in the list via Button/Menu
-    private func handleChannelSelection(_ channel: DRChannel) { }
 }
 
 /// A wrapper view that applies a ButtonStyle to any Menu label
 struct MenuLabelButtonStyle<Style: ButtonStyle, Label: View>: View {
     let style: Style
     let label: Label
-    
+
     init(style: Style, @ViewBuilder label: () -> Label) {
         self.style = style
         self.label = label()
     }
-    
+
     var body: some View {
         Button(action: {}) {
             label
@@ -128,4 +86,3 @@ struct MenuLabelButtonStyle<Style: ButtonStyle, Label: View>: View {
 }
 
 #endif
-

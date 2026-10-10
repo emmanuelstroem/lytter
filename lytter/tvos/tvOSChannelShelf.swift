@@ -29,6 +29,7 @@ struct tvOSChannelShelf: View {
                     .font(.system(size: 38, weight: .bold))
                     .foregroundStyle(.white)
                     .padding(.horizontal, 60)
+                    .accessibilityIdentifier("shelf.title")
 
                 ScrollView(.horizontal, showsIndicators: false) {
                     LazyHStack(alignment: .top, spacing: 40) {
