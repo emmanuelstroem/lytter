@@ -234,11 +234,13 @@ itself: Search opened with its field folded away (B4).
 
 ## Vision Pro
 
-- [ ] **B12. The launch test fails on screenshots. Test.**
+- [x] **B12. The launch test fails on screenshots. Test.**
       `lytterUITestsLaunchTests.testLaunch` takes a screenshot, and the visionOS simulator
       cannot (*remote interface does not have this capability*). It fails once for each of
       its four launch configurations. Skip the screenshot on visionOS. `VisionLaunchUITests`
       all pass.
+      *Fixed:* on visionOS the test checks that the app comes to the front instead, and
+      leaves what it draws to `VisionLaunchUITests`.
 
 ## Every platform
 

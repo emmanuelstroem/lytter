@@ -22,12 +22,18 @@ final class lytterUITestsLaunchTests: XCTestCase {
         let app = XCUIApplication()
         app.launch()
 
-        // Insert steps here to perform after app launch but before taking a screenshot,
-        // such as logging into a test account or navigating somewhere in the app
-
+        #if os(visionOS)
+        // No screenshot: the visionOS simulator cannot take one (*remote interface does not
+        // have this capability*), and asking failed this test once for each of its launch
+        // configurations (B12). That the app comes up is still checked; what it draws is
+        // VisionLaunchUITests'.
+        XCTAssertTrue(app.wait(for: .runningForeground, timeout: 10),
+                      "the app did not come to the front")
+        #else
         let attachment = XCTAttachment(screenshot: app.screenshot())
         attachment.name = "Launch Screen"
         attachment.lifetime = .keepAlways
         add(attachment)
+        #endif
     }
 }
