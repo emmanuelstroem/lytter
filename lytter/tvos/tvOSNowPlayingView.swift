@@ -8,7 +8,6 @@ import os
 #if os(iOS) || os(tvOS)
 import UIKit
 #endif
-import CoreImage
 #if os(tvOS)
 import GroupActivities
 #endif
@@ -16,95 +15,145 @@ import GroupActivities
 #if os(tvOS)
 
 // MARK: - Now Playing
-/// The controls are always on screen.
+/// Artwork and what is on air across the top, the progress bar and the controls along the
+/// bottom, on a backdrop coloured from the artwork: the arrangement Spotify uses on Apple TV.
 ///
-/// They used to fade out after five seconds and come back on any remote input, which took a
-/// pass-through gesture recognizer attached to the window and a helper that reached into
-/// UIKit to hide the tab bar. It did not work: the controls came back only on the back
-/// button, direction presses moved focus instead of waking anything, and the tab-bar helper
-/// was reaching for a tab bar that no longer exists now that navigation is a sidebar.
+/// Left alone for a few seconds, the screen dims to a small card in the corner — artwork,
+/// station, programme, track — as Spotify's does, so a radio left playing on the television
+/// is a quiet picture rather than a wall of controls. Any press of the remote brings the
+/// controls back.
 ///
-/// Nothing replaced it. A row of three buttons is not worth hiding, and every part of the
-/// machinery that hid them was a way for focus to go wrong.
+/// This screen hid its controls once before, and the way it did that was taken out: a
+/// gesture recognizer on the window that saw only the back button, direction presses that
+/// moved focus between buttons nobody could see, and a helper reaching for a tab bar that
+/// had become a sidebar. Waking now goes through focus instead of around it. While the
+/// screen is dim the controls are disabled, so nothing hidden can take focus, and the one
+/// thing that can is a full-screen target whose every command — select, a direction, Menu,
+/// Play/Pause — wakes the screen. A press that wakes it does nothing else, except
+/// Play/Pause, which also plays or pauses, since that is what the button says.
 struct tvOSNowPlayingView: View {
     @ObservedObject var serviceManager: DRServiceManager
     @State private var showingInfoSheet = false
     @State private var showingScheduleSheet = false
 
-    /// Artwork on the left, everything about it on the right — the arrangement the Music app
-    /// uses on Apple TV, and a better fit for a television than the centred stack this
-    /// replaces. A 16:9 screen has width to spare and very little height; stacking artwork,
-    /// title, track and controls down the middle spent the scarce dimension and left two
-    /// wide empty margins.
+    /// Dimmed to the corner card.
+    @State private var isIdle = false
+    /// Bumped by every press of the remote; the countdown to dimming restarts from each.
+    @State private var activity = 0
+    @FocusState private var focus: Focus?
+    /// Counts the times the screen has woken; see where the player is placed in `body`.
+    @State private var wakings = 0
+    /// The control that had focus when the screen dimmed, given focus again on waking.
+    @State private var lastControl: tvOSNowPlayingControls.ControlButton = .play
+    @Environment(\.accessibilityVoiceOverEnabled) private var voiceOverEnabled
+
+    enum Focus: Hashable {
+        case control(tvOSNowPlayingControls.ControlButton)
+        /// The full-screen target that exists only while the screen is dim.
+        case wake
+    }
+
+    /// How long the remote has to be left alone before the screen dims. Under test it never
+    /// dims unless a test asks for it: the others pause on this screen longer than this.
+    private static var idleDelay: Duration? {
+        UITestFixtures.isActive ? UITestFixtures.nowPlayingIdleDelay : .seconds(8)
+    }
+
     var body: some View {
         ZStack {
             if let channel = serviceManager.playingChannel {
                 tvOSNowPlayingBackground(channel: channel, serviceManager: serviceManager)
                     .ignoresSafeArea()
 
-                HStack(alignment: .center, spacing: 72) {
-                    tvOSNowPlayingArtworkCard(channel: channel, serviceManager: serviceManager)
+                Color.black
+                    .opacity(isIdle ? 0.5 : 0)
+                    .ignoresSafeArea()
 
-                    details(for: channel)
+                player(for: channel)
+                    .opacity(isIdle ? 0 : 1)
+                    .disabled(isIdle)
+                    // Built afresh on waking. Disabled and enabled again, the controls
+                    // kept focus but stopped telling accessibility which of them had it.
+                    .id(wakings)
+
+                // Built only while dim. Kept in place at no opacity, it was still in the
+                // accessibility tree, hidden or not.
+                if isIdle {
+                    tvOSNowPlayingIdleCard(channel: channel, serviceManager: serviceManager)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity,
+                               alignment: .bottomLeading)
+                        .transition(.opacity)
                 }
-                .padding(.horizontal, 90)
-                .sheet(isPresented: $showingScheduleSheet) {
-                    if let ch = serviceManager.playingChannel {
-                        tvOSChannelScheduleSheet(channel: ch, serviceManager: serviceManager)
-                    }
-                }
-                .sheet(isPresented: $showingInfoSheet) {
-                    if let ch = serviceManager.playingChannel {
-                        tvOSNowPlayingInfoSheet(
-                            channel: ch,
-                            program: serviceManager.getCurrentProgram(for: ch),
-                            track: serviceManager.currentTrack
-                        )
-                        .background(.clear)
-                    }
-                }
+
+                // Always here, and enabled only while dim. Removed on waking while it had
+                // focus, it left the focus engine with nothing: the control given focus
+                // drew itself focused, and the remote moved nothing. Disabled instead,
+                // it makes the engine move focus on, as disabling the controls does when
+                // the screen dims.
+                wakeTarget(for: channel)
+                    .disabled(!isIdle)
             } else {
                 tvOSEmptyState(serviceManager: serviceManager)
             }
         }
+        // Slow to dim, quick to wake: the screen settling should be hard to notice, and
+        // the controls coming back should feel like an answer to the press.
+        .animation(.easeInOut(duration: isIdle ? 1.2 : 0.3), value: isIdle)
+        // Play first, as in Spotify: it is what the screen is for.
+        .defaultFocus($focus, .control(.play))
+        .task(id: activity) { await dimWhenLeftAlone() }
+        .onChange(of: focus) { _, newFocus in
+            switch newFocus {
+            case .control(let control):
+                lastControl = control
+                noteActivity()
+            case .wake:
+                break
+            case nil:
+                // Focus has left the screen — to the sidebar, most likely — and nothing
+                // should stay dim behind it. Not at once: focus passes through nil for a
+                // moment as the screen dims and its controls are disabled.
+                Task { @MainActor in
+                    try? await Task.sleep(for: .milliseconds(500))
+                    if focus == nil { isIdle = false }
+                }
+            }
+        }
+        .onMoveCommand { _ in noteActivity() }
+        .onChange(of: showingInfoSheet) { _, _ in noteActivity() }
+        .onChange(of: showingScheduleSheet) { _, _ in noteActivity() }
+        .sheet(isPresented: $showingScheduleSheet) {
+            if let ch = serviceManager.playingChannel {
+                tvOSChannelScheduleSheet(channel: ch, serviceManager: serviceManager)
+            }
+        }
+        .sheet(isPresented: $showingInfoSheet) {
+            if let ch = serviceManager.playingChannel {
+                tvOSNowPlayingInfoSheet(
+                    channel: ch,
+                    program: serviceManager.getCurrentProgram(for: ch),
+                    track: serviceManager.currentTrack
+                )
+                .background(.clear)
+            }
+        }
     }
 
-    /// The right-hand column: what is playing, how far through it is, and what you can do.
-    private func details(for channel: DRChannel) -> some View {
+    /// Artwork and the words beside it, then the progress bar and the controls across the
+    /// width of the screen.
+    private func player(for channel: DRChannel) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             Spacer(minLength: 0)
 
-            // The station leads. On live radio it is the thing you chose; the programme is
-            // what happens to be on it, which is the opposite of an album and a track.
-            Text(channel.qualifiedName)
-                .font(.system(size: 54, weight: .bold))
-                .foregroundStyle(.white)
-                .lineLimit(1)
-                .minimumScaleFactor(0.6)
+            HStack(alignment: .center, spacing: 64) {
+                tvOSNowPlayingArtwork(channel: channel, serviceManager: serviceManager,
+                                      side: 420, cornerRadius: 24)
+                    .shadow(color: .black.opacity(0.5), radius: 40, x: 0, y: 20)
 
-            if let programme = serviceManager.getCurrentProgram(for: channel)?.programmeName,
-               !programme.isEmpty {
-                Text(programme)
-                    .font(.system(size: 30, weight: .medium))
-                    .foregroundStyle(.white.opacity(0.8))
-                    .lineLimit(2)
-                    .padding(.top, 10)
+                details(for: channel)
             }
 
-            if let track = serviceManager.currentTrack {
-                Text(track.displayText)
-                    .font(.system(size: 24))
-                    .foregroundStyle(.white.opacity(0.55))
-                    .lineLimit(1)
-                    .padding(.top, 12)
-            }
-
-            // Not focusable, so it never joins the row of controls below; Play is the retry.
-            ConnectionBanner(serviceManager: serviceManager, playbackOnly: true,
-                             showsRetry: false)
-                .padding(.top, 28)
-
-            Spacer(minLength: 36)
+            Spacer(minLength: 40)
 
             programmeProgress(for: channel)
 
@@ -112,21 +161,131 @@ struct tvOSNowPlayingView: View {
                 serviceManager: serviceManager,
                 showingInfoSheet: $showingInfoSheet,
                 showingScheduleSheet: $showingScheduleSheet,
-                channel: channel
+                channel: channel,
+                focus: $focus
             )
-            .padding(.top, 34)
+            .padding(.top, 28)
+        }
+        .padding(.horizontal, 40)
+        .padding(.bottom, 10)
+    }
 
-            Spacer(minLength: 0)
+    /// What is playing, beside the artwork.
+    private func details(for channel: DRChannel) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            // The station leads. On live radio it is the thing you chose; the programme is
+            // what happens to be on it, which is the opposite of an album and a track.
+            Text(channel.qualifiedName)
+                .font(.system(size: 58, weight: .bold))
+                .foregroundStyle(.white)
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
+
+            if let programme = serviceManager.getCurrentProgram(for: channel)?.programmeName,
+               !programme.isEmpty {
+                Text(programme)
+                    .font(.system(size: 32, weight: .medium))
+                    .foregroundStyle(.white.opacity(0.8))
+                    .lineLimit(2)
+                    .padding(.top, 10)
+            }
+
+            // Scrolls when it is longer than the column (B11). Artist and title together
+            // run long, and cut off with an ellipsis the end of the title was lost.
+            if let track = serviceManager.currentTrack {
+                MarqueeText(text: track.displayText, font: .system(size: 26),
+                            leftFade: 24, rightFade: 24, startDelay: 2)
+                    .accessibilityID("nowPlaying.track")
+                    .foregroundStyle(.white.opacity(0.6))
+                    .padding(.top, 14)
+            }
+
+            // Not focusable, so it never joins the row of controls below; Play is the retry.
+            ConnectionBanner(serviceManager: serviceManager, playbackOnly: true,
+                             showsRetry: false)
+                .padding(.top, 28)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .shadow(color: .black.opacity(0.5), radius: 8, x: 0, y: 4)
+        .shadow(color: .black.opacity(0.4), radius: 8, x: 0, y: 4)
+    }
+
+    /// The only thing that can take focus while the screen is dim, and the whole screen,
+    /// so that wherever the remote points, it points here.
+    private func wakeTarget(for channel: DRChannel) -> some View {
+        Button(action: wake) {
+            Color.clear
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+        .buttonStyle(tvOSWakeButtonStyle())
+        .focused($focus, equals: .wake)
+        .onMoveCommand { _ in wake() }
+        // Menu wakes rather than leaving: a viewer who cannot see the controls has not
+        // yet decided to go anywhere.
+        .onExitCommand(perform: wake)
+        .onPlayPauseCommand {
+            serviceManager.togglePlayback(for: channel)
+            wake()
+        }
+        // Never read out. The screen does not dim while VoiceOver runs, so there is never
+        // anything for it to wake. Its hiding is fixed, not tied to dimming: an element
+        // whose hiding changed stopped reporting focus to XCUITest.
+        .accessibilityHidden(true)
+        .ignoresSafeArea()
+    }
+
+    // MARK: Idle
+
+    private func noteActivity() {
+        activity &+= 1
+    }
+
+    /// Dims the screen once `idleDelay` passes with no press of the remote. Restarted by
+    /// every press, which is what cancels the one before.
+    private func dimWhenLeftAlone() async {
+        guard let delay = Self.idleDelay else { return }
+        try? await Task.sleep(for: delay)
+        guard !Task.isCancelled, mayDim else { return }
+        isIdle = true
+        // The focused control has just been disabled; the target is the one place focus can
+        // go. Asked until it is there, as Home's launch focus is: a request made while the
+        // focus engine is still moving can be dropped (B10).
+        await place(.wake)
+    }
+
+    /// Not with VoiceOver, which reads the controls, nor over a sheet, nor while focus is
+    /// outside the screen — in the sidebar, where the viewer is busy elsewhere.
+    private var mayDim: Bool {
+        !isIdle && !voiceOverEnabled && !showingInfoSheet && !showingScheduleSheet
+            && focus != nil && serviceManager.playingChannel != nil
+    }
+
+    private func wake() {
+        noteActivity()
+        guard isIdle else { return }
+        isIdle = false
+        wakings &+= 1
+        let control = lastControl
+        Task { @MainActor in
+            await place(.control(control))
+            // The control it had may have gone while the screen was dim — Live, once
+            // playback caught up, or SharePlay, once the call ended.
+            if focus == nil { await place(.control(.play)) }
+        }
+    }
+
+    private func place(_ target: Focus) async {
+        for _ in 0..<10 {
+            focus = target
+            try? await Task.sleep(for: .milliseconds(50))
+            if focus == target { return }
+        }
     }
 
     /// How far through the programme the broadcast is, with the hour it started and the hour
     /// it ends.
     ///
     /// Live radio has nothing to scrub, so this is a read-out rather than a control — which
-    /// is also why it is not focusable and does not wake the controls.
+    /// is also why it is not focusable.
     ///
     /// Driven by a `TimelineView` rather than a timer of its own: the bar only has to be
     /// right to the nearest minute on a screen someone is looking at, and a view that
@@ -146,16 +305,7 @@ struct tvOSNowPlayingView: View {
             TimelineView(.periodic(from: start, by: 30)) { _ in
                 let heard = Date.now.addingTimeInterval(-serviceManager.secondsBehindLive)
                 VStack(alignment: .leading, spacing: 12) {
-                    GeometryReader { proxy in
-                        ZStack(alignment: .leading) {
-                            Capsule().fill(.white.opacity(0.22))
-                            Capsule()
-                                .fill(.white)
-                                .frame(width: proxy.size.width
-                                       * (programme.progress(at: heard) ?? 0))
-                        }
-                    }
-                    .frame(height: 8)
+                    tvOSProgressBar(fraction: programme.progress(at: heard) ?? 0)
 
                     HStack {
                         Text(start.formatted(date: .omitted, time: .shortened))
@@ -177,15 +327,7 @@ struct tvOSNowPlayingView: View {
         let position = serviceManager.onDemandPosition
         let duration = max(serviceManager.onDemandDuration, 1)
         return VStack(alignment: .leading, spacing: 12) {
-            GeometryReader { proxy in
-                ZStack(alignment: .leading) {
-                    Capsule().fill(.white.opacity(0.22))
-                    Capsule()
-                        .fill(.white)
-                        .frame(width: proxy.size.width * min(position / duration, 1))
-                }
-            }
-            .frame(height: 8)
+            tvOSProgressBar(fraction: min(position / duration, 1))
 
             HStack {
                 Text(verbatim: PlaybackTime.format(position))
@@ -202,13 +344,82 @@ struct tvOSNowPlayingView: View {
         .accessibilityLabel("Position")
         .accessibilityValue(PlaybackTime.format(position))
     }
-
 }
 
-// MARK: - Blurred Background
+/// A thin bar across the screen, filled as far as `fraction`.
+private struct tvOSProgressBar: View {
+    let fraction: Double
+
+    var body: some View {
+        GeometryReader { proxy in
+            ZStack(alignment: .leading) {
+                Capsule().fill(.white.opacity(0.2))
+                Capsule()
+                    .fill(.white)
+                    .frame(width: proxy.size.width * min(max(fraction, 0), 1))
+            }
+        }
+        .frame(height: 6)
+    }
+}
+
+/// No lift, no platter, no highlight: the wake target is invisible, and only has to be
+/// somewhere for focus to be.
+private struct tvOSWakeButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .contentShape(Rectangle())
+            .focusEffectDisabled()
+    }
+}
+
+// MARK: - Idle Card
+/// What the screen dims to: the artwork, small, and what is on air beside it, in the corner.
+struct tvOSNowPlayingIdleCard: View {
+    let channel: DRChannel
+    @ObservedObject var serviceManager: DRServiceManager
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 28) {
+            // Stands free on the backdrop, with no shape around it to share a corner with.
+            tvOSNowPlayingArtwork(channel: channel, serviceManager: serviceManager,
+                                  side: 160, cornerRadius: 12)
+
+            VStack(alignment: .leading, spacing: 6) {
+                Text(channel.qualifiedName)
+                    .font(.system(size: 32, weight: .bold))
+                    .foregroundStyle(.white)
+                    .lineLimit(1)
+
+                if let programme = serviceManager.getCurrentProgram(for: channel)?.programmeName,
+                   !programme.isEmpty {
+                    Text(programme)
+                        .font(.system(size: 24, weight: .medium))
+                        .foregroundStyle(.white.opacity(0.75))
+                        .lineLimit(1)
+                }
+
+                if let track = serviceManager.currentTrack {
+                    MarqueeText(text: track.displayText, font: .system(size: 22),
+                                leftFade: 16, rightFade: 16, startDelay: 2)
+                        .foregroundStyle(.white.opacity(0.55))
+                }
+            }
+            .frame(maxWidth: 760, alignment: .leading)
+        }
+        .shadow(color: .black.opacity(0.5), radius: 16, x: 0, y: 8)
+        .accessibilityElement(children: .combine)
+        .accessibilityIdentifier("nowPlaying.idle")
+    }
+}
+
+// MARK: - Backdrop
+/// A wash of the artwork's own colour, darkening to black at the foot of the screen where
+/// the controls sit, with the artwork itself blurred faintly into it.
 struct tvOSNowPlayingBackground: View {
     let channel: DRChannel
     @ObservedObject var serviceManager: DRServiceManager
+    @State private var tint: Color = .black
 
     private var artworkURL: URL? {
         guard let program = serviceManager.getCurrentProgram(for: channel),
@@ -221,251 +432,184 @@ struct tvOSNowPlayingBackground: View {
         ZStack {
             Color.black
 
+            LinearGradient(colors: [tint, tint.opacity(0.6), .black],
+                           startPoint: .topLeading, endPoint: .bottom)
+
             if let url = artworkURL {
                 CachedAsyncImage(url: url) { image in
                     image
                         .resizable()
                         .aspectRatio(contentMode: .fill)
                         .scaleEffect(1.15)
-                        .blur(radius: 70)
-                        .opacity(0.55)
+                        .blur(radius: 80)
+                        .opacity(0.3)
                 } placeholder: {
-                    Color.black
+                    Color.clear
                 }
             }
 
-            LinearGradient(
-                colors: [
-                    Color.black.opacity(0.2),
-                    Color.black.opacity(0.45),
-                    Color.black.opacity(0.75)
-                ],
-                startPoint: .top,
-                endPoint: .bottom
-            )
+            // Legibility for the progress row and the controls at the bottom.
+            LinearGradient(colors: [.clear, .black.opacity(0.6)],
+                           startPoint: .center, endPoint: .bottom)
         }
+        .animation(.easeInOut(duration: 0.6), value: tint)
+        // From the square artwork, as the schedule's highlight is, so the two match.
+        .task(id: tintURL) {
+            tint = await ArtworkTint.of(tintURL)?.backdrop ?? channel.stationColor.opacity(0.6)
+        }
+    }
+
+    private var tintURL: URL? {
+        ArtworkTint.artworkURL(for: channel, serviceManager: serviceManager)
     }
 }
 
-// MARK: - Artwork Card
-struct tvOSNowPlayingArtworkCard: View {
+// MARK: - Artwork
+/// The programme's artwork, or the station's when it has none.
+struct tvOSNowPlayingArtwork: View {
     let channel: DRChannel
     @ObservedObject var serviceManager: DRServiceManager
-    @State private var pillBackground: Color = Color.white.opacity(0.15)
-    @State private var pillForeground: Color = .white
-
-    private var artworkURL: URL? {
-        guard let program = serviceManager.getCurrentProgram(for: channel),
-              let urlString = program.primaryImageURL ?? program.landscapeImageURL
-        else { return nil }
-        return URL(string: urlString)
-    }
+    let side: CGFloat
+    let cornerRadius: CGFloat
 
     var body: some View {
-        CachedAsyncImage(url: artworkURL) { image in
+        CachedAsyncImage(url: ArtworkTint.artworkURL(for: channel, serviceManager: serviceManager)) { image in
             image.resizable().aspectRatio(contentMode: .fill)
         } placeholder: {
             StationArtworkPlaceholder(channel: channel)
         }
-        .frame(width: 400, height: 400)
+        .frame(width: side, height: side)
         .clipped()
-        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
-        .overlay(alignment: .topTrailing) {
-            HStack(spacing: 6) {
-                Image(systemName: "dot.radiowaves.left.and.right")
-                    .font(.system(size: 13, weight: .bold))
-                Text(channel.title)
-                    .font(.system(size: 15, weight: .semibold))
-                    .lineLimit(1)
-            }
-            .foregroundStyle(pillForeground)
-            .padding(.horizontal, 14)
-            .padding(.vertical, 9)
-            // 12, not 10: the badge is inset 12 from a card with a 24 radius, and a nested
-            // shape that meets a corner takes the outer radius minus that inset. At 10 the
-            // gap between the two curves narrowed as it went round the corner.
-            .background(pillBackground, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-            .padding(12)
-            .animation(.easeInOut(duration: 0.4), value: pillBackground)
-        }
-        .shadow(color: .black.opacity(0.6), radius: 40, x: 0, y: 20)
-        .task(id: artworkURL) { await updatePillColors() }
-    }
-
-    private func updatePillColors() async {
-        // Reuse the image the card above is already showing. This used to fetch the same
-        // artwork a second time over the network, purely to read a few pixels from it.
-        guard let url = artworkURL,
-              let uiImage = await ImageCacheService.shared.image(for: url.absoluteString),
-              let cgImage = uiImage.cgImage else { return }
-
-        // Sample the top-right region where the pill sits
-        let w = cgImage.width, h = cgImage.height
-        let sampleRect = CGRect(x: Int(Double(w) * 0.55), y: 0,
-                                width: Int(Double(w) * 0.45), height: Int(Double(h) * 0.35))
-        guard let cropped = cgImage.cropping(to: sampleRect) else { return }
-
-        // Average color via CIAreaAverage
-        let ciImage = CIImage(cgImage: cropped)
-        let extent = ciImage.extent
-        guard let filter = CIFilter(name: "CIAreaAverage", parameters: [
-            kCIInputImageKey: ciImage,
-            kCIInputExtentKey: CIVector(x: extent.origin.x, y: extent.origin.y,
-                                        z: extent.size.width, w: extent.size.height)
-        ]), let output = filter.outputImage else { return }
-
-        var bitmap = [UInt8](repeating: 0, count: 4)
-        CIContext().render(output, toBitmap: &bitmap, rowBytes: 4,
-                           bounds: CGRect(x: 0, y: 0, width: 1, height: 1),
-                           format: .RGBA8, colorSpace: nil)
-
-        let r = CGFloat(bitmap[0]) / 255
-        let g = CGFloat(bitmap[1]) / 255
-        let b = CGFloat(bitmap[2]) / 255
-
-        // Shift hue 180° for the complementary colour
-        var hue: CGFloat = 0, sat: CGFloat = 0, bri: CGFloat = 0, alpha: CGFloat = 0
-        UIColor(red: r, green: g, blue: b, alpha: 1)
-            .getHue(&hue, saturation: &sat, brightness: &bri, alpha: &alpha)
-        let compHue = (hue + 0.5).truncatingRemainder(dividingBy: 1.0)
-        let compColor = UIColor(hue: compHue,
-                                saturation: min(sat + 0.15, 1.0),
-                                brightness: max(bri, 0.45),
-                                alpha: 0.88)
-
-        // Pick foreground that contrasts with the complementary background
-        var cr: CGFloat = 0, cg: CGFloat = 0, cb: CGFloat = 0
-        compColor.getRed(&cr, green: &cg, blue: &cb, alpha: nil)
-        let lum = 0.2126 * cr + 0.7152 * cg + 0.0722 * cb
-        let fg: Color = lum > 0.45 ? .black : .white
-
-        await MainActor.run {
-            withAnimation(.easeInOut(duration: 0.4)) {
-                pillBackground = Color(compColor)
-                pillForeground = fg
-            }
-        }
+        .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
     }
 }
 
 
-// MARK: - Controls Row (Info | Play/Pause | SharePlay)
+// MARK: - Controls Row
+/// Transport in the middle, as Spotify has it; what the programme is on the left, and what
+/// else there is to do on the right. Plain glyphs until focused, when a white disc comes up
+/// behind the one with focus. Play is always the disc, being what the screen is for.
 struct tvOSNowPlayingControls: View {
     @ObservedObject var serviceManager: DRServiceManager
     @Binding var showingInfoSheet: Bool
     @Binding var showingScheduleSheet: Bool
     let channel: DRChannel
-    @FocusState private var focused: ControlButton?
+    var focus: FocusState<tvOSNowPlayingView.Focus?>.Binding
     @StateObject private var groupState = GroupStateObserver()
 
     enum ControlButton: Hashable { case info, back, play, forward, shareplay, schedule, live }
 
     var body: some View {
-        HStack(spacing: 32) {
-            Button {
-                showingInfoSheet = true
-            } label: {
-                IconCircleLabel(systemImage: "info.circle", size: 64, iconSize: 28)
-            }
-            .buttonStyle(tvOSMusicCardButtonStyle())
-            .focused($focused, equals: .info)
-
-            // Skip appears only when the stream has a DVR window to move in.
-            if serviceManager.canSeek {
+        ZStack {
+            HStack(spacing: 24) {
                 Button {
-                    serviceManager.skip(by: -AudioPlayerService.skipInterval)
+                    showingInfoSheet = true
                 } label: {
-                    IconCircleLabel(systemImage: "gobackward.15", size: 64, iconSize: 28)
+                    GlyphLabel(systemImage: "info.circle")
                 }
                 .buttonStyle(tvOSMusicCardButtonStyle())
-                .focused($focused, equals: .back)
-                .accessibilityLabel("Skip back 15 seconds")
-            }
+                .focused(focus, equals: .control(.info))
 
-            // Play / Pause (centre, larger)
-            Button {
-                serviceManager.togglePlayback(for: channel)
-            } label: {
-                PlayPauseLabel(isPlaying: serviceManager.isPlaying)
-            }
-            .buttonStyle(tvOSMusicCardButtonStyle())
-            .focused($focused, equals: .play)
+                Spacer(minLength: 0)
 
-            if serviceManager.canSeek {
-                // Disabled at the live edge, where there is nothing ahead.
-                Button {
-                    serviceManager.skip(by: AudioPlayerService.skipInterval)
-                } label: {
-                    IconCircleLabel(systemImage: "goforward.15", size: 64, iconSize: 28)
-                        .opacity(serviceManager.isBehindLive ? 1 : 0.35)
-                }
-                .buttonStyle(tvOSMusicCardButtonStyle())
-                .disabled(!serviceManager.isBehindLive)
-                .focused($focused, equals: .forward)
-                .accessibilityLabel("Skip forward 15 seconds")
-            }
-
-            // Only while there is a FaceTime call to share into, as Apple's guidance
-            // asks: with none, the button could do nothing at all.
-            if groupState.isEligibleForGroupSession {
+                // Always on the row, so that the row is the same every time; usable only
+                // while there is a FaceTime call to share into, since with none it could do
+                // nothing at all. It used to appear only then, and its absence read as the
+                // feature having gone.
                 Button {
                     if let ch = serviceManager.playingChannel {
                         Task { await SharePlayCoordinator.start(ch) }
                     }
                 } label: {
-                    IconCircleLabel(systemImage: "shareplay", size: 64, iconSize: 28)
+                    GlyphLabel(systemImage: "shareplay")
                 }
                 .buttonStyle(tvOSMusicCardButtonStyle())
-                .focused($focused, equals: .shareplay)
+                .disabled(!groupState.isEligibleForGroupSession)
+                .focused(focus, equals: .control(.shareplay))
                 .accessibilityLabel("SharePlay")
-            }
 
-            // What else is on. iOS has had this from the full player since the list button
-            // was wired up; the television could not ask at all.
-            Button {
-                showingScheduleSheet = true
-            } label: {
-                IconCircleLabel(systemImage: "list.bullet", size: 64, iconSize: 28)
-            }
-            .buttonStyle(tvOSMusicCardButtonStyle())
-            .focused($focused, equals: .schedule)
-            .accessibilityLabel("Schedule")
-
-            if serviceManager.isBehindLive {
+                // What else is on. iOS has had this from the full player since the list
+                // button was wired up; the television could not ask at all.
                 Button {
-                    serviceManager.seekToLive()
-                    // The button goes once playback is live; hand focus somewhere that stays.
-                    focused = .play
+                    showingScheduleSheet = true
                 } label: {
-                    LiveLabel()
+                    GlyphLabel(systemImage: "list.bullet")
                 }
                 .buttonStyle(tvOSMusicCardButtonStyle())
-                .focused($focused, equals: .live)
-                .accessibilityLabel("Jump to live")
+                .focused(focus, equals: .control(.schedule))
+                .accessibilityLabel("Schedule")
+
+                if serviceManager.isBehindLive {
+                    Button {
+                        serviceManager.seekToLive()
+                        // The button goes once playback is live; hand focus somewhere that
+                        // stays.
+                        focus.wrappedValue = .control(.play)
+                    } label: {
+                        LiveLabel()
+                    }
+                    .buttonStyle(tvOSMusicCardButtonStyle())
+                    .focused(focus, equals: .control(.live))
+                    .accessibilityLabel("Jump to live")
+                }
+            }
+
+            HStack(spacing: 40) {
+                // Skip is always there, and works when the stream has a DVR window to move
+                // in; DR's HLS streams do, the ICY fallback does not. It used to appear only
+                // then, and the row changed shape from one station to the next.
+                Button {
+                    serviceManager.skip(by: -AudioPlayerService.skipInterval)
+                } label: {
+                    GlyphLabel(systemImage: "gobackward.15")
+                }
+                .buttonStyle(tvOSMusicCardButtonStyle())
+                .disabled(!serviceManager.canSeek)
+                .focused(focus, equals: .control(.back))
+                .accessibilityLabel("Skip back 15 seconds")
+
+                Button {
+                    serviceManager.togglePlayback(for: channel)
+                } label: {
+                    PlayPauseLabel(isPlaying: serviceManager.isPlaying)
+                }
+                .buttonStyle(tvOSMusicCardButtonStyle())
+                .focused(focus, equals: .control(.play))
+                .accessibilityLabel(serviceManager.isPlaying ? "Pause" : "Play")
+
+                // Also off at the live edge, where there is nothing ahead.
+                Button {
+                    serviceManager.skip(by: AudioPlayerService.skipInterval)
+                } label: {
+                    GlyphLabel(systemImage: "goforward.15")
+                }
+                .buttonStyle(tvOSMusicCardButtonStyle())
+                .disabled(!serviceManager.canSeek || !serviceManager.isBehindLive)
+                .focused(focus, equals: .control(.forward))
+                .accessibilityLabel("Skip forward 15 seconds")
             }
         }
     }
 
-    // Inner view: small icon buttons (info, shareplay)
-    private struct IconCircleLabel: View {
+    /// A glyph on its own, with a white disc behind it while it has focus, and faint while
+    /// it cannot be used.
+    private struct GlyphLabel: View {
         let systemImage: String
-        let size: CGFloat
-        let iconSize: CGFloat
         @Environment(\.isFocused) private var isFocused
+        @Environment(\.isEnabled) private var isEnabled
 
         var body: some View {
             Image(systemName: systemImage)
-                .font(.system(size: iconSize, weight: .semibold))
-                .foregroundStyle(isFocused ? Color.black : Color.white)
-                .frame(width: size, height: size)
+                .font(.system(size: 30, weight: .semibold))
+                .foregroundStyle(isFocused ? Color.black
+                                 : Color.white.opacity(isEnabled ? 0.85 : 0.3))
+                .frame(width: 72, height: 72)
                 .background(isFocused ? Color.white : Color.clear, in: Circle())
-                .background(.ultraThinMaterial, in: Circle())
-                .shadow(color: .gray.opacity(isFocused ? 0.25 : 0), radius: 12, x: 0, y: 0)
                 .focusAnimation(value: isFocused)
         }
     }
 
-    // Inner view: the way back to live, shown only while behind it
+    /// The way back to live, shown only while behind it.
     private struct LiveLabel: View {
         @Environment(\.isFocused) private var isFocused
 
@@ -474,37 +618,29 @@ struct tvOSNowPlayingControls: View {
                 Circle().fill(Color.red).frame(width: 12, height: 12)
                 Text("Live").font(.system(size: 26, weight: .semibold))
             }
-            .foregroundStyle(isFocused ? Color.black : Color.white)
+            .foregroundStyle(isFocused ? Color.black : Color.white.opacity(0.85))
             .padding(.horizontal, 24)
-            .frame(height: 64)
+            .frame(height: 72)
             .background(isFocused ? Color.white : Color.clear, in: Capsule())
-            .background(.ultraThinMaterial, in: Capsule())
             .focusAnimation(value: isFocused)
         }
     }
 
-    // Inner view: play/pause button
+    /// Always a white disc; focus brings it up a little brighter and lifts it, through the
+    /// button style.
     private struct PlayPauseLabel: View {
         let isPlaying: Bool
         @Environment(\.isFocused) private var isFocused
 
         var body: some View {
-            ZStack {
-                Circle()
-                    .fill(isFocused ? Color.white : Color.white.opacity(0.15))
-                    .frame(width: 88, height: 88)
-                if !isFocused {
-                    Circle()
-                        .stroke(.white.opacity(0.25), lineWidth: 2)
-                        .frame(width: 88, height: 88)
-                }
-                Image(systemName: isPlaying ? "pause.fill" : "play.fill")
-                    .font(.system(size: 36, weight: .medium))
-                    .foregroundStyle(isFocused ? Color.black : Color.white)
-                    .offset(x: isPlaying ? 0 : 3)
-            }
-            .shadow(color: .white.opacity(isFocused ? 0.55 : 0), radius: 18, x: 0, y: 0)
-            .focusAnimation(value: isFocused)
+            Image(systemName: isPlaying ? "pause.fill" : "play.fill")
+                .font(.system(size: 38, weight: .semibold))
+                .foregroundStyle(Color.black)
+                .offset(x: isPlaying ? 0 : 3)
+                .frame(width: 100, height: 100)
+                .background(Color.white.opacity(isFocused ? 1 : 0.85), in: Circle())
+                .shadow(color: .white.opacity(isFocused ? 0.45 : 0), radius: 18, x: 0, y: 0)
+                .focusAnimation(value: isFocused)
         }
     }
 }

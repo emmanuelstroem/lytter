@@ -101,6 +101,10 @@ its UI tests still cannot start (B8).
 The fix for B10 changed only the tvOS schedule sheet, which no other platform compiles.
 Both Apple TVs now pass all 27 UI tests, tvOS 18.5 included.
 
+The new Now Playing (B11) is tvOS only too, as is the larger text under its cards; the
+shared files it touches change nothing on other platforms, whose clean builds stay
+warning-free. It adds ten UI tests, and both Apple TVs pass all 37.
+
 ---
 
 ## iPhone, small screens (SE, mini)
@@ -217,9 +221,16 @@ itself: Search opened with its field folded away (B4).
       exists only once the schedule has loaded, so the programme on air is known when
       the engine asks. Checked with the load slowed by two seconds as well, on tvOS 18.5
       and 26.5.
-- [ ] **B11. Long track titles truncate on Now Playing. Decide.**
+- [x] **B11. Long track titles truncate on Now Playing. Decide.**
       `tvOSNowPlayingView` sets the track on one line. A television is wide, and a marquee
       there would need focus to scroll (AGENTS.md), so this may be intended.
+      *Decided, and fixed:* the track scrolls, as on the iPhone. `MarqueeText` animates on
+      its own and needs no focus, which is a `UILabel`'s marquee on tvOS. It came with a
+      new Now Playing, after Spotify's on Apple TV: artwork and what is on air across the
+      top, a thin progress bar and the controls along the bottom, on a wash of the
+      artwork's colour. Left alone for eight seconds, the screen dims to a small card in
+      the corner, and any press of the remote brings the controls back
+      (`TVNowPlayingUITests`).
 
 ## Vision Pro
 

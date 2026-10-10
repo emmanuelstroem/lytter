@@ -102,6 +102,18 @@ enum UITestFixtures {
         }
     }
 
+    // MARK: - Now Playing idle
+
+    /// How long Apple TV's Now Playing waits for the remote before it dims, in seconds, from
+    /// `LYTTER_UITEST_IDLE_SECONDS`. Nil unless asked for, and then the screen never dims
+    /// under test: the other tests pause on it for longer than the real delay.
+    static var nowPlayingIdleDelay: Duration? {
+        guard isActive,
+              let value = ProcessInfo.processInfo.environment["LYTTER_UITEST_IDLE_SECONDS"],
+              let seconds = Double(value) else { return nil }
+        return .seconds(seconds)
+    }
+
     // MARK: - Long titles
 
     /// Whether the programmes on air carry titles wider than any phone, with a track on air
