@@ -17,13 +17,31 @@ import SwiftUI
 /// which can be a single district, when that is what the words named (`StationSearch`).
 ///
 /// The tab is declared with `role: .search`, so `.searchable` gets the system's
-/// presentation: the field in the tab bar, and the keyboard up as the tab opens.
+/// presentation: the field in the tab bar, and the keyboard up as the tab opens. On iPad the
+/// field stands open under the title, as Music's does (`searchPlacement`).
 struct SearchView: View {
     @ObservedObject var serviceManager: DRServiceManager
     @ObservedObject var selectionState: SelectionState
     /// Observed directly, for the recent searches — see AGENTS.md.
     @ObservedObject var preferences: UserPreferencesService
     @State private var query = ""
+    #if os(iOS)
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    #endif
+
+    /// Where the field goes. On iPad at full width the system folds it into a button at the
+    /// end of the navigation bar, and Search opened on a page with nothing to type into; so
+    /// there it stands open under the title. On iPhone, and on iPad in a narrow split view,
+    /// the tabs are a bar along the bottom and the field is the tab bar's own. Not by size
+    /// class alone: a large iPhone held sideways is regular width too.
+    private var searchPlacement: SearchFieldPlacement {
+        #if os(iOS)
+        if UIDevice.current.userInterfaceIdiom == .pad, horizontalSizeClass == .regular {
+            return .navigationBarDrawer(displayMode: .always)
+        }
+        #endif
+        return .automatic
+    }
 
     private var isSearching: Bool {
         !StationSearch.terms(query).isEmpty
@@ -47,7 +65,8 @@ struct SearchView: View {
             }
             .navigationTitle("Search")
             .navigationBarTitleDisplayMode(.large)
-            .searchable(text: $query, prompt: "Stations, regions and programmes")
+            .searchable(text: $query, placement: searchPlacement,
+                        prompt: "Stations, regions and programmes")
         }
         .onAppear {
             if serviceManager.availableChannels.isEmpty {

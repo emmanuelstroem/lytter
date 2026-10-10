@@ -63,7 +63,7 @@ sheet's description both shipped that way. Every scrolling surface on tvOS has a
 container that is not listed against one. Add the test when you add the scroll view. Run them:
 
 ```
-xcodebuild test -scheme lytter -destination 'platform=tvOS Simulator,name=Apple TV 4K (3rd generation) (at 1080p)' -only-testing:lytterUITests/TVScrollingUITests -parallel-testing-enabled NO
+xcodebuild test -scheme lytter -destination 'platform=tvOS Simulator,name=Apple TV 4K (3rd generation) (at 1080p)' -only-testing:lytterUITests/TVScrollingUITests -parallel-testing-enabled NO -collect-test-diagnostics never
 ```
 
 **An Icon Composer layer needs a filled shape.** `AppIcon.icon/Assets/*.svg` must use
@@ -82,12 +82,14 @@ than iOS 26 show the PNG fallback, so they cannot show this class of bug:
 `UserPreferencesService` directly rather than reaching it through `DRServiceManager`, or the
 view will not redraw when it changes.
 
-**`xcodebuild test` can hang after the tests have finished.** Now and then it never exits —
-seen tearing down a simulator clone, on both the unit and the tvOS UI tests — and it looks
-exactly like a test that is stuck. Before suspecting the code, check whether every result
-was already printed; rerunning the same command usually finishes in under a minute. Run
-tests with a time limit, and write the log to a file rather than piping it through a filter
-that only flushes at the end.
+**`xcodebuild test` sits for ten minutes after a test fails.** Once the last test is done,
+if any failed, xcodebuild runs `simctl diagnose` (timeout 600 s) to put a sysdiagnose in the
+result bundle. The log goes quiet and the bundle has no `Info.plist` yet, so it looks
+exactly like a hang, and like one tied to whichever test failed; a rerun that passes has
+nothing to diagnose and exits at once. Pass `-collect-test-diagnostics never`: the bundle
+still keeps every failure's screenshot and UI hierarchy. Still run tests with a time limit,
+and write the log to a file rather than piping it through a filter that only flushes at the
+end.
 
 **On tvOS, XCUITest reports an app that has just left as still in front.** For a moment
 after Back exits to the Apple TV home screen, `app.state` is `runningForeground` with nothing

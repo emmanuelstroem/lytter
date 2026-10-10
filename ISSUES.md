@@ -30,7 +30,6 @@ The smallest and largest of each kind, and the oldest OS that has a simulator ru
 | Device | OS | Why |
 | --- | --- | --- |
 | iPhone SE (3rd generation) | iOS 26.5 | Smallest iPhone screen, 375×667. Not created by default: `xcrun simctl create "iPhone SE (3rd generation)" com.apple.CoreSimulator.SimDeviceType.iPhone-SE-3rd-generation com.apple.CoreSimulator.SimRuntime.iOS-26-5` |
-| iPhone 17e | iOS 26.5 | The standard iPhone size |
 | iPhone 17 Pro Max | iOS 26.5 | Largest iPhone screen |
 | iPhone 16e | iOS 18.5 | Oldest iOS with a runtime here; tests cannot run on it yet (B13) |
 | iPad mini (A17 Pro) | iOS 26.5 | Smallest iPad |
@@ -46,14 +45,16 @@ tvOS 17.6, macOS 14.6) go untested.
 ### Running it
 
 Build once per platform, then test each device from that build. Give every run a time
-limit and its own log and result bundle: `xcodebuild test` sometimes hangs after the last
-test (AGENTS.md), and the result bundle keeps a screenshot and UI hierarchy for every failure.
+limit and its own log and result bundle, and pass `-collect-test-diagnostics never`: without
+it, a run with a failure sits for ten minutes after its last test (AGENTS.md). The result
+bundle keeps a screenshot and UI hierarchy for every failure either way.
 
 ```
 xcodebuild build-for-testing -scheme lytter -destination 'generic/platform=iOS Simulator'
 xcodebuild test-without-building -scheme lytter -parallel-testing-enabled NO \
-  -destination 'platform=iOS Simulator,name=iPhone 17e,OS=26.5' \
-  -resultBundlePath results/iphone-17e.xcresult > results/iphone-17e.log 2>&1
+  -collect-test-diagnostics never \
+  -destination 'platform=iOS Simulator,name=iPhone SE (3rd generation),OS=26.5' \
+  -resultBundlePath results/iphone-se.xcresult > results/iphone-se.log 2>&1
 ```
 
 Repeat the second command for each iOS device, then do the same with
@@ -83,6 +84,10 @@ The unit-test target is not built for tvOS, so Apple TV runs only the UI tests.
 Since the baseline, #108 added four iOS UI tests (two on visionOS), for B1 and B3. They pass
 on every iPhone and iPad and on Vision Pro, and every other test it ran passed or failed as
 it did here.
+
+#109 fixed B4–B7 and B14 and added one test, for the iPad's search field. Both iPads now
+pass all 42 UI tests; the 17 Pro Max passes the suites it touched, reordering included; the
+SE fails only B2's two, as here.
 
 ---
 
@@ -122,31 +127,41 @@ it did here.
 
 ## iPad
 
-The app itself passed every check that reached it. Every failure on iPad is a test that
-was written against the iPhone's layout, which leaves the iPad with almost no UI coverage.
+Every failure on iPad was a test written against the iPhone's layout, which left the iPad
+with almost no UI coverage. Once the tests reached it, they turned up one thing in the app
+itself: Search opened with its field folded away (B4).
 
-- [ ] **B4. Sixteen UI tests look for a tab bar the iPad does not have. Test.**
+- [x] **B4. Sixteen UI tests look for a tab bar the iPad does not have. Test.**
       `BroadcastersUITests`, `SettingsAndSearchUITests` and `AccessibilityAuditUITests`
       reach Settings and Search through `app.tabBars.buttons[…]`. On iPad with iOS 26 the
       tabs sit at the top of the window, not in a bar at the bottom, and the query finds
       nothing. Reach tabs with a query that works on both, such as `app.buttons["Settings"]`
       inside the tab container, or a helper that knows each idiom.
-- [ ] **B5. `PlayerDynamicTypeUITests` opens the player and then closes it. Test.**
+      *Fixed in #109:* tests reach tabs through `app.tab(_:)` (`lytterUITests/Tabs.swift`),
+      which knows each idiom. Behind it was a difference in the app: on iPad the system
+      folded Search's field into a button at the end of the navigation bar, so Search
+      opened with nothing to type into. It now stands open under the title, as Music's
+      does (`testSearchOpensWithItsFieldShowing`).
+- [x] **B5. `PlayerDynamicTypeUITests` opens the player and then closes it. Test.**
       It finds the station card with `label BEGINSWITH 'P1'`, which also matches the
       mini player once a station has been restored. Then it taps the mini player again to
       open the player. On iPhone the sheet covers the mini player, so the second tap is
       harmless. On iPad the player is a centred sheet, the mini player stays exposed, and
       the second tap lands outside the sheet and dismisses it. Exclude the mini player, as
       the newer player tests do (`AND identifier != 'miniPlayer'`).
-- [ ] **B6. `PlayerLongTitlesUITests` checks the margin of the window, not the sheet. Test.**
+      *Fixed in #109*, and in `AccessibilityAuditUITests`, which found its card the same way.
+- [x] **B6. `PlayerLongTitlesUITests` checks the margin of the window, not the sheet. Test.**
       The margin it reads for stray text is the strip from the window's edge to the
       title's column. On iPhone that is the player's margin; on iPad it is a strip of Home,
       dimmed behind the sheet, with Home's own text in it. Measure from the sheet's edge,
       or run the check on iPhone only.
-- [ ] **B7. `BroadcastersUITests` checks the order of stations by height alone. Test.**
+      *Fixed in #109:* the margin, and the bounds the lines must stay inside, are the
+      player's own (`player.scroll`), not the window's.
+- [x] **B7. `BroadcastersUITests` checks the order of stations by height alone. Test.**
       `testABroadcastersChipListsEachStationOnceInOrder` asserts each station sits lower
       than the one before it. iPad's wider grid puts P1 and P2 on the same row, so P1 is
       not "above" P2 (288 = 288). Compare reading order: row first, then column.
+      *Fixed in #109.*
 
 ## Mac
 
@@ -192,11 +207,16 @@ was written against the iPhone's layout, which leaves the iPad with almost no UI
       target*). Nothing has tested iOS 17–18 or macOS 14–15 automatically. Lower the test
       targets to match the app, then fix whatever then fails to compile against the older
       SDK. Checked by hand on iOS 18.5: the app launches, and Home draws as on iOS 26.
-- [ ] **B14. `testReorderingChangesHome` does not wait for the drop. Test.**
+- [x] **B14. `testReorderingChangesHome` does not wait for the drop. Test.**
       It drags Testradio above DR in Settings, then goes straight to Home. On the 17 Pro
       Max its own screenshot shows the drag still in flight, Testradio lifted over DR, and
       Home is then in the old order. It passed on the SE and the 17e. Wait for Settings to
       show the new order before leaving it.
+      *Fixed in #109:* it waits for Settings to take the new order, then for Home to follow.
+      Once B4 let it reach Settings on iPad, it failed there too, and on the iPad Pro
+      13-inch in a second way: now and then the simulator lifted the row only after the
+      drag had gone by. It holds longer before dragging, and drags once more if the row
+      stayed put.
 
 Tracked in [docs/ROADMAP.md](docs/ROADMAP.md) rather than here: no CI (nothing runs these
 tests but a person), the orphaned `AppIcon Watch.appiconset`, and an API retirement
