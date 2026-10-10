@@ -56,7 +56,10 @@ struct tvOSNowPlayingView: View {
     /// How long the remote has to be left alone before the screen dims. Under test it never
     /// dims unless a test asks for it: the others pause on this screen longer than this.
     private static var idleDelay: Duration? {
-        UITestFixtures.isActive ? UITestFixtures.nowPlayingIdleDelay : .seconds(8)
+        #if DEBUG
+        if UITestFixtures.isActive { return UITestFixtures.nowPlayingIdleDelay }
+        #endif
+        return .seconds(8)
     }
 
     var body: some View {
