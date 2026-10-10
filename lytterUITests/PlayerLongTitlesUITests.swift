@@ -51,10 +51,14 @@ final class PlayerLongTitlesUITests: XCTestCase {
         let titleFrame = title.frame
         let trackFrame = track.frame
         let window = app.windows.firstMatch.frame
+        // The player's own bounds. On iPhone the sheet is the width of the screen; on iPad it
+        // is centred, with Home dimmed on either side of it, and Home's text is not the
+        // player's to keep out of its margin.
+        let sheet = app.scrollViews["player.scroll"].frame
         // Each line is one element in its own frame, not the two copies of a scrolling text,
-        // one of them far off the side of the screen.
+        // one of them far off the side of the player.
         for (name, frame) in [("title", titleFrame), ("track", trackFrame)] {
-            XCTAssertTrue(window.contains(frame), "the \(name) reaches outside the window: \(frame)")
+            XCTAssertTrue(sheet.contains(frame), "the \(name) reaches outside the player \(sheet): \(frame)")
         }
 
         // Scrolling starts 1.5 s after the text appears; take one frame either side of that.
@@ -66,11 +70,11 @@ final class PlayerLongTitlesUITests: XCTestCase {
         XCTAssertNotEqual(before.crop(titleFrame), after.crop(titleFrame),
                           "the title did not scroll")
 
-        // The margin left of the column: from just inside the screen edge to just short of
+        // The margin left of the column: from just inside the player's edge to just short of
         // where the title and track start. Nothing should be drawn there, at any point.
-        let marginWidth = min(titleFrame.minX, trackFrame.minX) - 6
+        let marginWidth = min(titleFrame.minX, trackFrame.minX) - 6 - (sheet.minX + 2)
         XCTAssertGreaterThan(marginWidth, 8, "no margin beside the title to check")
-        let margin = CGRect(x: 2, y: titleFrame.minY, width: marginWidth,
+        let margin = CGRect(x: sheet.minX + 2, y: titleFrame.minY, width: marginWidth,
                             height: trackFrame.maxY - titleFrame.minY)
         for (moment, pixels) in [("before scrolling", before), ("while scrolling", after)] {
             XCTAssertLessThan(pixels.contrast(in: margin), 24,

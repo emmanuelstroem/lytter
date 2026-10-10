@@ -24,7 +24,7 @@ final class SettingsAndSearchUITests: XCTestCase {
     @MainActor
     func testSiriAndShortcutsLivesInSettings() throws {
         launch()
-        XCTAssertFalse(app.tabBars.buttons["Shortcuts"].exists, "Shortcuts is still a tab")
+        XCTAssertFalse(app.tab("Shortcuts").exists, "Shortcuts is still a tab")
 
         openSettings()
         XCTAssertTrue(app.switches["Show Images"].waitForExistence(timeout: 5),
@@ -93,7 +93,7 @@ final class SettingsAndSearchUITests: XCTestCase {
     @MainActor
     func testSearchOpensOnEveryStation() throws {
         launch()
-        app.tabBars.buttons["Search"].tap()
+        app.tab("Search").tap()
 
         XCTAssertTrue(app.staticTexts["All Stations"].waitForExistence(timeout: 5),
                       "Search does not open on every station")
@@ -103,12 +103,26 @@ final class SettingsAndSearchUITests: XCTestCase {
         shot("search-browse")
     }
 
+    /// Search opens with its field showing, ready to type into: in the tab bar on iPhone,
+    /// under the title on iPad, as Music's is. On iPad the system folded it into a button at
+    /// the end of the navigation bar, and Search opened with nothing to type into.
+    @MainActor
+    func testSearchOpensWithItsFieldShowing() throws {
+        launch()
+        app.tab("Search").tap()
+
+        let field = app.searchFields.firstMatch
+        XCTAssertTrue(field.waitForExistence(timeout: 5), "Search opened with no field to type into")
+        XCTAssertTrue(field.isHittable, "Search's field is not in reach")
+        shot("search-field")
+    }
+
     /// A district name finds the districts, as channels — not P4 and P5 as stations to
     /// choose a district from again.
     @MainActor
     func testSearchingADistrictListsItsChannels() throws {
         launch()
-        app.tabBars.buttons["Search"].tap()
+        app.tab("Search").tap()
 
         let field = app.searchFields.firstMatch
         XCTAssertTrue(field.waitForExistence(timeout: 5), "no search field")
@@ -126,7 +140,7 @@ final class SettingsAndSearchUITests: XCTestCase {
     @MainActor
     func testAChosenResultIsRememberedAsARecentSearch() throws {
         launch()
-        app.tabBars.buttons["Search"].tap()
+        app.tab("Search").tap()
 
         let field = app.searchFields.firstMatch
         XCTAssertTrue(field.waitForExistence(timeout: 5), "no search field")
@@ -156,7 +170,7 @@ final class SettingsAndSearchUITests: XCTestCase {
     @MainActor
     func testLaunchOpensOnHomeNotTheLastTab() throws {
         launch()
-        app.tabBars.buttons["Search"].tap()
+        app.tab("Search").tap()
         XCTAssertTrue(app.staticTexts["All Stations"].waitForExistence(timeout: 5),
                       "Search did not open")
 
@@ -167,7 +181,7 @@ final class SettingsAndSearchUITests: XCTestCase {
         app.terminate()
         launch()
 
-        XCTAssertTrue(app.tabBars.buttons["Home"].isSelected, "the app did not open on Home")
+        XCTAssertTrue(app.tab("Home").isSelected, "the app did not open on Home")
         XCTAssertFalse(app.staticTexts["All Stations"].exists, "the app reopened on Search")
     }
 
@@ -206,7 +220,7 @@ final class SettingsAndSearchUITests: XCTestCase {
 
     @MainActor
     private func openSettings() {
-        app.tabBars.buttons["Settings"].tap()
+        app.tab("Settings").tap()
         XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 5),
                       "Settings did not open")
     }

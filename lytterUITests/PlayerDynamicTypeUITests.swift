@@ -31,7 +31,13 @@ final class PlayerDynamicTypeUITests: XCTestCase {
         app.launch()
         defer { app.terminate() }
 
-        let card = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'P1'")).firstMatch
+        // Not the mini player, whose label also starts with the station once one is restored.
+        // On iPhone tapping it twice was harmless, the sheet covering it by the second tap;
+        // on iPad the sheet is centred, the mini player stays in reach, and the second tap
+        // landed outside the sheet and closed it.
+        let card = app.buttons
+            .matching(NSPredicate(format: "label BEGINSWITH 'P1,' AND identifier != 'miniPlayer'"))
+            .firstMatch
         XCTAssertTrue(card.waitForExistence(timeout: 20), "no P1 card on Home")
         // A card plays the station; the full player opens from the mini player, as a
         // listener opens it.

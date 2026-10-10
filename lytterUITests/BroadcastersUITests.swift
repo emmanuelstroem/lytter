@@ -42,13 +42,13 @@ final class BroadcastersUITests: XCTestCase {
         shot("broadcasters-settings")
         setSwitch(testradio, on: false)
 
-        app.tabBars.buttons["Home"].tap()
+        app.tab("Home").tap()
         XCTAssertTrue(waitForAbsence(homeSection("Testradio")), "a hidden broadcaster is still on Home")
         XCTAssertTrue(homeSection("DR").exists, "DR left Home with Testradio")
 
         openSettings()
         setSwitch(broadcasterSwitch("Testradio"), on: true)
-        app.tabBars.buttons["Home"].tap()
+        app.tab("Home").tap()
         XCTAssertTrue(homeSection("Testradio").waitForExistence(timeout: 10),
                       "a broadcaster shown again did not come back to Home")
     }
@@ -98,18 +98,32 @@ final class BroadcastersUITests: XCTestCase {
         openSettings()
         let testradio = broadcasterSwitch("Testradio")
         XCTAssertTrue(testradio.waitForExistence(timeout: 5), "Settings does not list Testradio")
-        // Touch and hold on the name, clear of the switch, then drag above DR.
+        // Touch and hold on the name, clear of the switch, until the row lifts; then drag it
+        // above DR, slowly, and hold there so the drop lands where it was aimed.
         let dr = broadcasterSwitch("DR")
-        testradio.coordinate(withNormalizedOffset: CGVector(dx: 0.2, dy: 0.5))
-            .press(forDuration: 1.0,
-                   thenDragTo: dr.coordinate(withNormalizedOffset: CGVector(dx: 0.2, dy: 0.1)))
+        let moved = { testradio.frame.minY < dr.frame.minY }
+        let drag = {
+            testradio.coordinate(withNormalizedOffset: CGVector(dx: 0.2, dy: 0.5))
+                .press(forDuration: 2.0,
+                       thenDragTo: dr.coordinate(withNormalizedOffset: CGVector(dx: 0.2, dy: 0.1)),
+                       withVelocity: .slow, thenHoldForDuration: 0.5)
+            // The rows' frames mean nothing while the drop animates; read them once it has.
+            sleep(1)
+        }
+        drag()
+        // Now and then the simulator lifts the row only after the drag has gone by, and it
+        // drops where it was (one run in three on the iPad Pro 13-inch); once more if so.
+        // This test is about Home following Settings, not about the gesture.
+        if !moved() { drag() }
+        // Leaving Settings before the drop had landed took Home the old order (B14).
+        XCTAssertTrue(eventually(moved), "Settings did not take the new order")
         shot("broadcasters-reordered")
 
-        app.tabBars.buttons["Home"].tap()
+        app.tab("Home").tap()
         let section = homeSection("Testradio")
         XCTAssertTrue(section.waitForExistence(timeout: 5), "Testradio left Home")
-        XCTAssertLessThan(section.frame.minY, homeSection("DR").frame.minY,
-                          "Home does not follow the order chosen in Settings")
+        XCTAssertTrue(eventually { section.frame.minY < self.homeSection("DR").frame.minY },
+                      "Home does not follow the order chosen in Settings")
     }
 
     // MARK: - Home's chips (F54c)
@@ -122,7 +136,7 @@ final class BroadcastersUITests: XCTestCase {
         XCTAssertTrue(chip("forYou").exists, "no For you chip")
         XCTAssertTrue(chip("all").isSelected, "Home did not open on All")
         XCTAssertTrue(chip("broadcaster:dr").exists, "DR has no chip while it is the only broadcaster")
-        XCTAssertFalse(app.tabBars.buttons["Radio"].exists, "the Radio tab is still there")
+        XCTAssertFalse(app.tab("Radio").exists, "the Radio tab is still there")
         shot("home-chips-dr-only")
     }
 
@@ -154,8 +168,8 @@ final class BroadcastersUITests: XCTestCase {
         XCTAssertEqual(p1Cards.count, 1, "a favourite is listed twice on its broadcaster's chip")
         XCTAssertFalse(app.scrollViews.firstMatch.staticTexts["Favourites"].exists,
                        "the broadcaster's chip still has a Favourites shelf")
-        XCTAssertLessThan(card("P1").frame.minY, card("P3").frame.minY,
-                          "P1 is not first: the stations are not in order")
+        XCTAssertTrue(readsBefore(card("P1").frame, card("P3").frame),
+                      "P1 is not first: the stations are not in order")
     }
 
     /// See all, on a broadcaster's shelf under All, is that broadcaster's chip.
@@ -182,7 +196,7 @@ final class BroadcastersUITests: XCTestCase {
 
         openSettings()
         setSwitch(broadcasterSwitch("Testradio"), on: false)
-        app.tabBars.buttons["Home"].tap()
+        app.tab("Home").tap()
 
         XCTAssertTrue(waitForAbsence(chip("broadcaster:fixture")), "a hidden broadcaster still has a chip")
         XCTAssertTrue(chip("broadcaster:dr").exists, "DR lost its chip when Testradio was hidden")
@@ -200,12 +214,12 @@ final class BroadcastersUITests: XCTestCase {
 
         openSettings()
         setSwitch(broadcasterSwitch("Testradio"), on: false)
-        app.tabBars.buttons["Home"].tap()
+        app.tab("Home").tap()
         XCTAssertTrue(waitForAbsence(chip("broadcaster:fixture")), "a hidden broadcaster still has a chip")
 
         openSettings()
         setSwitch(broadcasterSwitch("Testradio"), on: true)
-        app.tabBars.buttons["Home"].tap()
+        app.tab("Home").tap()
 
         XCTAssertTrue(chip("broadcaster:fixture").waitForExistence(timeout: 5), "Testradio's chip did not return")
         XCTAssertTrue(chip("all").isSelected, "Home jumped back to Testradio's chip")
@@ -235,7 +249,7 @@ final class BroadcastersUITests: XCTestCase {
 
     @MainActor
     private func openSettings() {
-        app.tabBars.buttons["Settings"].tap()
+        app.tab("Settings").tap()
         XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 5),
                       "Settings did not open")
     }
@@ -259,6 +273,12 @@ final class BroadcastersUITests: XCTestCase {
             .matching(NSPredicate(format: "label BEGINSWITH %@", "\(station),")).firstMatch
     }
 
+    /// Whether `a` comes before `b` in reading order: the row first, then the column. On
+    /// iPhone the cards are one above another; iPad's wider grid sets several side by side.
+    private func readsBefore(_ a: CGRect, _ b: CGRect) -> Bool {
+        abs(a.minY - b.minY) < 1 ? a.minX < b.minX : a.minY < b.minY
+    }
+
     @MainActor
     private func broadcasterSwitch(_ name: String) -> XCUIElement {
         app.switches[name]
@@ -266,7 +286,7 @@ final class BroadcastersUITests: XCTestCase {
 
     @MainActor
     private func search(_ query: String) {
-        app.tabBars.buttons["Search"].tap()
+        app.tab("Search").tap()
         let field = app.searchFields.firstMatch
         XCTAssertTrue(field.waitForExistence(timeout: 5), "no search field")
         field.tap()
@@ -292,6 +312,17 @@ final class BroadcastersUITests: XCTestCase {
                 || XCTWaiter.wait(for: [expectation(for: NSPredicate(format: "value == %@", expected),
                                                     evaluatedWith: toggle)], timeout: 3) == .completed,
             "\(toggle) did not switch \(on ? "on" : "off")")
+    }
+
+    /// Whether `condition` holds within `timeout`, asked again every quarter of a second.
+    @MainActor
+    private func eventually(timeout: TimeInterval = 5, _ condition: () -> Bool) -> Bool {
+        let deadline = Date().addingTimeInterval(timeout)
+        while !condition() {
+            guard Date() < deadline else { return false }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.25))
+        }
+        return true
     }
 
     @MainActor

@@ -23,20 +23,24 @@ final class AccessibilityAuditUITests: XCTestCase {
         // On All, where every station is (F54c), whatever chip the simulator last had.
         app.launchArguments = ["-homeScope", "all"]
         app.launch()
-        let card = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'P1'")).firstMatch
+        // Not the mini player, whose label also starts with the station once one is restored.
+        let card = app.buttons
+            .matching(NSPredicate(format: "label BEGINSWITH 'P1,' AND identifier != 'miniPlayer'"))
+            .firstMatch
         XCTAssertTrue(card.waitForExistence(timeout: 20), "Home did not load")
 
         try audit(app)                                  // Home, on All: chips and every station
         // Settings before Search: in search mode the tab bar folds away its other tabs.
-        app.tabBars.buttons["Settings"].tap()
+        app.tab("Settings").tap()
         try audit(app)
-        app.tabBars.buttons["Search"].tap()
+        app.tab("Search").tap()
         try audit(app)
 
-        // In search mode the bar folds to one button, the tab that was open before Search;
-        // that brings the full bar back, and Home is then named rather than counted.
-        app.tabBars.buttons.element(boundBy: 0).tap()
-        app.tabBars.buttons["Home"].tap()
+        // On iPhone, in search mode the bar folds to one button, the tab that was open before
+        // Search; that brings the full bar back, and Home is then named rather than counted.
+        // iPad's tabs at the top of the window stay as they are.
+        if !app.tab("Home").exists { app.tabBars.buttons.element(boundBy: 0).tap() }
+        app.tab("Home").tap()
         card.tap()                                      // plays P1
         // Then the full player, from the mini player. Tapping a card does not open it; this
         // used to pass only when P1 was already the last station played, which made the
