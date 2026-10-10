@@ -46,8 +46,10 @@ struct iOSSettingsView: View {
             }
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.large)
-            // Room for the mini player, as on the other tabs.
-            .contentMargins(.bottom, 100, for: .scrollContent)
+            // Room for the mini player, as on the other tabs. Safe-area padding rather than
+            // a content margin: on iOS 18 a Form puts the margin above its last footer, and
+            // the About line ended under the mini player.
+            .safeAreaPadding(.bottom, 100)
         }
     }
 }

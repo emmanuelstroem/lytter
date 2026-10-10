@@ -67,6 +67,8 @@ struct SharePlayTests {
 
     #if os(iOS) || os(macOS)
     /// The share sheet's other destinations — Messages, Mail, copy — still get the text.
+    /// Skipped before iOS 18.2 and macOS 15.2, which have no `exported(as:)` to read it with.
+    @available(iOS 18.2, macOS 15.2, *)
     @Test func theShareSheetStillSharesTheText() async throws {
         let shared = SharedChannel(activity: RadioShareActivity(channel: channel),
                                    text: "Listening to DR P1")
