@@ -18,6 +18,8 @@ public struct MarqueeText: View {
     /// With Reduce Motion on the text never scrolls; what does not fit is truncated.
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     var isCompact = false
+    /// Set on the accessibility element itself; see `accessibilityID(_:)`.
+    var accessibilityID = ""
     
     public var body: some View {
         let stringWidth  = textSize.width
@@ -53,15 +55,19 @@ public struct MarqueeText: View {
                         maxHeight: .infinity,
                         alignment: .topLeading
                     )
-                    .offset(x: leftFade)
+                    // Masked within its own frame. The mask used to be widened by
+                    // `leftFade` past the leading edge, so the text scrolled out over the
+                    // margin beside it — nearly to the screen's edge in the full player.
+                    // At rest the text starts at the leading edge, in line with the line
+                    // above it, so the leading fade comes in only as the scroll begins.
                     .mask(
                         fadeMask(
-                            leftFade: leftFade,
+                            leftFade: animate ? leftFade : 0,
                             rightFade: rightFade
                         )
+                        .animation(animate ? .easeIn(duration: 0.3).delay(startDelay) : nil,
+                                   value: animate)
                     )
-                    .frame(width: geo.size.width + leftFade)
-                    .offset(x: -leftFade)
                 } else {
                     // MARK: - Non-scrolling version
                     Text(text)
@@ -102,6 +108,11 @@ public struct MarqueeText: View {
         }
         .onDisappear {
             self.animate = false
+        }
+        // One Text, in the marquee's own frame. Scrolling, it draws the text twice, and
+        // VoiceOver read both — and outlined the pair, one far off to the side.
+        .accessibilityRepresentation {
+            Text(verbatim: text).accessibilityIdentifier(accessibilityID)
         }
     }
     
@@ -144,8 +155,6 @@ public struct MarqueeText: View {
     @ViewBuilder
     private func fadeMask(leftFade: CGFloat, rightFade: CGFloat) -> some View {
         HStack(spacing: 0) {
-            Rectangle().frame(width: 2).opacity(0)
-            
             LinearGradient(
                 gradient: Gradient(colors: [Color.black.opacity(0), Color.black]),
                 startPoint: .leading,
@@ -165,8 +174,6 @@ public struct MarqueeText: View {
                 endPoint: .trailing
             )
             .frame(width: rightFade)
-            
-            Rectangle().frame(width: 2).opacity(0)
         }
     }
     
@@ -192,6 +199,15 @@ extension MarqueeText {
     public func makeCompact(_ compact: Bool = true) -> Self {
         var view = self
         view.isCompact = compact
+        return view
+    }
+
+    /// An identifier for UI tests. `.accessibilityIdentifier` from outside does not reach the
+    /// element: it lands on the view the representation replaces, whose frame takes in the
+    /// second copy of the text scrolling off to the side.
+    public func accessibilityID(_ identifier: String) -> Self {
+        var view = self
+        view.accessibilityID = identifier
         return view
     }
 }

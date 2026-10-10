@@ -76,11 +76,18 @@ struct PlayerInfoView: View {
         // the progress row below them grew. The row now takes the height its text needs.
         HStack(alignment: .center, spacing: 12) {
             VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                    .font(.headline)
-                    .foregroundStyle(Color.primary)
-                    .lineLimit(1)
-                    .accessibilityIdentifier("player.title")
+                // A marquee, like the line under it. While a track plays the title is the
+                // station *and* the programme, and as a one-line Text it was cut off with
+                // an ellipsis — on a smaller iPhone, before the programme's name even began.
+                MarqueeText(
+                    text: title,
+                    font: .headline,
+                    leftFade: 16,
+                    rightFade: 16,
+                    startDelay: 1.5
+                )
+                .accessibilityID("player.title")
+                .foregroundStyle(Color.primary)
 
                 MarqueeText(
                     text: subtitle,

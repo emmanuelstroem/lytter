@@ -94,10 +94,16 @@ struct MiniPlayerComponents: View {
                                 if serviceManager.isHeard(track) {
                                     let programTitle = serviceManager.getCurrentProgram(for: playingChannel)
                                     VStack(alignment: .leading, spacing: 1) {
-                                        Text(verbatim: "\(playingChannel.title) - \(programTitle?.cleanTitle() ?? "")")
-                                            .font(.footnote.weight(.medium))
-                                            .foregroundStyle(Color.primary)
-                                            .lineLimit(1)
+                                        // Station and programme together outgrow the bar,
+                                        // so this line scrolls as the track under it does.
+                                        MarqueeText(
+                                            text: "\(playingChannel.title) - \(programTitle?.cleanTitle() ?? "")",
+                                            font: .footnote.weight(.medium),
+                                            leftFade: 5,
+                                            rightFade: 24,
+                                            startDelay: 1.5
+                                        )
+                                        .foregroundStyle(Color.primary)
                                         MarqueeText(
                                             text: track.displayText,
                                             font: .caption2,
