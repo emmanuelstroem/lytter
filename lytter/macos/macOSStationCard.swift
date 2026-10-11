@@ -50,14 +50,13 @@ struct macOSStationCard: View {
 
     private var isPlaying: Bool { serviceManager.playingChannel?.id == channel.id }
 
-    /// Whether the playing marker goes beside the name, or leads the programme beneath the
-    /// card instead.
+    /// Whether the playing marker goes on the card, in its corner, or leads the programme
+    /// beneath the card instead.
     ///
-    /// Beside the name only where every name DR broadcasts fits with it: on the standard
-    /// card "P4 - Nordjylland" measures 125 points and beside the marker there are 121 —
-    /// and widening the card does not help, because the marker grows with it (F44).
-    /// The line beneath has the room, and it is where Music marks the playing item too.
-    /// `StationCardTests` measures both.
+    /// On the card only on a featured one. The marker began beside the name, in a caption
+    /// across the card's foot, and on the standard card the longest districts left it no
+    /// room there (F44). The name is the tile's now, but the line beneath still has the room,
+    /// and it is where Music marks the playing item too.
     static func marksPlayingBesideName(_ style: StationCardStyle) -> Bool {
         style == .featured
     }
