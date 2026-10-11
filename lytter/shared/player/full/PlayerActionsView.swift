@@ -59,8 +59,11 @@ struct PlayerActionsView: View {
                     }
                 }
                 Spacer()
-                
-                if showAirPlayButton {
+
+                // Left out, its spacer with it, where there is no picker (visionOS): an
+                // empty slot between two spacers made the gap between information and the
+                // schedule twice the others.
+                if showAirPlayButton && AirPlayButtonView.isAvailable {
                     // The same AirPlayButtonView the mini player uses — an
                     // AVRoutePickerView, which presents the route picker itself. There is
                     // deliberately no tap callback: there was one, and it was never
@@ -70,8 +73,8 @@ struct PlayerActionsView: View {
                     // wraps a UIKit view, so a SwiftUI foreground style never reached it —
                     // the old .gray here did nothing at all.
                     AirPlayButtonView(size: 24, tint: .secondaryLabel)
+                    Spacer()
                 }
-                Spacer()
                 if showListButton {
                     Button(action: {
                         onListTap?()

@@ -6,9 +6,9 @@
 import SwiftUI
 import CoreImage
 
-#if os(tvOS)
-/// The colour of a programme's artwork, for the surfaces drawn around it: Now Playing's
-/// backdrop, and the focused row of its schedule.
+#if os(iOS) || os(tvOS) || os(visionOS)
+/// The colour of a programme's artwork, for the surfaces drawn around it: Apple TV's Now
+/// Playing backdrop, and the highlighted row of the schedule on every platform with one.
 ///
 /// Measured from the image the cache already holds for the artwork, so asking for it does not
 /// fetch the artwork a second time.
@@ -51,6 +51,22 @@ struct ArtworkTint {
         return ArtworkTint(hue: hue, saturation: saturation, brightness: brightness)
     }
 
+    /// A colour read as an artwork's is: for a station with no artwork, its own colour, so
+    /// that its highlight is drawn the same way as one taken from a picture. The station's
+    /// colour as it stands is chosen for the tile's name, which on P1, P3 and P4 is near-black;
+    /// white on P3's light green did not read.
+    init(_ color: Color) {
+        var hue: CGFloat = 0, saturation: CGFloat = 0, brightness: CGFloat = 0, alpha: CGFloat = 0
+        UIColor(color).getHue(&hue, saturation: &saturation, brightness: &brightness, alpha: &alpha)
+        self.init(hue: hue, saturation: saturation, brightness: brightness)
+    }
+
+    init(hue: CGFloat, saturation: CGFloat, brightness: CGFloat) {
+        self.hue = hue
+        self.saturation = saturation
+        self.brightness = brightness
+    }
+
     /// Held dark, for a backdrop with white text on it.
     var backdrop: Color {
         Color(UIColor(hue: hue, saturation: min(saturation * 1.2, 1),
@@ -58,11 +74,29 @@ struct ArtworkTint {
     }
 
     /// The artwork's colour brought forward: an average of a photograph is a muddy version
-    /// of its strongest colour, so the saturation is raised, and the brightness set to where
-    /// white text still reads on it. A grey artwork stays grey.
-    var accent: Color {
-        Color(UIColor(hue: hue, saturation: saturation < 0.08 ? saturation : min(saturation * 1.6, 0.85),
-                      brightness: 0.55, alpha: 1))
+    /// of its strongest colour, so the saturation is raised, and the brightness set for a
+    /// mark on the dark page — the schedule's on-air time and its play marks. A grey artwork
+    /// stays grey. Too light for white body text on it: that is `fill`.
+    var accent: Color { brought(toBrightness: 0.55) }
+
+    /// The accent, deep enough to fill a row of body text in white: 4.5:1 at the least,
+    /// whatever the hue (`ArtworkTintTests`). At the accent's own brightness a yellow or a
+    /// green came out near 4:1, under the least for text that size. The schedule's
+    /// highlighted row is filled with it on every platform (`ScheduleTint`).
+    var fill: Color { brought(toBrightness: Self.fillBrightness) }
+
+    static let fillBrightness: CGFloat = 0.45
+
+    private var broughtSaturation: CGFloat {
+        saturation < 0.08 ? saturation : min(saturation * 1.6, 0.85)
+    }
+
+    func brought(toBrightness brightness: CGFloat) -> Color {
+        Color(uiColor: broughtColor(brightness: brightness))
+    }
+
+    func broughtColor(brightness: CGFloat) -> UIColor {
+        UIColor(hue: hue, saturation: broughtSaturation, brightness: brightness, alpha: 1)
     }
 }
 #endif

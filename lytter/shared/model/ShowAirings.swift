@@ -93,6 +93,20 @@ extension ShowAiring {
         }
     }
 
+    /// The line under the show's card, which names the station on the card itself: *On now*,
+    /// *22:03*, and otherwise as `caption`, which names no station. The full `caption` is
+    /// still what VoiceOver reads, as it reads the card as one element.
+    var timeCaption: String {
+        switch self {
+        case .onNow:
+            String(localized: "On now")
+        case .laterToday(let episode):
+            episode.startDate?.formatted(date: .omitted, time: .shortened) ?? ""
+        case .usually, .earlierToday, .notOnAgainToday, .unknown:
+            caption(channelTitle: { $0 })
+        }
+    }
+
     /// One key per weekday rather than a weekday name dropped into a sentence: Danish puts
     /// the plural weekday in lower case, and other languages decline it.
     private static func usuallyCaption(_ next: Date) -> String {

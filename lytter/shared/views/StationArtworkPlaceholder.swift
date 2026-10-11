@@ -34,22 +34,20 @@ extension DRChannel {
     }
 }
 
-/// The station's colour, and optionally its name, in place of a picture.
+/// The station's colour and its name, in place of a picture: the station's
+/// `StationNameTile`.
 ///
-/// What every artwork slot shows with Show Images off, and while a picture is loading. The
-/// name is left off where a caption already says it — on a shelf card it would be printed
-/// twice. With the name it is the station's `StationNameTile`.
+/// What every artwork slot shows with Show Images off, and while a picture is loading.
 ///
 /// Flat, as DR's colours are: the name's colour is chosen for contrast against the colour
 /// itself, and a gradient towards transparent would darken it on a dark background — P4's
 /// amber, faded over black, is too dark for its near-black name.
 struct StationArtworkPlaceholder: View {
     let channel: DRChannel?
-    var showsName = true
 
     var body: some View {
         Group {
-            if showsName, let channel {
+            if let channel {
                 StationNameTile(name: channel.name, stationKey: channel.stationKey)
             } else {
                 channel?.stationColor ?? .purple

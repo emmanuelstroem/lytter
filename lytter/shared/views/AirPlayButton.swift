@@ -93,6 +93,16 @@ struct AirPlayButtonView: View {
         self.tint = tint
     }
 
+    /// Whether there is a picker to draw. Where there is not, the view only holds its place,
+    /// and a row with no room to keep for it leaves it out.
+    static var isAvailable: Bool {
+        #if os(iOS) || os(tvOS)
+        true
+        #else
+        false
+        #endif
+    }
+
     var body: some View {
         #if os(iOS) || os(tvOS)
         AirPlayButton(size: size, tint: tint)

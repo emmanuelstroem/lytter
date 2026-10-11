@@ -24,6 +24,15 @@ struct iOSChannelScheduleSheet: View {
     /// Why the schedule could not be fetched. It used to read "No schedule", as if DR had
     /// nothing to list, when the connection was the problem.
     @State private var failure: ConnectionProblem?
+    /// The programme on air's artwork colour, which its row is filled with, as on Apple TV.
+    /// From the station's colour until the artwork is read, and when there is none.
+    @State private var tint: ScheduleTint
+
+    init(channel: DRChannel, serviceManager: DRServiceManager) {
+        self.channel = channel
+        self.serviceManager = serviceManager
+        _tint = State(initialValue: .station(channel))
+    }
 
     var body: some View {
         NavigationStack {
@@ -60,9 +69,7 @@ struct iOSChannelScheduleSheet: View {
                                     }
                                     .id(episode.broadcastID)
                                     .listRowBackground(
-                                        episode.isCurrentlyPlaying
-                                            ? Color.accentColor.opacity(0.12)
-                                            : Color.clear
+                                        episode.isCurrentlyPlaying ? tint.fill : Color.clear
                                     )
                             }
                         }
@@ -86,6 +93,11 @@ struct iOSChannelScheduleSheet: View {
         }
         .presentationDetents([.medium, .large])
         .task { await load() }
+        .task {
+            if let artwork = await ScheduleTint.artwork(for: channel, serviceManager: serviceManager) {
+                tint = artwork
+            }
+        }
     }
 
     /// A catch-up row is a button; the rest are read-only.
@@ -93,6 +105,7 @@ struct iOSChannelScheduleSheet: View {
     private func row(for episode: DREpisode) -> some View {
         let isPlayingBack = serviceManager.onDemandEpisode?.broadcastID == episode.broadcastID
         let content = ScheduleRow(episode: episode, isOnAir: episode.isCurrentlyPlaying,
+                                  isHighlighted: episode.isCurrentlyPlaying, tint: tint,
                                   isCatchUp: episode.isCatchUp(at: Date()),
                                   isPlayingBack: isPlayingBack)
         if episode.isCatchUp(at: Date()) {
@@ -117,73 +130,6 @@ struct iOSChannelScheduleSheet: View {
             failure = .forFailedRequest(error, isOnline: serviceManager.isOnline)
         }
         isLoading = false
-    }
-}
-
-/// One programme. The time column is fixed-width so the titles line up, and it is
-/// monospaced-digit so the rows do not shift as the digits change.
-///
-/// Colours are concrete rather than hierarchical: a catch-up row is a button's label, and
-/// there `.primary` resolves against the tint and the titles turn blue.
-private struct ScheduleRow: View {
-    let episode: DREpisode
-    let isOnAir: Bool
-    /// Finished, with a recording to play.
-    var isCatchUp = false
-    /// The recording playing now.
-    var isPlayingBack = false
-
-    private var startTime: String {
-        episode.startDate?.formatted(date: .omitted, time: .shortened) ?? ""
-    }
-
-    var body: some View {
-        HStack(alignment: .firstTextBaseline, spacing: 12) {
-            Text(startTime)
-                .font(.subheadline.monospacedDigit())
-                .foregroundStyle(isOnAir ? Color.accentColor : Color.secondary)
-                .frame(width: 52, alignment: .leading)
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text(episode.cleanTitle())
-                    .font(.body)
-                    .fontWeight(isOnAir ? .semibold : .regular)
-                    .foregroundStyle(Color.primary)
-
-                if let description = episode.description, !description.isEmpty {
-                    Text(description)
-                        .font(.footnote)
-                        .foregroundStyle(Color.secondary)
-                        .lineLimit(2)
-                }
-            }
-
-            Spacer(minLength: 0)
-
-            if isOnAir {
-                // Label rather than a bare symbol, so VoiceOver reads it and the symbol
-                // stays optically matched to the caption beside it.
-                Label("On air", systemImage: "dot.radiowaves.left.and.right")
-                    .font(.caption.weight(.semibold))
-                    .imageScale(.small)
-                    .labelStyle(.titleAndIcon)
-                    .foregroundStyle(Color.accentColor)
-            } else if isPlayingBack {
-                Label("Playing", systemImage: "speaker.wave.2.fill")
-                    .font(.caption.weight(.semibold))
-                    .imageScale(.small)
-                    .labelStyle(.titleAndIcon)
-                    .foregroundStyle(Color.accentColor)
-            } else if isCatchUp {
-                // The affordance, and what VoiceOver hears before the hint.
-                Label("Play", systemImage: "play.circle")
-                    .font(.title3)
-                    .labelStyle(.iconOnly)
-                    .foregroundStyle(Color.accentColor)
-            }
-        }
-        .padding(.vertical, 4)
-        .accessibilityElement(children: .combine)
     }
 }
 #endif
