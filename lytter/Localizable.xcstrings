@@ -1127,6 +1127,17 @@
         }
       }
     },
+    "Open the player" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Åbn afspilleren"
+          }
+        }
+      }
+    },
     "Opens the player" : {
       "extractionState" : "manual",
       "localizations" : {

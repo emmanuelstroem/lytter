@@ -63,11 +63,11 @@ struct macOSHomeView: View {
                                               onSelect: onSelect)
                         }
                     }
-                    // Room for the hover shadow and ring; without it the scroll view
-                    // clips both at the row's edges.
-                    .padding(.horizontal, 2)
-                    .padding(.vertical, 8)
+                    // Room for the hover shadow, which the scroll view would clip, taken
+                    // back outside it.
+                    .padding(macOSStationCard.shadowRoom)
                 }
+                .padding(macOSStationCard.shadowRoomReturned)
             }
         }
     }

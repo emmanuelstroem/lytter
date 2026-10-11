@@ -20,7 +20,15 @@ import os
     // MARK: - iOS Audio Player Service
 
 class AudioPlayerService: NSObject, ObservableObject {
-    private var player: AVPlayer?
+    /// Published for the Mac's AirPlay picker, which routes one player's audio rather than
+    /// the app's: it has to be handed each player as it is made.
+    @Published private(set) var player: AVPlayer?
+    #if os(macOS)
+    /// The output a listener picked for the player before this one, AirPlay speakers
+    /// included. A route belongs to its player, and every station gets a new player, so
+    /// without this a change of station went back to the Mac's own speakers.
+    private var outputDeviceUniqueID: String?
+    #endif
     /// Subscriptions belonging to the *current* AVPlayer and AVPlayerItem.
     ///
     /// These must be torn down whenever the player is replaced or stopped. They capture
@@ -598,7 +606,13 @@ class AudioPlayerService: NSObject, ObservableObject {
         removeTimeObserver()
 
         // Create new player
+        #if os(macOS)
+        if let player { outputDeviceUniqueID = player.audioOutputDeviceUniqueID }
+        #endif
         player = AVPlayer(playerItem: playerItem)
+        #if os(macOS)
+        player?.audioOutputDeviceUniqueID = outputDeviceUniqueID
+        #endif
         addTimeObserver()
 
         #if os(tvOS)
@@ -852,6 +866,9 @@ class AudioPlayerService: NSObject, ObservableObject {
         player?.pause()
         playerObservations.removeAll()
         removeTimeObserver()
+        #if os(macOS)
+        if let player { outputDeviceUniqueID = player.audioOutputDeviceUniqueID }
+        #endif
         player = nil
         refreshSeekState()
         isPlaying = false

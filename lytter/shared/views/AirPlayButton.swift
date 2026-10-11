@@ -10,9 +10,8 @@ import AVKit
 // MARK: - SwiftUI Native AirPlay Button
 
 #if os(iOS) || os(tvOS)
-// AVRoutePickerView, the system's own AirPlay control, is a UIKit view with no AppKit
-// counterpart -- macOS routes audio output a different way entirely. This wrapper only
-// exists to bridge it into SwiftUI, so it only exists where the thing it bridges does.
+// AVRoutePickerView, the system's own AirPlay control, bridged into SwiftUI. The Mac's is
+// an AppKit view, and works differently enough to be bridged on its own, below.
 struct AirPlayButton: UIViewRepresentable {
     let size: CGFloat
     /// Semantic by default, so the glyph follows the system appearance. Callers that
@@ -82,21 +81,63 @@ struct AirPlayButton: UIViewRepresentable {
 }
 #endif
 
+#if os(macOS)
+/// The Mac's AVRoutePickerView. Where the phone's routes the app's audio session, this one
+/// routes a single player's audio, so it is handed the player — a new one with every station.
+/// With none, nothing is playing, and there is nothing to send anywhere.
+struct MacAirPlayButton: NSViewRepresentable {
+    let player: AVPlayer?
+    let tint: PlatformColor
+
+    func makeNSView(context: Context) -> AVRoutePickerView {
+        let view = AVRoutePickerView()
+        // A glyph like the controls beside it, not a push button.
+        view.isRoutePickerButtonBordered = false
+        update(view)
+        return view
+    }
+
+    func updateNSView(_ view: AVRoutePickerView, context: Context) {
+        update(view)
+    }
+
+    private func update(_ view: AVRoutePickerView) {
+        if view.player !== player { view.player = player }
+        view.setRoutePickerButtonColor(tint, for: .normal)
+        view.setRoutePickerButtonColor(tint, for: .normalHighlighted)
+        view.setRoutePickerButtonColor(.controlAccentColor, for: .active)
+        view.setRoutePickerButtonColor(.controlAccentColor, for: .activeHighlighted)
+    }
+}
+#endif
+
 // MARK: - AirPlay Button with Frame
 
 struct AirPlayButtonView: View {
     let size: CGFloat
     let tint: PlatformColor
+    #if os(macOS)
+    /// The player whose audio is sent. Only the Mac's picker needs it.
+    let player: AVPlayer?
+    #endif
 
+    #if os(macOS)
+    init(size: CGFloat, tint: PlatformColor = .label, player: AVPlayer? = nil) {
+        self.size = size
+        self.tint = tint
+        self.player = player
+    }
+    #else
     init(size: CGFloat, tint: PlatformColor = .label) {
         self.size = size
         self.tint = tint
     }
+    #endif
 
     /// Whether there is a picker to draw. Where there is not, the view only holds its place,
     /// and a row with no room to keep for it leaves it out.
     static var isAvailable: Bool {
-        #if os(iOS) || os(tvOS)
+        #if os(iOS) || os(tvOS) || os(macOS)
         true
         #else
         false
@@ -110,11 +151,15 @@ struct AirPlayButtonView: View {
             .clipped() // Ensure the content stays within bounds
             .contentShape(Rectangle()) // Ensure the entire frame is tappable
             .accessibilityLabel("AirPlay")
+        #elseif os(macOS)
+        MacAirPlayButton(player: player, tint: tint)
+            .frame(width: size, height: size, alignment: .center)
+            .disabled(player == nil)
+            .accessibilityLabel("AirPlay")
         #else
-        // No AirPlay picker on macOS yet -- output routing there is a menu-bar affair,
-        // not a view -- nor on visionOS, which has no AVRoutePickerView: there it is
+        // No AirPlay picker on visionOS, which has no AVRoutePickerView: there it is
         // Control Centre's. Reserves the space rather than disappearing, so a row of controls
-        // around it does not visibly shift once a macOS equivalent exists to fill it.
+        // around it does not shift.
         Color.clear
             .frame(width: size, height: size, alignment: .center)
         #endif

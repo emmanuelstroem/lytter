@@ -92,6 +92,11 @@ struct lytterApp: App {
         // Room for Home's shelves without scrolling sideways at once. Only the size a
         // window opens at; it can still be resized.
         .defaultSize(width: 1180, height: 820)
+        #elseif os(macOS)
+        // Twice the window it opened at by itself (900 × 450, the content's own size), which
+        // showed a shelf and a half. Only the size a new window opens at: one the listener
+        // has resized comes back as they left it.
+        .defaultSize(width: 1800, height: 900)
         #endif
         #if os(iOS) || os(tvOS) || os(visionOS)
         .backgroundTask(.appRefresh(ShowScheduleRefresh.identifier)) {
