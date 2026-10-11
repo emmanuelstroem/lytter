@@ -73,3 +73,6 @@ fastlane/test_output
 *.xcf
 *.psd
 *.sketch
+
+# App Store screenshots, made by Tools/export-screenshots.sh
+/screenshots/
