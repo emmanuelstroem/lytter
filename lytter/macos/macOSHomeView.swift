@@ -64,7 +64,7 @@ struct macOSHomeView: View {
                         }
                     }
                     // Room for the hover shadow, which the scroll view would clip, taken
-                    // back outside it so the first card stays in line with the title.
+                    // back outside it.
                     .padding(macOSStationCard.shadowRoom)
                 }
                 .padding(macOSStationCard.shadowRoomReturned)

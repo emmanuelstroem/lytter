@@ -20,6 +20,10 @@ struct macOSContentView: View {
     /// Held here, not by Search: the field is at the top of the sidebar, as in Music, and
     /// typing into it from anywhere opens Search.
     @State private var query = ""
+    /// Where keyboard focus starts: the sidebar, as in Music and Finder. Otherwise the
+    /// window's first control takes it when the window opens — with keyboard navigation on,
+    /// the first Favourites card, ringed in the accent colour before anything was pressed.
+    @FocusState private var isSidebarFocused: Bool
 
     var body: some View {
         NavigationSplitView {
@@ -38,6 +42,8 @@ struct macOSContentView: View {
                 }
             }
             .navigationSplitViewColumnWidth(min: 180, ideal: 200)
+            .focused($isSidebarFocused)
+            .task { isSidebarFocused = true }
         } detail: {
             Group {
                 switch section ?? .home {

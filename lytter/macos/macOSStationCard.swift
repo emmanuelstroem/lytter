@@ -73,11 +73,14 @@ struct macOSStationCard: View {
                                        bottom: hoverShadow.radius + hoverShadow.y,
                                        trailing: hoverShadow.radius)
 
-    /// `shadowRoom` taken back, around the row's scroll view.
-    static let shadowRoomReturned = EdgeInsets(top: -shadowRoom.top,
+    /// `shadowRoom` taken back around the row's scroll view, all but the eight points above
+    /// and below that a row has always had, so the first card stays in line with the title
+    /// and the shelves stay as far apart as they were.
+    static let shadowRoomReturned = EdgeInsets(top: rowMargin - shadowRoom.top,
                                                leading: -shadowRoom.leading,
-                                               bottom: -shadowRoom.bottom,
+                                               bottom: rowMargin - shadowRoom.bottom,
                                                trailing: -shadowRoom.trailing)
+    private static let rowMargin: CGFloat = 8
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {

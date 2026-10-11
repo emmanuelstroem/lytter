@@ -29,9 +29,11 @@ struct macOSShowShelf: View {
                                 card(for: show, now: context.date)
                             }
                         }
-                        .padding(.horizontal, 2)
-                        .padding(.vertical, 8)
+                        // As Home's other shelves, so the rows line up: no shadow here, but
+                        // the focus ring stands outside the tile, and the scroll view clips.
+                        .padding(macOSStationCard.shadowRoom)
                     }
+                    .padding(macOSStationCard.shadowRoomReturned)
                 }
             }
         }
@@ -44,33 +46,40 @@ struct macOSShowShelf: View {
         let channel = (airing.channelSlug ?? show.channelSlugs.first)
             .flatMap(serviceManager.channel(forSlug:))
 
-        return Button {
-            switch action {
-            case .playLive(let channel), .showSchedule(let channel):
-                serviceManager.playChannel(channel)
-            case .playRecording(let episode):
-                serviceManager.playOnDemand(episode)
-            case .none:
-                break
-            }
-        } label: {
-            VStack(alignment: .leading, spacing: 6) {
+        let tile = RoundedRectangle(cornerRadius: metrics.cornerRadius, style: .continuous)
+        return VStack(alignment: .leading, spacing: 6) {
+            // The tile alone is the button, as on a station's card, so the keyboard's focus
+            // ring goes round the tile; round the time beneath as well, it stood clear of
+            // the tile's foot.
+            Button {
+                switch action {
+                case .playLive(let channel), .showSchedule(let channel):
+                    serviceManager.playChannel(channel)
+                case .playRecording(let episode):
+                    serviceManager.playOnDemand(episode)
+                case .none:
+                    break
+                }
+            } label: {
                 FavouriteShowTile(show: show, channel: channel)
                     .frame(width: metrics.width, height: metrics.height)
-                    .clipShape(RoundedRectangle(cornerRadius: metrics.cornerRadius,
-                                                style: .continuous))
-                StationCard.Subtitle(text: airing.timeCaption, metrics: metrics)
-                    // Centred under the tile, which centres its own text. A time is short, and
-                    // the longest line ("Usually Wednesdays 22.03") still fits.
-                    .frame(maxWidth: .infinity)
-                    .multilineTextAlignment(.center)
+                    .clipShape(tile)
             }
-            .frame(width: metrics.width, alignment: .leading)
-            .contentShape(Rectangle())
+            .buttonStyle(.plain)
+            .contentShape(.focusEffect, tile)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(Text(verbatim: "\(show.title), \(caption)"))
+
+            StationCard.Subtitle(text: airing.timeCaption, metrics: metrics)
+                // Centred under the tile, which centres its own text. A time is short, and
+                // the longest line ("Usually Wednesdays 22.03") still fits.
+                .frame(maxWidth: .infinity)
+                .multilineTextAlignment(.center)
+                // Read as part of the button's label.
+                .accessibilityHidden(true)
         }
-        .buttonStyle(.plain)
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(Text(verbatim: "\(show.title), \(caption)"))
+        .frame(width: metrics.width, alignment: .leading)
+        .contentShape(Rectangle())
         .contextMenu {
             Button(role: .destructive) {
                 preferences.removeFavouriteShow(show.seriesID)
