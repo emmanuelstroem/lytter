@@ -74,12 +74,8 @@ struct tvOSShowShelf: View {
             Button {
                 perform(action)
             } label: {
-                FavouriteShowArtwork(show: show, channel: channel)
+                FavouriteShowTile(show: show, channel: channel)
                     .frame(width: metrics.width, height: metrics.height)
-                    .clipped()
-                    .overlay(alignment: .bottom) {
-                        StationCard.Caption(title: show.title, metrics: metrics)
-                    }
                     .accessibilityElement(children: .ignore)
                     .accessibilityLabel(Text(verbatim: "\(show.title), \(caption)"))
             }
@@ -101,7 +97,11 @@ struct tvOSShowShelf: View {
                 }
             }
 
-            StationCard.Subtitle(text: caption, metrics: metrics)
+            StationCard.Subtitle(text: airing.timeCaption, metrics: metrics)
+                // Centred under the tile, which centres its own text. A time is short, and
+                // the longest line ("Usually Wednesdays 22.03") still fits.
+                .frame(maxWidth: .infinity)
+                .multilineTextAlignment(.center)
         }
         .frame(width: metrics.width, alignment: .leading)
     }

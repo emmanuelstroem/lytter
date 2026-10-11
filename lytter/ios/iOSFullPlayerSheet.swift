@@ -244,6 +244,12 @@ struct iOSFullPlayerSheet: View {
             .frame(maxWidth: .infinity)
         }
         .padding(.top, 40)
+        #if os(visionOS)
+        // On iPhone the sheet's safe area keeps the actions off its bottom edge. The
+        // visionOS panel has none, and they sat on its edge. They stand clear of the
+        // panel's corners, so this is the system's inset inside glass, not a radius sum.
+        .padding(.bottom, 24)
+        #endif
     }
 }
 

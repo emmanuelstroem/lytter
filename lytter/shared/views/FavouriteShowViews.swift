@@ -46,19 +46,25 @@ extension DRServiceManager {
     }
 }
 
-/// A show's artwork, or the colour of the channel it is on when there is none, or when
-/// Show Images is off.
-struct FavouriteShowArtwork: View {
+/// A favourite show's card face: the tile its station has under Favourites — the station's
+/// name across its colour, the show's picture showing through — with the show's title
+/// beneath the name, where a station's tile has its programme.
+///
+/// Shows were the one card left with the old design, a picture with its title on glass
+/// across the foot, beside station tiles that had moved on (#98, #101). Every platform's
+/// shelf draws this, at the size its cards already were.
+struct FavouriteShowTile: View {
     let show: FavouriteShow
     let channel: DRChannel?
 
     var body: some View {
-        CachedAsyncImage(url: show.imageURL.flatMap(URL.init(string:)),
-                         maxPixelSize: ImageCacheService.thumbnailMaxPixelSize) { image in
-            image.resizable().aspectRatio(contentMode: .fill)
-        } placeholder: {
-            // The caption names the show; the station's name here would contradict it.
-            StationArtworkPlaceholder(channel: channel, showsName: false)
+        if let channel {
+            StationNameTile(name: channel.name, stationKey: channel.stationKey,
+                            details: [show.title],
+                            artworkURL: show.imageURL.flatMap(URL.init(string:)))
+        } else {
+            // On no station in the catalogue: no station to name, so the show is the name.
+            StationNameTile(name: show.title, stationKey: "")
         }
     }
 }

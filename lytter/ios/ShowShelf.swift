@@ -6,8 +6,8 @@
 import SwiftUI
 
 #if os(iOS) || os(visionOS)
-/// Favourite shows on Home, under Favourites (F33): each show's artwork and title, and one
-/// line saying when it is next on.
+/// Favourite shows on Home, under Favourites (F33): each show as its station's tile with the
+/// show's title on it (`FavouriteShowTile`), and one line saying when it is next on.
 ///
 /// Observes the preferences and the show schedule directly; through `DRServiceManager`
 /// neither would redraw it (see AGENTS.md). Redrawn every minute as well, since "on now"
@@ -58,17 +58,17 @@ struct ShowShelf: View {
             perform(action)
         } label: {
             VStack(alignment: .leading, spacing: 6) {
-                FavouriteShowArtwork(show: show, channel: channel)
+                FavouriteShowTile(show: show, channel: channel)
                     .frame(width: metrics.width, height: metrics.height)
-                    .clipped()
-                    .overlay(alignment: .bottom) {
-                        StationCard.Caption(title: show.title, metrics: metrics)
-                    }
                     .clipShape(RoundedRectangle(cornerRadius: metrics.cornerRadius,
                                                 style: .continuous))
                     .shadow(color: .black.opacity(0.14), radius: 10, y: 2)
 
-                StationCard.Subtitle(text: caption, metrics: metrics)
+                StationCard.Subtitle(text: airing.timeCaption, metrics: metrics)
+                    // Centred under the tile, which centres its own text. A time is short, and
+                    // the longest line ("Usually Wednesdays 22.03") still fits.
+                    .frame(maxWidth: .infinity)
+                    .multilineTextAlignment(.center)
             }
             .frame(width: metrics.width, alignment: .leading)
         }

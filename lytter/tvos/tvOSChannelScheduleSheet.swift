@@ -32,9 +32,17 @@ struct tvOSChannelScheduleSheet: View {
     /// Why the schedule could not be fetched; see the iOS sheet.
     @State private var failure: ConnectionProblem?
     @FocusState private var focusedRow: String?
-    /// The focused row's highlight: the colour of the artwork on air, as Now Playing's
-    /// backdrop is; a faint white until that has been read.
-    @State private var highlight: Color = .white.opacity(0.16)
+    /// The focused row's fill: the colour of the artwork on air, as Now Playing's backdrop
+    /// is (`ScheduleTint`), from the station's colour until that has been read. It was a
+    /// faint white until then, and the station's own colour with no artwork, which on P3's
+    /// light green left the focused row's white text unreadable.
+    @State private var tint: ScheduleTint
+
+    init(channel: DRChannel, serviceManager: DRServiceManager) {
+        self.channel = channel
+        self.serviceManager = serviceManager
+        _tint = State(initialValue: .station(channel))
+    }
 
     /// Where focus starts: what is on now, so the schedule opens where the listener is.
     private var onAirRow: String? {
@@ -114,11 +122,9 @@ struct tvOSChannelScheduleSheet: View {
         .onExitCommand { dismiss() }
         .task { await load() }
         .task {
-            // With no artwork to read, the station's colour, which is what its placeholder
-            // artwork is drawn in.
-            highlight = await ArtworkTint.of(
-                ArtworkTint.artworkURL(for: channel, serviceManager: serviceManager))?.accent
-                ?? channel.stationColor
+            if let artwork = await ScheduleTint.artwork(for: channel, serviceManager: serviceManager) {
+                tint = artwork
+            }
         }
     }
 
@@ -126,13 +132,17 @@ struct tvOSChannelScheduleSheet: View {
     /// otherwise just focusable, so that the list can scroll to it.
     @ViewBuilder
     private func focusableRow(for episode: DREpisode) -> some View {
-        let highlighted = row(for: episode)
+        let isFocused = focusedRow == episode.broadcastID
+        let highlighted = ScheduleRow(
+            episode: episode, isOnAir: episode.isCurrentlyPlaying, isHighlighted: isFocused,
+            tint: tint, isCatchUp: episode.isCatchUp(at: Date()),
+            isPlayingBack: serviceManager.onDemandEpisode?.broadcastID == episode.broadcastID)
             .padding(.horizontal, 20)
             .background(
                 // Inset on every side, so it shares no corner with the panel and is not
                 // bound to its radius.
                 RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(focusedRow == episode.broadcastID ? highlight : .clear)
+                    .fill(isFocused ? tint.fill : .clear)
             )
         if episode.isCatchUp(at: Date()) {
             Button {
@@ -157,54 +167,6 @@ struct tvOSChannelScheduleSheet: View {
             failure = .forFailedRequest(error, isOnline: serviceManager.isOnline)
         }
         isLoading = false
-    }
-
-    /// The time column is fixed-width so the titles line up, and monospaced-digit so the
-    /// rows do not shift as the digits change.
-    private func row(for episode: DREpisode) -> some View {
-        let isOnAir = episode.isCurrentlyPlaying
-        let isPlayingBack = serviceManager.onDemandEpisode?.broadcastID == episode.broadcastID
-
-        return HStack(alignment: .firstTextBaseline, spacing: 20) {
-            Text(episode.startDate?.formatted(date: .omitted, time: .shortened) ?? "")
-                .font(.body.monospacedDigit())
-                .foregroundStyle(isOnAir ? Color.accentColor : Color.secondary)
-                .frame(width: 90, alignment: .leading)
-
-            VStack(alignment: .leading, spacing: 4) {
-                Text(episode.cleanTitle())
-                    .font(.body)
-                    .fontWeight(isOnAir ? .semibold : .regular)
-
-                if let description = episode.description, !description.isEmpty {
-                    Text(description)
-                        .font(.caption)
-                        .foregroundStyle(Color.secondary)
-                        .lineLimit(2)
-                }
-            }
-
-            Spacer(minLength: 0)
-
-            if isOnAir {
-                // A label rather than a bare symbol, so VoiceOver reads it.
-                Label("On air", systemImage: "dot.radiowaves.left.and.right")
-                    .font(.caption.weight(.semibold))
-                    .labelStyle(.titleAndIcon)
-                    .foregroundStyle(Color.accentColor)
-            } else if isPlayingBack {
-                Label("Playing", systemImage: "speaker.wave.2.fill")
-                    .font(.caption.weight(.semibold))
-                    .labelStyle(.titleAndIcon)
-                    .foregroundStyle(Color.accentColor)
-            } else if episode.isCatchUp(at: Date()) {
-                Label("Play", systemImage: "play.circle")
-                    .font(.title3)
-                    .labelStyle(.iconOnly)
-                    .foregroundStyle(Color.secondary)
-            }
-        }
-        .padding(.vertical, 8)
     }
 }
 
