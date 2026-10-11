@@ -283,11 +283,7 @@ struct MiniPlayer: View {
                     .environmentObject(serviceManager)
                     .environmentObject(selectionState)
                     .id(serviceManager.playingChannel?.id ?? "no-channel")
-                    .background(
-                        Capsule()
-                            .fill(.ultraThinMaterial)
-                            .opacity(0.9)
-                    )
+                    .background(MiniPlayerBackdrop())
                     .overlay(
                         Capsule()
                             .stroke(Color.primary.opacity(0.15), lineWidth: 1)
@@ -322,6 +318,9 @@ struct LiquidGlassMiniPlayer: View {
                 .environmentObject(serviceManager)
                 .environmentObject(selectionState)
                 .id(serviceManager.playingChannel?.id ?? "no-channel")
+                #if os(iOS)
+                .background(MiniPlayerBackdrop())
+                #endif
             default:
                 MiniPlayerComponents(
                     playingChannel: serviceManager.playingChannel,
@@ -335,7 +334,28 @@ struct LiquidGlassMiniPlayer: View {
                 .environmentObject(serviceManager)
                 .environmentObject(selectionState)
                 .id(serviceManager.playingChannel?.id ?? "no-channel")
+                #if os(iOS)
+                .background(MiniPlayerBackdrop())
+                #endif
         }
+    }
+}
+
+/// What the mini player's text sits on: on iPhone and iPad an opaque capsule, inside the
+/// tab bar accessory's glass on iOS 26 and floating over Home before it.
+///
+/// It was glass, or a thin material, and the cards scrolling under it showed through: a
+/// station's colour and the caption under it, right behind the programme and the track.
+/// Opaque, the two lines read the same over any card. The capsule is the accessory's own
+/// shape, so the two curves stay concentric. visionOS's ornament keeps its glass: it
+/// stands in the room, with nothing scrolling behind it.
+private struct MiniPlayerBackdrop: View {
+    var body: some View {
+        #if os(iOS)
+        Capsule().fill(Color(uiColor: .secondarySystemBackground))
+        #else
+        Capsule().fill(.ultraThinMaterial).opacity(0.9)
+        #endif
     }
 }
 

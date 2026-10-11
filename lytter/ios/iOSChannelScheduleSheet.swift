@@ -78,6 +78,11 @@ struct iOSChannelScheduleSheet: View {
             }
             .navigationTitle(channel.title)
             .navigationBarTitleDisplayMode(.inline)
+            #if os(iOS)
+            // The header opaque too, so a row scrolled under it is gone, not half-seen.
+            .toolbarBackground(Color(uiColor: .systemBackground), for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
+            #endif
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") { dismiss() }
@@ -85,6 +90,11 @@ struct iOSChannelScheduleSheet: View {
             }
         }
         .presentationDetents([.medium, .large])
+        #if os(iOS)
+        // Opaque. As glass it showed the player through it, artwork and controls, behind
+        // the programme titles.
+        .presentationBackground(Color(uiColor: .systemBackground))
+        #endif
         .task { await load() }
     }
 
