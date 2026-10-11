@@ -41,6 +41,7 @@ cards. It is a design principle for this app, not a one-off fix.
 | tvOS now-playing artwork, dimmed | 12 — stands free on the backdrop |
 | tvOS panels | 28 |
 | Mini-player artwork | 10 |
+| macOS mini player | a capsule 52 tall; the artwork a circle (36, inset 8: 26 − 8 = 18) |
 | visionOS mini-player ornament | 20 (artwork 10, inset 10 on every side) |
 | visionOS full-player panel | 40 — stands free in the window, clear of its corners |
 | visionOS cards | the iPhone's (14 featured, 12 standard); the hover highlight takes the card's radius |

@@ -7,10 +7,10 @@ import SwiftUI
 
 #if os(macOS)
 /// Where the app opens on the Mac: a sidebar and a detail pane either side of a
-/// `NavigationSplitView`, a docked player bar along the bottom — the shape of Music.app,
-/// not a port of the phone's tab bar. A tab bar is a compromise for a screen too small to
-/// show navigation and content at once; a Mac window has room for both, permanently, the
-/// way Finder and Mail do it too.
+/// `NavigationSplitView`, the mini player floating over the foot of the detail pane — the
+/// shape of Music.app on an iPad, not a port of the phone's tab bar. A tab bar is a
+/// compromise for a screen too small to show navigation and content at once; a Mac window
+/// has room for both, permanently, the way Finder and Mail do it too.
 struct macOSContentView: View {
     @ObservedObject var serviceManager: DRServiceManager
     @ObservedObject var selectionState: SelectionState
@@ -50,15 +50,19 @@ struct macOSContentView: View {
                     macOSSearchView(serviceManager: serviceManager, query: query, onSelect: play)
                 }
             }
+            // Over the detail pane only, as on the iPad: the page scrolls on beneath it, and
+            // the sidebar keeps its whole height.
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                macOSMiniPlayer(serviceManager: serviceManager,
+                                preferences: serviceManager.userPreferences,
+                                selectionState: selectionState)
+            }
             .navigationTitle(title(of: section ?? .home))
         }
         .searchable(text: $query, placement: .sidebar,
                     prompt: Text("Stations, regions and programmes"))
         .onChange(of: query) { _, query in
             if !query.isEmpty { section = .search }
-        }
-        .safeAreaInset(edge: .bottom, spacing: 0) {
-            macOSPlayerBar(serviceManager: serviceManager, selectionState: selectionState)
         }
         .sheet(isPresented: $selectionState.isShowingFullPlayer) {
             FullPlayerSheet(serviceManager: serviceManager, selectionState: selectionState)

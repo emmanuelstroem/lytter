@@ -61,6 +61,24 @@ struct macOSStationCard: View {
         style == .featured
     }
 
+    /// The shadow under a hovered card, the larger of its two.
+    private static let hoverShadow = (radius: 14.0, y: 6.0)
+
+    /// What a row of cards needs around it for the hover shadow to fall in full: a shelf's
+    /// scroll view clips to its bounds, and with two points at the sides and eight below,
+    /// as it had, the shadow was cut off in straight lines — a box drawn round the card,
+    /// larger than the card.
+    static let shadowRoom = EdgeInsets(top: hoverShadow.radius - hoverShadow.y,
+                                       leading: hoverShadow.radius,
+                                       bottom: hoverShadow.radius + hoverShadow.y,
+                                       trailing: hoverShadow.radius)
+
+    /// `shadowRoom` taken back, around the row's scroll view.
+    static let shadowRoomReturned = EdgeInsets(top: -shadowRoom.top,
+                                               leading: -shadowRoom.leading,
+                                               bottom: -shadowRoom.bottom,
+                                               trailing: -shadowRoom.trailing)
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             artwork
@@ -68,7 +86,6 @@ struct macOSStationCard: View {
         }
         .frame(width: metrics.width, alignment: .leading)
         .contentShape(Rectangle())
-        .onHover { isHovering = $0 }
         .contextMenu {
             if !opensPicker {
                 let isFavourite = serviceManager.userPreferences.isFavourite(channel.id)
@@ -98,6 +115,13 @@ struct macOSStationCard: View {
             cardImage
         }
         .buttonStyle(.plain)
+        // The tile's own shape, for the keyboard's focus ring as well as the pointer: the
+        // ring otherwise follows the label's square frame, outside the rounded corners.
+        .contentShape(.focusEffect, RoundedRectangle(cornerRadius: metrics.cornerRadius,
+                                                     style: .continuous))
+        // On the tile, not the whole card: the line beneath is not clickable, and lit the
+        // tile up as if it were.
+        .onHover { isHovering = $0 }
         .popover(isPresented: $showingDistrictPicker, arrowEdge: .bottom) {
             districtList
         }
@@ -148,12 +172,14 @@ struct macOSStationCard: View {
         .clipShape(RoundedRectangle(cornerRadius: metrics.cornerRadius, style: .continuous))
         .overlay {
             // A hover ring rather than a lift: a window has no depth to raise the card
-            // into, and scaling it in place just jitters the grid around it.
+            // into, and scaling it in place just jitters the grid around it. Inside the
+            // tile's edge: a centred stroke stood half its width outside it.
             RoundedRectangle(cornerRadius: metrics.cornerRadius, style: .continuous)
-                .stroke(Color.primary.opacity(isHovering ? 0.25 : 0), lineWidth: 2)
+                .strokeBorder(Color.primary.opacity(isHovering ? 0.25 : 0), lineWidth: 2)
         }
         .shadow(color: .black.opacity(isHovering ? 0.28 : 0.16),
-                radius: isHovering ? 14 : 8, y: isHovering ? 6 : 3)
+                radius: isHovering ? Self.hoverShadow.radius : 8,
+                y: isHovering ? Self.hoverShadow.y : 3)
         .animation(.easeOut(duration: 0.15), value: isHovering)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text(verbatim: "\(title), \(subtitle)"))

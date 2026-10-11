@@ -22,6 +22,9 @@ struct FullPlayerSheet: View {
     var body: some View {
         #if os(iOS) || os(visionOS)
         iOSFullPlayerSheet(serviceManager: serviceManager, selectionState: selectionState)
+        #elseif os(macOS)
+        // The same pieces in a sheet of fixed size. Without this the Mac's sheet was empty.
+        macOSFullPlayerView(serviceManager: serviceManager)
         #endif
     }
 }

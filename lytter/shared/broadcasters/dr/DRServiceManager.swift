@@ -12,6 +12,9 @@ import os
 #if os(tvOS)
 import TVServices
 #endif
+#if os(macOS)
+import AVFoundation
+#endif
 
 // MARK: - Service Manager
 class DRServiceManager: ObservableObject {
@@ -48,6 +51,11 @@ class DRServiceManager: ObservableObject {
     /// How far behind live playback is, in whole seconds; 0 at live or on ICY.
     @Published private(set) var secondsBehindLive: TimeInterval = 0
     @Published var playbackError: String? // Separate error for playback issues
+    #if os(macOS)
+    /// Mirrors AudioPlayerService: the player the Mac's AirPlay picker routes. A new one
+    /// with every station.
+    @Published private(set) var routedPlayer: AVPlayer?
+    #endif
 
     /// The recording being listened back to, while catch-up plays instead of the live
     /// stream (F16). `playingChannel` stays its channel, so the mini player, the cards and
@@ -174,6 +182,11 @@ class DRServiceManager: ObservableObject {
         audioPlayer.$canSeek
             .assign(to: \.canSeek, on: self)
             .store(in: &cancellables)
+        #if os(macOS)
+        audioPlayer.$player
+            .assign(to: \.routedPlayer, on: self)
+            .store(in: &cancellables)
+        #endif
         audioPlayer.$isBehindLive
             .assign(to: \.isBehindLive, on: self)
             .store(in: &cancellables)
