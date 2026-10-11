@@ -13,6 +13,8 @@ import Testing
 ///   exempt; without the key every upload stops at the export-compliance question.
 /// - `LSApplicationCategoryType`. A macOS upload is refused without one.
 /// - `NSHumanReadableCopyright`, on the app and on both extensions, which shipped as `""`.
+/// - `UIRequiredDeviceCapabilities` with `arm64` on the Top Shelf extension, whose
+///   Info.plist is hand-written: without it App Store validation refused the tvOS upload.
 /// - `NSSiriUsageDescription`, with its Danish in `InfoPlist.xcstrings`. The Siri prompt is
 ///   the system's dialog, so a missing translation shows English to a Danish listener.
 ///   (The system draws it in the *device's* language: `-AppleLanguages` on the app alone
@@ -51,6 +53,16 @@ struct ReleaseInfoPlistTests {
     /// The extensions are not hosts the unit tests run in (Top Shelf is tvOS-only), so their
     /// generated keys are read from the project's build settings: every configuration of
     /// every target that sets a copyright must set this one.
+    /// Read from the file, as the extension is no host the unit tests run in.
+    @Test func topShelfDeclaresArm64() throws {
+        let data = try Data(contentsOf: Self.repository
+            .appendingPathComponent("TopShelfExtension/Info.plist"))
+        let plist = try #require(
+            try PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any])
+        let capabilities = plist["UIRequiredDeviceCapabilities"] as? [String]
+        #expect(capabilities?.contains("arm64") == true, "\(String(describing: capabilities))")
+    }
+
     @Test func everyTargetSetsTheSameCopyright() throws {
         let project = try String(
             contentsOf: Self.repository.appendingPathComponent("lytter.xcodeproj/project.pbxproj"),
