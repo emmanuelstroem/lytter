@@ -103,6 +103,7 @@ taken. The upload would then no longer match its archive.
 
 - The release Xcode at `/Applications/Xcode.app`, signed in as above, with the iOS, tvOS
   and visionOS platforms installed (Xcode → Settings → Components).
-- For `make test`: the simulators an iPhone 17 Pro Max, an iPad Pro 13-inch (M5), an Apple
+- For `make test`: the simulators an iPhone 17, an iPad Pro 13-inch (M5), an Apple
   Vision Pro and an Apple TV 4K (3rd generation) (at 1080p) — or others, named with the
-  variables in §1.
+  variables in §1. A regular iPhone on purpose, not a Pro Max: the widest screen has room
+  for text that a regular one truncates.

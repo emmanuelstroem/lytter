@@ -12,7 +12,9 @@
 source "$(dirname "$0")/common.sh"
 PLATFORMS=${PLATFORMS:-iphone ipad vision mac tv}
 ONLY=${ONLY:-}
-IPHONE=${IPHONE:-iPhone 17 Pro Max}
+# A regular iPhone, not a Pro Max: the widest screen has room for text that a regular one
+# truncates, so a test there passes over what most people will see.
+IPHONE=${IPHONE:-iPhone 17}
 IPAD=${IPAD:-iPad Pro 13-inch (M5)}
 VISION=${VISION:-Apple Vision Pro}
 TV=${TV:-Apple TV 4K (3rd generation) (at 1080p)}
