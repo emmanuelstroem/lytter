@@ -68,7 +68,7 @@ The Top Shelf extension, a separate target, builds the same string in
 ## Working on Lytter
 
 ```bash
-make test       # unit tests on iPhone, iPad, Vision Pro and Mac; tvOS UI tests
+make test       # unit tests on iPhone, iPad, Vision Pro and Mac; iPhone and tvOS UI tests
 make build      # clean build of every platform, failing on a warning
 make release    # archive every platform and upload it to App Store Connect
 ```

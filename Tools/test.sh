@@ -1,8 +1,10 @@
 #!/bin/bash
-# make test — the unit tests (lytterTests) on an iPhone, an iPad, a Vision Pro and the Mac,
-# and the tvOS scrolling UI tests on an Apple TV: lytterTests does not run on tvOS, and on
-# tvOS a list that does not scroll under the remote is the bug that has shipped (AGENTS.md).
-# The platforms run side by side; iPhone and iPad share one build.
+# make test — the unit tests (lytterTests) on an iPhone, an iPad, a Vision Pro and the Mac;
+# the iOS UI tests (lytterUITests) on the iPhone, which measure the layout and read its
+# pixels, so they belong on the screen where text first runs out of room; and the tvOS
+# scrolling UI tests on an Apple TV: lytterTests does not run on tvOS, and on tvOS a list
+# that does not scroll under the remote is the bug that has shipped (AGENTS.md).
+# The platforms run side by side.
 #
 #   PLATFORMS   which to run, from: iphone ipad vision mac tv (default: all five)
 #   ONLY        what to run instead, as -only-testing takes it, space-separated:
@@ -23,7 +25,8 @@ mkdir -p "$OUT/logs" "$OUT/test-results"
 
 wants() { [[ " $PLATFORMS " == *" $1 "* ]]; }
 
-# One xcodebuild per build: its name, then its arguments.
+# One xcodebuild per build: its name, the tests it runs unless ONLY names others, then its
+# arguments.
 run() {
     local name=$1 default=$2; shift 2
     local filters=()
@@ -36,10 +39,17 @@ run() {
 }
 
 ran=()
-ios=()
-wants iphone && ios+=(-destination "platform=iOS Simulator,name=$IPHONE,OS=latest")
-wants ipad && ios+=(-destination "platform=iOS Simulator,name=$IPAD,OS=latest")
-if [ ${#ios[@]} -gt 0 ]; then run iOS lytterTests "${ios[@]}" & ran+=(iOS); fi
+# A build each: one xcodebuild runs the same tests on every destination it is given, and the
+# iPad runs only the unit tests.
+if wants iphone; then
+    run iPhone "lytterTests lytterUITests" \
+        -destination "platform=iOS Simulator,name=$IPHONE,OS=latest" &
+    ran+=(iPhone)
+fi
+if wants ipad; then
+    run iPad lytterTests -destination "platform=iOS Simulator,name=$IPAD,OS=latest" &
+    ran+=(iPad)
+fi
 if wants vision; then
     run visionOS lytterTests -destination "platform=visionOS Simulator,name=$VISION,OS=latest" &
     ran+=(visionOS)
