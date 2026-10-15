@@ -196,6 +196,34 @@ final class TVScrollingUITests: XCTestCase {
         XCTAssertEqual(row.value as? String, "Østjylland", "Settings should show the chosen region")
     }
 
+    /// Settings → Network's Daily Schedules picker pushes its two choices. Every station is
+    /// chosen to begin with, and choosing the other comes back to Settings showing it.
+    @MainActor
+    func testDailySchedulesPickerChoosesWithTheRemote() throws {
+        launch()
+        openSection("Settings")
+
+        XCTAssertTrue(moveFocus(.down, until: { $0.label.hasPrefix("Daily Schedules") }, maxPresses: 6),
+                      "could not reach the Daily Schedules row; focus is on \(focusedLabel)")
+        XCTAssertEqual(focused.buttons["Daily Schedules"].firstMatch.value as? String,
+                       "All Shows/Channels", "every station should be chosen to begin with")
+        press(.select)
+        XCTAssertTrue(app.buttons["Favourite Shows/Channels"].waitForExistence(timeout: 5),
+                      "the choices did not open")
+
+        XCTAssertTrue(moveFocus(.down, until: { $0.label.hasPrefix("Favourite Shows/Channels") },
+                                maxPresses: 4),
+                      "pressing down never reached the second choice; focus is on \(focusedLabel)")
+        shot("daily-schedules-choices")
+        press(.select)
+        sleep(1)
+        XCTAssertTrue(focused.waitForExistence(timeout: 5), "nothing has focus after choosing")
+        XCTAssertEqual(focusedLabel, "Daily Schedules",
+                       "choosing should return to the Daily Schedules row; focus is on \(focusedLabel)")
+        XCTAssertEqual(focused.buttons["Daily Schedules"].firstMatch.value as? String,
+                       "Favourite Shows/Channels", "Settings should show the choice")
+    }
+
     // MARK: - District picker
 
     /// The picker is one column of ten districts, taller than its panel. Pressing down has to
@@ -429,7 +457,9 @@ final class TVScrollingUITests: XCTestCase {
         app.launchArguments = [
             "-favouriteChannelIDs", plistArray(favourites.map { "urn:fixture:\($0)" }),
             "-recentlyPlayedChannelIDs", plistArray(recentlyPlayed.map { "urn:fixture:\($0)" }),
-            "-preferredDistrictName", region ?? ""
+            "-preferredDistrictName", region ?? "",
+            // No choice stored, as on a fresh install: every station's schedule.
+            "-scheduleScope", ""
         ]
         app.launch()
         XCTAssertTrue(app.staticTexts["DR"].waitForExistence(timeout: 15)
