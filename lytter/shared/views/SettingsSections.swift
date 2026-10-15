@@ -40,6 +40,20 @@ struct SettingsSections: View {
             Text("When off, stations show their colour and name instead of programme artwork, which uses less data on a slow connection.")
         }
 
+        Section {
+            Picker("Daily Schedules", selection: Binding(
+                get: { preferences.scheduleScope },
+                set: { preferences.setScheduleScope($0) })) {
+                ForEach(ScheduleScope.allCases) { scope in
+                    Text(scope.title).tag(scope)
+                }
+            }
+        } header: {
+            Text("Network")
+        } footer: {
+            Text("Once a day, Lytter fetches the day's schedules from DR to learn when shows are usually on. With All Shows/Channels it learns every station, so a show you favourite later already has its usual times. Favourite Shows/Channels asks DR for less: only your favourite stations and the ones your favourite shows are on.")
+        }
+
         #if os(iOS)
         Section {
             Picker("Screen Off", selection: Binding(

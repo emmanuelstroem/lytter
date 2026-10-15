@@ -28,6 +28,7 @@ class UserPreferencesService: ObservableObject {
         static let remindsShows = "remindsShows"
         static let broadcasterOrder = "broadcasterOrder"
         static let hiddenBroadcasterIDs = "hiddenBroadcasterIDs"
+        static let scheduleScope = "scheduleScope"
     }
     
     // MARK: - Published Properties
@@ -65,6 +66,9 @@ class UserPreferencesService: ObservableObject {
     /// How long the app waits, while playing, before blacking out the screen (F43).
     @Published private(set) var screenOffDelay = ScreenOffDelay.default
 
+    /// Which stations' schedules the daily refresh fetches (Settings → Network).
+    @Published private(set) var scheduleScope = ScheduleScope.default
+
     /// Stations chosen from a search, newest first — what Search lists before anything has
     /// been typed. Ids only, for the same reason as `recentlyPlayed`, whose type it borrows:
     /// both are a short recency list with no duplicates.
@@ -101,6 +105,8 @@ class UserPreferencesService: ObservableObject {
                 ?? Self.defaultScreenOffDelay
         recentSearches = RecentlyPlayed(
             channelIDs: userDefaults.stringArray(forKey: Keys.recentSearchChannelIDs) ?? [])
+        scheduleScope = userDefaults.string(forKey: Keys.scheduleScope)
+            .flatMap(ScheduleScope.init(rawValue:)) ?? .default
         favouriteShows = Self.loadFavouriteShows(from: userDefaults)
         remindsShows = userDefaults.bool(forKey: Keys.remindsShows)
         if !Self.keepsBroadcastersToItself {
@@ -156,6 +162,11 @@ class UserPreferencesService: ObservableObject {
     func setScreenOffDelay(_ delay: ScreenOffDelay) {
         screenOffDelay = delay
         userDefaults.set(delay.rawValue, forKey: Keys.screenOffDelaySeconds)
+    }
+
+    func setScheduleScope(_ scope: ScheduleScope) {
+        scheduleScope = scope
+        userDefaults.set(scope.rawValue, forKey: Keys.scheduleScope)
     }
 
     /// Unpins every channel. Settings asks first; this does not.

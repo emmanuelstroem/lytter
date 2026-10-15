@@ -11,11 +11,13 @@ import Combine
 /// for the channels it has fetched, and the weekly template in `ScheduleTemplateStore`.
 ///
 /// Each broadcast day, every channel's schedule is fetched once and folded into the
-/// template — all of them, so that a show favourited on any channel already has its weeks
-/// behind it. On a constrained network (Low Data Mode) only the channels favourite shows
-/// have been seen on are fetched. A refresh is due from 05:05 Copenhagen time, when DR's new
-/// day is there; the app checks at launch, on returning to the foreground, and from a
-/// background refresh that the system runs at or after 05:05.
+/// template — all of them by default, so that a show favourited on any channel already has
+/// its weeks behind it. Settings → Network can narrow that to the favourite stations and the
+/// channels favourite shows are on (`ScheduleScope`), and on a constrained network (Low Data
+/// Mode) only the channels favourite shows have been seen on are fetched. A refresh is due
+/// from 05:05 Copenhagen time, when DR's new day is there; the app checks at launch, on
+/// returning to the foreground, and from a background refresh that the system runs at or
+/// after 05:05.
 ///
 /// An `ObservableObject` of its own, observed directly by the shelves: through
 /// `DRServiceManager` it would not redraw them (see AGENTS.md).
@@ -67,14 +69,20 @@ final class ShowScheduleService: ObservableObject {
     ///
     /// A channel is due when the template has not had today's schedule for it, or when the
     /// shelf needs today's airings and has none in memory — after a relaunch, the template
-    /// has today but the airings went with the process.
+    /// has today but the airings went with the process. Only channels in `scope` are
+    /// fetched — with `.favourites`, those favourite shows are on and `favouriteStationSlugs`
+    /// — and on a constrained network only those favourite shows are on.
     static func channelsDue(_ channels: [DRChannel], favouriteSlugs: Set<String>,
+                            scope: ScheduleScope = .all,
+                            favouriteStationSlugs: Set<String> = [],
                             constrained: Bool, now: Date,
                             templateFetchedAt: (String) -> Date?,
                             todayFetchedAt: (String) -> Date?) -> [DRChannel] {
         let due = channels.filter { channel in
             let isFavourite = favouriteSlugs.contains(channel.slug)
             if constrained && !isFavourite { return false }
+            if scope == .favourites && !isFavourite
+                && !favouriteStationSlugs.contains(channel.slug) { return false }
             let learnt = BroadcastClock.isCurrent(fetchedAt: templateFetchedAt(channel.slug),
                                                   now: now)
             let shown = !isFavourite
@@ -90,12 +98,14 @@ final class ShowScheduleService: ObservableObject {
     /// - Parameters:
     ///   - fetchDay: one channel's broadcast day, as the schedule sheets fetch it.
     ///   - onDay: called with each day fetched, so favourite shows can be brought up to date.
-    func refreshIfDue(channels: [DRChannel], favourites: FavouriteShows, constrained: Bool,
-                      inBackground: Bool = false,
+    func refreshIfDue(channels: [DRChannel], favourites: FavouriteShows,
+                      scope: ScheduleScope = .all, favouriteStationSlugs: Set<String> = [],
+                      constrained: Bool, inBackground: Bool = false,
                       fetchDay: @escaping (DRChannel) async throws -> [DREpisode],
                       onDay: @escaping ([DREpisode]) -> Void = { _ in }) -> Task<Void, Never>? {
         if let refreshTask { return refreshTask }
         let due = Self.channelsDue(channels, favouriteSlugs: favourites.channelSlugs,
+                                   scope: scope, favouriteStationSlugs: favouriteStationSlugs,
                                    constrained: constrained, now: Date(),
                                    templateFetchedAt: { self.store.fetchedAt(channelSlug: $0) },
                                    todayFetchedAt: { self.todayFetchedAt[$0] })

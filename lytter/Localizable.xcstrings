@@ -310,6 +310,17 @@
         }
       }
     },
+    "All Shows/Channels" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle programmer/kanaler"
+          }
+        }
+      }
+    },
     "All Stations" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -482,6 +493,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Kunne ikke afspille %@"
+          }
+        }
+      }
+    },
+    "Daily Schedules" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Daglige sendeplaner"
           }
         }
       }
@@ -663,6 +685,17 @@
         }
       }
     },
+    "Favourite Shows/Channels" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Favoritprogrammer/-kanaler"
+          }
+        }
+      }
+    },
     "Favourites" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -837,6 +870,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Lytter er en uafhængig app. Den er hverken lavet eller godkendt af DR. Programmer, logoer og billeder tilhører DR."
+          }
+        }
+      }
+    },
+    "Network" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Netværk"
           }
         }
       }
@@ -1112,6 +1156,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sendes nu på %@"
+          }
+        }
+      }
+    },
+    "Once a day, Lytter fetches the day's schedules from DR to learn when shows are usually on. With All Shows/Channels it learns every station, so a show you favourite later already has its usual times. Favourite Shows/Channels asks DR for less: only your favourite stations and the ones your favourite shows are on." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Én gang om dagen henter Lytter dagens sendeplaner fra DR for at lære, hvornår programmerne plejer at blive sendt. Med Alle programmer/kanaler lærer den alle kanaler, så et program, du gør til favorit senere, allerede har sine faste tider. Favoritprogrammer/-kanaler spørger DR om mindre: kun dine favoritkanaler og dem, dine favoritprogrammer sendes på."
           }
         }
       }

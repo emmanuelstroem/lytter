@@ -102,6 +102,26 @@ final class SettingsAndSearchUITests: XCTestCase {
         }
     }
 
+    /// Settings → Network chooses which stations' schedules are fetched each day: every
+    /// station unless the listener asks for less.
+    @MainActor
+    func testDailySchedulesDefaultToEveryStation() throws {
+        launch()
+        openSettings()
+
+        scrollIntoReach(schedulesPicker)
+        XCTAssertEqual(schedulesPicker.label, "Daily Schedules, All Shows/Channels",
+                       "Settings does not default to every station's schedule")
+
+        schedulesPicker.tap()
+        let favourites = app.buttons["Favourite Shows/Channels"]
+        XCTAssertTrue(favourites.waitForExistence(timeout: 5), "the picker does not offer favourites")
+        favourites.tap()
+        XCTAssertEqual(schedulesPicker.label, "Daily Schedules, Favourite Shows/Channels",
+                       "the choice is not shown")
+        shot("settings-network")
+    }
+
     // MARK: - Search
 
     /// Before anything is typed, Search lists every station once: P4 as a station, not
@@ -209,6 +229,12 @@ final class SettingsAndSearchUITests: XCTestCase {
         app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Region, '")).firstMatch
     }
 
+    /// The Daily Schedules picker, whose label carries the choice.
+    @MainActor
+    private var schedulesPicker: XCUIElement {
+        app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Daily Schedules, '")).firstMatch
+    }
+
     @MainActor
     private func choose(_ option: String) {
         regionPicker.tap()
@@ -227,7 +253,9 @@ final class SettingsAndSearchUITests: XCTestCase {
             "-favouriteChannelIDs", plistArray(favourites.map { "urn:fixture:\($0)" }),
             "-recentlyPlayedChannelIDs", "()",
             "-recentSearchChannelIDs", "()",
-            "-preferredDistrictName", region ?? ""
+            "-preferredDistrictName", region ?? "",
+            // No choice stored, as on a fresh install: the default.
+            "-scheduleScope", ""
         ]
         app.launch()
         let card = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'P1'")).firstMatch
