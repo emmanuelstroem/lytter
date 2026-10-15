@@ -67,6 +67,13 @@ The Top Shelf extension, a separate target, builds the same string in
 
 ## Working on Lytter
 
+```bash
+make test       # unit tests on iPhone, iPad, Vision Pro and Mac; tvOS UI tests
+make build      # clean build of every platform, failing on a warning
+make release    # archive every platform and upload it to App Store Connect
+```
+
+- [docs/RELEASING.md](docs/RELEASING.md): those commands, and a release from start to finish.
 - [AGENTS.md](AGENTS.md): the project's working rules.
 - [docs/OVERVIEW-AND-ARCHITECTURE.md](docs/OVERVIEW-AND-ARCHITECTURE.md): how the app is put together.
 - [docs/ROADMAP.md](docs/ROADMAP.md): what is planned.

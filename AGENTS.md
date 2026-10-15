@@ -118,7 +118,11 @@ must never change. A channel with no `broadcasterID` is DR's.
 - **No new warnings.** The build is warning-free; keep it so unless a warning is truly
   unavoidable, and then say why. Check a *clean* build on iOS, tvOS and macOS
   (`xcodebuild clean build-for-testing`): an incremental build reports only the files it
-  recompiles, and tvOS-only files never appear in an iOS build (S16).
+  recompiles, and tvOS-only files never appear in an iOS build (S16). `make build` is that
+  check, on all four platforms; `make test` runs the suites, and `ONLY=` narrows it to the
+  ones a change touches. See [docs/RELEASING.md](docs/RELEASING.md).
+- **`make release` runs from the user's own Terminal**, not a sandboxed shell: signing and the
+  upload need the Xcode account in the keychain.
 - Verify by running the app, not only by building it. A green build has shipped a crash here
   before.
 - Every new test gets a negative control: break it deliberately, watch it fail, restore it.
