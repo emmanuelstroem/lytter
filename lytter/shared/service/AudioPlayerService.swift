@@ -208,12 +208,11 @@ class AudioPlayerService: NSObject, ObservableObject {
         // The decision was made by InterruptionState.ended(); this only carries it out.
         guard player != nil else { return }
 
-        activateSession(longFormAudio: true, context: "after an interruption") { [weak self] activated in
-            guard activated, let self, let player = self.player else { return }
-            player.play()
-            self.isPlaying = true
-            self.updateCommandCenterPlaybackState()
-        }
+        // The listener's own Resume, not a bare player.play(). A call can outlast the live
+        // window, and only resume() reloads at live when it has, puts wantsPlayback back so
+        // a stall afterwards is recovered, and reloads if the audio does not come back —
+        // which, after a call in CarPlay, is what retries a session that would not activate.
+        resume()
     }
     #endif
 
@@ -793,18 +792,31 @@ class AudioPlayerService: NSObject, ObservableObject {
     /// Activates the playback session on `sessionQueue`, then runs `then` on main with
     /// whether it succeeded. A failure is logged; most callers carry on regardless, since a
     /// session that is already active reports no error and trying to play beats silence.
-    /// `longFormAudio` asks for the long-form route-sharing policy, as the interruption
-    /// path always has. A Bool rather than the policy itself, which macOS does not have.
-    private func activateSession(longFormAudio: Bool = false,
-                                 context: StaticString,
+    ///
+    /// Always long-form (F55). That puts the radio on the output Music and Podcasts share,
+    /// so on an AirPlay 2 speaker it keeps playing through a call taken on the handset. Only
+    /// the interruption path used to ask for it; play and resume asked for the default,
+    /// which follows the device's own route and so is interrupted along with it.
+    /// See docs/AUDIO-AND-CALLS.md.
+    private func activateSession(context: StaticString,
                                  then: (@MainActor @Sendable (Bool) -> Void)? = nil) {
         #if os(iOS) || os(tvOS) || os(visionOS)
         sessionQueue.async {
             var activated = true
+            let audioSession = AVAudioSession.sharedInstance()
+            #if os(iOS)
+            // The phone ringing does not stop the radio; answering does. Only honoured when
+            // calls are shown as a banner — full-screen calls interrupt regardless. Logged
+            // and passed over on failure: it is a preference, not a reason to stay silent.
             do {
-                let audioSession = AVAudioSession.sharedInstance()
-                try audioSession.setCategory(.playback, mode: .default,
-                                             policy: longFormAudio ? .longFormAudio : .default)
+                try audioSession.setPrefersNoInterruptionsFromSystemAlerts(true)
+            } catch {
+                Log.playback.error(
+                    "could not ask not to be interrupted by a ringing call: \(error.localizedDescription, privacy: .public)")
+            }
+            #endif
+            do {
+                try audioSession.setCategory(.playback, mode: .default, policy: .longFormAudio)
                 try audioSession.setActive(true)
             } catch {
                 activated = false

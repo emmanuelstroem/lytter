@@ -71,6 +71,13 @@ What is left is listed below. Three gaps are not entries of their own:
 - [x] **F53. Show the channel's logo when Show Images is off.** Withdrawn 2026-10-09: the
       app no longer carries DR's logos (S11). With the setting off, the placeholder is the
       station's name on DR's colour for it, the same as the widgets' tiles.
+- [ ] **F55. Take a call without stopping the radio on AirPlay.** Done in code
+      (2026-10-15): the session is long-form on every activation, the Info.plist asks for
+      long-form from launch, a ringing phone no longer interrupts, and the resume after a
+      call is the listener's Resume. CarPlay cannot keep playing through a call; it
+      resumes by itself afterwards. See [AUDIO-AND-CALLS.md](AUDIO-AND-CALLS.md).
+      Remaining: the device checklist there — a real call, which no simulator can place,
+      with an AirPlay 2 speaker, on iPhone, iPad and Mac; CarPlay once F21 is granted.
 - [ ] **F14. Add a README.** Nineteen commits and no entry point for a reader.
       Checked 2026-10-04: not started; there is still no README.
 - [ ] **F49. Read the DR API version from a file the app fetches, not only from the
