@@ -920,21 +920,20 @@ class DRServiceManager: ObservableObject {
         isPollingForTrack = true
         
         trackPollingTask = Task { [weak self] in
+            var polling = TrackPolling()
             while !Task.isCancelled {
                 guard let self else { return }
                 let track = await self.getCurrentTrack(for: channel)
                 guard !Task.isCancelled else { return }
-                
-                // Wake just after the current track ends, otherwise fall back to the
-                // fixed interval.
-                let delay: TimeInterval
-                let behind = await MainActor.run { self.secondsBehindLive }
-                if let track, let endTime = track.endTime,
-                   endTime.addingTimeInterval(behind) > Date() {
-                    delay = max(endTime.timeIntervalSinceNow + behind + DRAPIConfig.trackUpdateBuffer, 1)
-                } else {
-                    delay = DRAPIConfig.trackPollingInterval
+
+                // Wake just after the current track ends; with none playing, a little
+                // later each time (TrackPolling).
+                let (behind, known) = await MainActor.run {
+                    (self.secondsBehindLive, self.recentTracks)
                 }
+                let delay = polling.delay(heard: track, known: known,
+                                          secondsBehindLive: behind, now: Date())
+                Log.network.debug("next track poll in \(Int(delay), privacy: .public) s, \(polling.idlePolls, privacy: .public) in a row without a song")
                 await MainActor.run {
                     self.nextLivePollingTime = Date().addingTimeInterval(delay)
                 }

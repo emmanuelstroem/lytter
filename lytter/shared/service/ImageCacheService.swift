@@ -63,7 +63,7 @@ final class ImageCacheService {
         cacheDirectory = caches.appendingPathComponent("ImageCache", isDirectory: true)
         try? fileManager.createDirectory(at: cacheDirectory, withIntermediateDirectories: true)
 
-        let config = URLSessionConfiguration.default
+        let config = URLSessionConfiguration.lytter
         config.requestCachePolicy = .returnCacheDataElseLoad
         session = URLSession(configuration: config)
 
