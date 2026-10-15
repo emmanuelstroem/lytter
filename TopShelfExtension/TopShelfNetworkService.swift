@@ -30,6 +30,15 @@ struct TopShelfAPIConfig {
     static func imageURL(for imageAssetURN: String) -> String {
         return "\(assetBaseURL)/\(imageAssetURN)"
     }
+
+    /// ⚠️ Must match `UserAgent` in lytter/shared/service/UserAgent.swift, which this target
+    /// cannot see: "Lytter/1.0 (tvOS; build 1)". An extension carries its app's version.
+    static let userAgent: String = {
+        let info = Bundle.main.infoDictionary ?? [:]
+        let version = info["CFBundleShortVersionString"] as? String ?? "unknown"
+        let build = info["CFBundleVersion"] as? String ?? "unknown"
+        return "Lytter/\(version) (tvOS; build \(build))"
+    }()
 }
 
 // MARK: - Simplified Models for TopShelf
@@ -108,6 +117,7 @@ class TopShelfNetworkService {
         config.timeoutIntervalForRequest = 30
         config.timeoutIntervalForResource = 60
         config.waitsForConnectivity = true
+        config.httpAdditionalHeaders = ["User-Agent": TopShelfAPIConfig.userAgent]
         
         self.session = URLSession(configuration: config)
         self.decoder = JSONDecoder()

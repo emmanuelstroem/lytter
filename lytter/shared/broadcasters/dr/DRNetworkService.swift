@@ -15,7 +15,7 @@ class DRNetworkService {
     private let decoder: JSONDecoder
 
     init() {
-        let config = URLSessionConfiguration.default
+        let config = URLSessionConfiguration.lytter
         config.timeoutIntervalForRequest = 30
         config.timeoutIntervalForResource = 60
         config.waitsForConnectivity = true
@@ -54,7 +54,6 @@ class DRNetworkService {
         log(url)
         var request = URLRequest(url: url)
         request.setValue("application/json", forHTTPHeaderField: "Accept")
-        request.setValue("lytter/1.0 tvOS", forHTTPHeaderField: "User-Agent")
         if let key = DRAPIConfig.subscriptionKey {
             request.setValue(key, forHTTPHeaderField: "Ocp-Apim-Subscription-Key")
         }

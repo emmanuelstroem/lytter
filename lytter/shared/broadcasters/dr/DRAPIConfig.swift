@@ -50,7 +50,9 @@ struct DRAPIConfig {
     nonisolated static let channelDirectory = "\(baseURL)/channels"
     
     // Polling Configuration
-    nonisolated static let trackPollingInterval: TimeInterval = 15 // 30 seconds for finished tracks
+    /// The waits between polls for the live track while no song is playing: after the
+    /// first poll in a row to find none, the second, and every one after (`TrackPolling`).
+    nonisolated static let idleTrackPollingIntervals: [TimeInterval] = [15, 30, 60]
     nonisolated static let trackUpdateBuffer: TimeInterval = 5 // 5 seconds buffer before track ends
     
     nonisolated static func imageURL(for imageAssetURN: String) -> String {

@@ -105,10 +105,12 @@ struct ShowScheduleRefreshTests {
     private let cph = ShowTestSupport.cph
     private let channels = ["p1", "p2", "p3", "p6"].map { ShowTestSupport.channel($0) }
 
-    private func due(favourites: Set<String> = [], constrained: Bool = false,
+    private func due(favourites: Set<String> = [], scope: ScheduleScope = .all,
+                     stations: Set<String> = [], constrained: Bool = false,
                      learnt: [String: Date] = [:], shown: [String: Date] = [:],
                      at now: String = "2026-10-05 12:00") -> [String] {
         ShowScheduleService.channelsDue(channels, favouriteSlugs: favourites,
+                                        scope: scope, favouriteStationSlugs: stations,
                                         constrained: constrained, now: cph(now),
                                         templateFetchedAt: { learnt[$0] },
                                         todayFetchedAt: { shown[$0] })
@@ -125,6 +127,36 @@ struct ShowScheduleRefreshTests {
 
     @Test func aConstrainedNetworkFetchesOnlyFavouriteChannels() {
         #expect(due(favourites: ["p3"], constrained: true) == ["p3"])
+    }
+
+    // MARK: Settings → Network
+
+    /// Every station unless the listener asks for less: what the weekly template learns
+    /// from is what lets a show favourited later say when it is usually on.
+    @Test func everyStationIsTheDefault() {
+        #expect(ScheduleScope.default == .all)
+        #expect(due(favourites: ["p3"], stations: ["p6"]) == ["p3", "p1", "p2", "p6"])
+    }
+
+    @Test func favouritesFetchesFavouriteStationsAndTheChannelsShowsAreOn() {
+        #expect(due(favourites: ["p3"], scope: .favourites, stations: ["p6"]) == ["p3", "p6"])
+    }
+
+    /// With nothing favourited there is nothing to learn, so DR is not asked at all.
+    @Test func favouritesWithNothingFavouritedFetchesNothing() {
+        #expect(due(scope: .favourites).isEmpty)
+    }
+
+    /// Low Data Mode stays the narrower of the two: favourite stations are left out too.
+    @Test func aConstrainedNetworkLeavesOutFavouriteStations() {
+        #expect(due(favourites: ["p3"], scope: .favourites, stations: ["p6"],
+                    constrained: true) == ["p3"])
+    }
+
+    /// The raw values are the stored format: renaming one would quietly put everyone back
+    /// on the default.
+    @Test func theScopeIsStoredByName() {
+        #expect(ScheduleScope.allCases.map(\.rawValue) == ["all", "favourites"])
     }
 
     @Test func nothingIsDueOnceTodayIsFetched() {

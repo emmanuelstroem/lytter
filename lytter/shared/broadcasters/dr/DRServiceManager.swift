@@ -169,6 +169,11 @@ class DRServiceManager: ObservableObject {
             .dropFirst()
             .sink { [weak self] shows in self?.refreshShowSchedule(favourites: shows) }
             .store(in: &cancellables)
+        // Back to every station in Settings → Network: the ones left out are due now.
+        userPreferences.$scheduleScope
+            .dropFirst()
+            .sink { [weak self] scope in self?.refreshShowSchedule(scope: scope) }
+            .store(in: &cancellables)
         // Switching reminders on or off schedules them, or takes them away, at once.
         userPreferences.$remindsShows
             .dropFirst()
@@ -920,21 +925,20 @@ class DRServiceManager: ObservableObject {
         isPollingForTrack = true
         
         trackPollingTask = Task { [weak self] in
+            var polling = TrackPolling()
             while !Task.isCancelled {
                 guard let self else { return }
                 let track = await self.getCurrentTrack(for: channel)
                 guard !Task.isCancelled else { return }
-                
-                // Wake just after the current track ends, otherwise fall back to the
-                // fixed interval.
-                let delay: TimeInterval
-                let behind = await MainActor.run { self.secondsBehindLive }
-                if let track, let endTime = track.endTime,
-                   endTime.addingTimeInterval(behind) > Date() {
-                    delay = max(endTime.timeIntervalSinceNow + behind + DRAPIConfig.trackUpdateBuffer, 1)
-                } else {
-                    delay = DRAPIConfig.trackPollingInterval
+
+                // Wake just after the current track ends; with none playing, a little
+                // later each time (TrackPolling).
+                let (behind, known) = await MainActor.run {
+                    (self.secondsBehindLive, self.recentTracks)
                 }
+                let delay = polling.delay(heard: track, known: known,
+                                          secondsBehindLive: behind, now: Date())
+                Log.network.debug("next track poll in \(Int(delay), privacy: .public) s, \(polling.idlePolls, privacy: .public) in a row without a song")
                 await MainActor.run {
                     self.nextLivePollingTime = Date().addingTimeInterval(delay)
                 }
@@ -1080,26 +1084,31 @@ class DRServiceManager: ObservableObject {
 
     // MARK: - Favourite shows (F33)
 
-    /// Fetches today's schedule for every channel not yet fetched this broadcast day, and
-    /// folds it into the weekly template; then schedules reminders afresh from what is known
+    /// Fetches today's schedule for every channel not yet fetched this broadcast day — of
+    /// those Settings → Network asks for (`ScheduleScope`) — and folds it into the weekly
+    /// template; then schedules reminders afresh from what is known
     /// (F51), whether or not anything needed fetching. Cheap to call: it fetches nothing when
     /// all is current. Returns the whole pass, for the background task to wait on.
     @discardableResult
-    func refreshShowSchedule(inBackground: Bool = false,
-                             favourites: FavouriteShows? = nil) -> Task<Void, Never> {
-        let refresh = fetchDueShowSchedules(inBackground: inBackground, favourites: favourites)
+    func refreshShowSchedule(inBackground: Bool = false, favourites: FavouriteShows? = nil,
+                             scope: ScheduleScope? = nil) -> Task<Void, Never> {
+        let refresh = fetchDueShowSchedules(inBackground: inBackground, favourites: favourites,
+                                            scope: scope)
         return Task { [weak self] in
             await refresh?.value
             await self?.rescheduleShowReminders().value
         }
     }
 
-    private func fetchDueShowSchedules(inBackground: Bool,
-                                       favourites: FavouriteShows?) -> Task<Void, Never>? {
+    private func fetchDueShowSchedules(inBackground: Bool, favourites: FavouriteShows?,
+                                       scope: ScheduleScope?) -> Task<Void, Never>? {
         guard isOnline, !availableChannels.isEmpty else { return nil }
+        let stations = availableChannels.filter { userPreferences.isFavourite($0.id) }
         return showSchedule.refreshIfDue(
             channels: availableChannels,
             favourites: favourites ?? userPreferences.favouriteShows,
+            scope: scope ?? userPreferences.scheduleScope,
+            favouriteStationSlugs: Set(stations.map(\.slug)),
             constrained: networkMonitor.isConstrained,
             inBackground: inBackground,
             fetchDay: { [weak self] channel in
