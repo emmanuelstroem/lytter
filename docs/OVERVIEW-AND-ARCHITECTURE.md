@@ -186,6 +186,10 @@ Adaptive rather than fixed-interval: after fetching the current track,
   rebound to it so PineBoard gets a playback queue.
 - Interruption (`AVAudioSession.interruptionNotification`) and route-change handling,
   including pause-on-unplug.
+- A long-form session (`.longFormAudio`, and `AVInitialRouteSharingPolicy` in Info.plist),
+  so the radio keeps playing on an AirPlay speaker through a call taken on the handset; a
+  ringing phone does not interrupt it. What each platform allows, and why CarPlay cannot:
+  [AUDIO-AND-CALLS.md](AUDIO-AND-CALLS.md).
 
 ## 5. Platform specifics
 

@@ -11,6 +11,12 @@
 		<string>audio</string>
 		<string>fetch</string>
 	</array>
+	<!-- Long-form audio from launch, before the first play sets it on the session (F55):
+	     the AirPlay picker then offers the speakers Music and Podcasts play to, and a call
+	     taken on the handset leaves the radio playing on the speaker. Xcode calls this
+	     "AirPlay optimization policy". See docs/AUDIO-AND-CALLS.md. -->
+	<key>AVInitialRouteSharingPolicy</key>
+	<string>LongFormAudio</string>
 	<key>BGTaskSchedulerPermittedIdentifiers</key>
 	<array>
 		<string>com.eopio.lytter.show-schedule</string>
