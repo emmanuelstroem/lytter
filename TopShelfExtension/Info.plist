@@ -8,6 +8,14 @@
 		<key>NSAllowsArbitraryLoads</key>
 		<false/>
 	</dict>
+	<!-- App Store validation refuses a tvOS upload whose extension has a 64-bit slice and
+	     does not say so: "you must include the arm64 value for the
+	     UIRequiredDeviceCapabilities key". The app's own Info.plist is generated and has it;
+	     this one is written by hand. ReleaseInfoPlistTests holds it. -->
+	<key>UIRequiredDeviceCapabilities</key>
+	<array>
+		<string>arm64</string>
+	</array>
 	<key>NSExtension</key>
 	<dict>
 		<key>NSExtensionPointIdentifier</key>
