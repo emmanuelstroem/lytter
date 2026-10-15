@@ -51,6 +51,18 @@ cards. It is a design principle for this app, not a one-off fix.
 Prefer `style: .continuous` — it is the curve the system uses, and it is visibly different
 from the circular default at larger radii.
 
+## Take Music's lead
+
+**Where a screen has a counterpart in Apple's Music app, start from how Music does it.**
+Much of Lytter's design came from there, and it is the reference for what comes next.
+
+**Turning the phone moves views; it does not rebuild them.** In Music the artwork and the
+controls are two views that only change places: one under the other upright, side by side
+on its side. Lytter's full player does the same with one `AnyLayout` — a `VStackLayout` or
+an `HStackLayout`, by the player's own shape — around the same two views, which keep their
+size either way. An `if`/`else` between two stacks builds new views on every turn and fades
+between them, and a column that is a different size each way reflows everything in it.
+
 ## Things that have bitten this project
 
 **Hierarchical shape styles resolve against the tint.** `.foregroundStyle(.primary)` inside a

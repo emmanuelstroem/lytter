@@ -76,7 +76,10 @@ lock to portrait. Those are the two things that are painful to undo.
    Type-relative sizes.
 
 4. **The full player is a `.sheet`.** Sheets move to avoid the fold automatically, but the
-   partially-folded pose needs a visual check.
+   partially-folded pose needs a visual check. It lays itself out by its own shape (since
+   2026-10-15): the artwork beside the controls when it is wider than tall, as on an iPhone
+   on its side, and above them otherwise — so the inner display in landscape should get the
+   side-by-side player without further work.
 
 5. **`NavigationView` has no defined behaviour on Duo.** It must go regardless.
 

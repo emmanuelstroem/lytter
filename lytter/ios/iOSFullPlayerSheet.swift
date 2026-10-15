@@ -82,7 +82,8 @@ struct iOSFullPlayerSheet: View {
                 GeometryReader { viewport in
                     ScrollView {
                         AtLeastHeight(height: viewport.size.height) {
-                            player(for: currentChannel)
+                            player(for: currentChannel,
+                                   sideBySide: viewport.size.width > viewport.size.height)
                         }
                     }
                     .scrollBounceBehavior(.basedOnSize)
@@ -134,28 +135,42 @@ struct iOSFullPlayerSheet: View {
         }
     }
 
-    /// The artwork, and every row under it.
-    private func player(for currentChannel: DRChannel) -> some View {
-        VStack(spacing: 0) {
+    /// The artwork, and every row under it — or beside it, when the player is wider than it
+    /// is tall, as on an iPhone on its side.
+    ///
+    /// Two views that keep their size and only change places, as in Music. It is the layout
+    /// that changes, not the views, so turning the phone slides them across rather than
+    /// building new ones; and the rows are the same column either way, so nothing in it
+    /// moves but the column. Laid out under the artwork on its side, the rows had no height
+    /// to spare: the artwork shrank to nothing and the rows still ran off the screen. The
+    /// shape is the player's own, not the device's orientation or idiom, so a foldable's
+    /// inner display or a short visionOS window is laid out the same (docs/IPHONE-DUO.md).
+    private func player(for currentChannel: DRChannel, sideBySide: Bool) -> some View {
+        let layout = sideBySide ? AnyLayout(HStackLayout(spacing: 0))
+                                : AnyLayout(VStackLayout(spacing: 0))
+        return layout {
             // Artwork: a square as wide as the player, or as tall as what is left
             // once everything below has the room it needs. The two halves used to
             // split the height evenly, and on a shorter iPhone the lower half needs
             // more than half — its fixed rows and gaps came out of the artwork, which
             // on an iPhone SE shrank to a stamp. The square is the cap: on a taller
             // phone the artwork is no larger than before, and the gaps below take
-            // the rest.
+            // the rest. Beside the rows it is as tall as the player, and no wider, so
+            // the rows have the rest of the width.
             PlayerArtworkView(
                 channel: currentChannel,
                 currentProgram: serviceManager.getCurrentProgram(for: currentChannel),
                 channelColor: channelColor
             )
             .aspectRatio(1, contentMode: .fit)
-            .frame(maxWidth: .infinity)
-            .layoutPriority(1)
+            .frame(maxWidth: sideBySide ? nil : .infinity)
+            .layoutPriority(sideBySide ? 0 : 1)
 
             // Everything else
             VStack(spacing: 0) {
-                VStack(spacing: 30) {
+                // 16, not 30: beside the artwork the rows have only the player's height,
+                // and they are the same column under it.
+                VStack(spacing: 16) {
                     // Only what stops audio: offline, or this stream failing.
                     ConnectionBanner(serviceManager: serviceManager, playbackOnly: true)
                         .padding(.horizontal, 20)
@@ -243,7 +258,9 @@ struct iOSFullPlayerSheet: View {
             // does not fit in it, upwards as well as down. The spacers fill any spare room.
             .frame(maxWidth: .infinity)
         }
-        .padding(.top, 40)
+        // Clear of the grab handle, which ends 13pt down. On its side an iPhone has the least
+        // height to give, and 20 still clears it.
+        .padding(.top, sideBySide ? 20 : 40)
         #if os(visionOS)
         // On iPhone the sheet's safe area keeps the actions off its bottom edge. The
         // visionOS panel has none, and they sat on its edge. They stand clear of the
