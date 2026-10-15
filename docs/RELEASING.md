@@ -11,7 +11,7 @@ From the repository's root:
 
 | Command | What it does | Takes |
 | --- | --- | --- |
-| `make test` | The unit tests on an iPhone, an iPad, a Vision Pro and the Mac; the tvOS scrolling UI tests on an Apple TV | About seven minutes |
+| `make test` | The unit tests on an iPhone, an iPad, a Vision Pro and the Mac; the iOS UI tests on the iPhone; the tvOS scrolling UI tests on an Apple TV | About eight minutes |
 | `make build` | A clean build of iOS, tvOS, macOS and visionOS, side by side; fails on any compiler warning | About a minute and a half |
 | `make bump` | Raises the build number by one in every target | Instant |
 | `make archive` | Archives every platform with the release Xcode, without uploading | A few minutes |
@@ -95,9 +95,14 @@ taken. The upload would then no longer match its archive.
   The script runs the export with `PATH` set to the system's directories only, so this
   means it was run some other way.
 - **The build number is taken.** `make bump`, then the release from step 1.
-- **A test failed.** `build/logs/test-<platform>.log` names it, and
-  `build/test-results/` has the result bundle with its screenshot and UI hierarchy.
-  Re-run just it with `ONLY=`.
+- **A test failed.** `build/logs/test-<platform>.log` names it (`iPhone`, `iPad`,
+  `visionOS`, `macOS`, `tvOS`), and `build/test-results/` has the result bundle with what
+  the screen showed and the UI hierarchy. Re-run just it with `ONLY=`, on its platform:
+  `make test PLATFORMS=iphone ONLY=lytterUITests/PlayerOverflowUITests`.
+- **A UI test fails in `make test` and passes on its own.** The UI tests run in parallel
+  on clones of the simulator, so a test can inherit what an earlier one left on its clone
+  — the orientation, for one ([AGENTS.md](../AGENTS.md)). The log says which clone each
+  test ran on; the ones before it on the same clone are the suspects.
 
 ## 5. Before the first release on a Mac
 
@@ -106,4 +111,4 @@ taken. The upload would then no longer match its archive.
 - For `make test`: the simulators an iPhone 17, an iPad Pro 13-inch (M5), an Apple
   Vision Pro and an Apple TV 4K (3rd generation) (at 1080p) — or others, named with the
   variables in §1. A regular iPhone on purpose, not a Pro Max: the widest screen has room
-  for text that a regular one truncates.
+  for text that a regular one truncates, and the iPhone is where the iOS UI tests run.

@@ -93,6 +93,12 @@ still keeps every failure's screenshot and UI hierarchy. Still run tests with a 
 and write the log to a file rather than piping it through a filter that only flushes at the
 end.
 
+**A UI test that turns the simulator must turn it back.** The simulator keeps its
+orientation from one test to the next. `lytterUITestsLaunchTests` runs once in each
+orientation and ended in landscape, so in a parallel run whichever class came next on its
+clone opened the app on its side: the player's layout and pixel tests failed only in the
+whole suite, never on their own. Put device state back in a teardown block.
+
 **On tvOS, XCUITest reports an app that has just left as still in front.** For a moment
 after Back exits to the Apple TV home screen, `app.state` is `runningForeground` with nothing
 focused, which reads as "stuck on Home" (F35). Take a screenshot before believing it.
