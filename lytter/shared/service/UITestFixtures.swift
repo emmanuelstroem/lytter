@@ -91,7 +91,16 @@ enum UITestFixtures {
     /// far longer than the player's info sheet can show at once.
     static func schedules(now: Date = Date()) -> [DREpisode] {
         channels.map { channel in
-            episode(on: channel,
+            if isShowcase {
+                let station = showcaseStation(for: channel.slug)
+                let start = showcaseSlotStart(now)
+                return episode(on: channel, index: 0, start: start,
+                               end: start.addingTimeInterval(30 * 60),
+                               title: station.programmes[showcaseOnAirIndex],
+                               description: station.description,
+                               series: showcaseSeries(showcaseOnAirIndex, slug: channel.slug))
+            }
+            return episode(on: channel,
                     index: 0,
                     start: now.addingTimeInterval(-30 * 60),
                     end: now.addingTimeInterval(30 * 60),
@@ -129,9 +138,17 @@ enum UITestFixtures {
     static let longTrackTitle = "A Very Long Song Title That Keeps Going (Extended Radio Edit)"
 
     /// What `/indexpoints/live` would answer for a channel: one track, on air now, when the
-    /// long titles are asked for.
+    /// long titles are asked for, or in the showcase on a music station.
     static func indexPoints(for slug: String, now: Date = Date()) throws -> DRIndexPointsResponse {
-        guard hasLongTitles, let channel = channels.first(where: { $0.slug == slug }) else {
+        guard let channel = channels.first(where: { $0.slug == slug }) else {
+            throw NetworkError.invalidResponse
+        }
+        let artist: String, title: String
+        if hasLongTitles {
+            (artist, title) = (longTrackArtist, longTrackTitle)
+        } else if isShowcase, let track = showcaseStation(for: slug).track {
+            (artist, title) = track
+        } else {
             throw NetworkError.invalidResponse
         }
         let track = DRTrack(type: "Music", durationMilliseconds: 60 * 60 * 1000,
@@ -139,9 +156,9 @@ enum UITestFixtures {
                             musicUrl: "", trackUrn: "urn:fixture:track:\(slug)",
                             classical: false,
                             roles: [DRTrackRole(artistUrn: "urn:fixture:artist",
-                                                role: "Hovedkunstner", name: longTrackArtist,
+                                                role: "Hovedkunstner", name: artist,
                                                 musicUrl: "")],
-                            title: longTrackTitle, description: longTrackArtist)
+                            title: title, description: artist)
         return DRIndexPointsResponse(type: "IndexPoints", channel: channel, totalSize: 1,
                                      items: [track], id: "urn:fixture:indexpoints:\(slug)")
     }
@@ -152,6 +169,18 @@ enum UITestFixtures {
     static func schedule(for slug: String, now: Date = Date()) -> DRScheduleResponse? {
         guard let channel = channels.first(where: { $0.slug == slug }) else { return nil }
         let items = (0..<30).map { index -> DREpisode in
+            if isShowcase {
+                // On the half hour, as a real schedule is.
+                let start = showcaseSlotStart(now)
+                    .addingTimeInterval(TimeInterval((index - 15) * 30 * 60))
+                let station = showcaseStation(for: slug)
+                return episode(on: channel, index: index, start: start,
+                               end: start.addingTimeInterval(30 * 60),
+                               title: station.programmes[index % 10],
+                               description: station.description,
+                               recorded: index < 15 && index.isMultiple(of: 2),
+                               series: showcaseSeries(index, slug: slug))
+            }
             let start = now.addingTimeInterval(TimeInterval((index - 15) * 30 * 60))
             return episode(on: channel,
                            index: index,
@@ -160,7 +189,7 @@ enum UITestFixtures {
                            title: "Fixture-program \(index + 1)",
                            description: "Beskrivelse af program \(index + 1).",
                            recorded: index < 15 && index.isMultiple(of: 2),
-                           series: index % seriesCount)
+                           series: series(index % seriesCount))
         }
         return DRScheduleResponse(type: "Schedule", channel: channel, items: items,
                                   scheduleDate: nil)
@@ -213,6 +242,13 @@ enum UITestFixtures {
         guard isActive else { return nil }
         let count = ProcessInfo.processInfo.environment["LYTTER_UITEST_FAVOURITE_SHOWS"]
             .flatMap(Int.init) ?? 0
+        if isShowcase {
+            return showcaseFavouriteShows.prefix(count).map { show in
+                FavouriteShow(seriesID: showcaseSeriesID(show.index, slug: show.slug),
+                              title: showcaseStation(for: show.slug).programmes[show.index],
+                              imageURL: nil, channelSlugs: [show.slug])
+            }
+        }
         return (0..<min(count, seriesCount)).map { index in
             FavouriteShow(seriesID: seriesID(index), title: seriesTitle(index), imageURL: nil,
                           channelSlugs: ["p1"])
@@ -221,6 +257,17 @@ enum UITestFixtures {
 
     private static func seriesID(_ index: Int) -> String { "urn:fixture:series:\(index)" }
     private static func seriesTitle(_ index: Int) -> String { "Fixture-serie \(index + 1)" }
+
+    private static func series(_ index: Int) -> DRSeries {
+        DRSeries(id: seriesID(index), title: seriesTitle(index),
+                 slug: "fixture-serie-\(index + 1)", type: "Series",
+                 isAvailableOnDemand: true, presentationUrl: nil, learnId: "")
+    }
+
+    /// The start of the half hour `now` is in.
+    private static func showcaseSlotStart(_ now: Date) -> Date {
+        Date(timeIntervalSince1970: (now.timeIntervalSince1970 / 1800).rounded(.down) * 1800)
+    }
 
     // MARK: - Building blocks
 
@@ -234,7 +281,9 @@ enum UITestFixtures {
     ]
 
     private static var channels: [DRChannel] {
-        titles.map { title in
+        // P1 to P6 in the showcase: DR has no P7, and on iPad P8 stood alone on a row of
+        // its own after the gap.
+        titles.filter { !isShowcase || $0 != "P8" }.map { title in
             let slug = title.lowercased()
                 .replacingOccurrences(of: " ", with: "")
                 .replacingOccurrences(of: "&", with: "")
@@ -254,7 +303,7 @@ enum UITestFixtures {
 
     private static func episode(on channel: DRChannel, index: Int, start: Date, end: Date,
                                 title: String, description: String,
-                                recorded: Bool = false, series: Int? = nil) -> DREpisode {
+                                recorded: Bool = false, series: DRSeries? = nil) -> DREpisode {
         DREpisode(
             type: "Episode",
             learnId: "",
@@ -267,21 +316,20 @@ enum UITestFixtures {
             order: index,
             previousId: nil,
             nextId: nil,
-            series: series.map { index in
-                DRSeries(id: seriesID(index), title: seriesTitle(index),
-                         slug: "fixture-serie-\(index + 1)", type: "Series",
-                         isAvailableOnDemand: true, presentationUrl: nil, learnId: "")
-            },
+            series: series,
             channel: channel,
             // Nothing listens on this address, so playback fails at once and quietly —
-            // what the tests need is the player on screen, not audio.
+            // what the tests need is the player on screen, not audio. The showcase plays
+            // silence instead, so the screenshots show a station playing.
             audioAssets: recorded
                 ? [DRAudioAsset(type: "Audio", target: "Stream", isStreamLive: false,
                                 format: "HLS", bitrate: nil,
-                                url: "http://127.0.0.1:9/fixture-recording.m3u8")]
+                                url: isShowcase ? showcaseStreamURL
+                                    : "http://127.0.0.1:9/fixture-recording.m3u8")]
                 : [DRAudioAsset(type: "Audio", target: "Stream", isStreamLive: true,
                                 format: "HLS", bitrate: nil,
-                                url: "http://127.0.0.1:9/fixture.m3u8")],
+                                url: isShowcase ? showcaseStreamURL
+                                    : "http://127.0.0.1:9/fixture.m3u8")],
             isAvailableOnDemand: recorded,
             hasVideo: nil,
             explicitContent: nil,

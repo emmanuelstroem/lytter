@@ -905,6 +905,12 @@ class AudioPlayerService: NSObject, ObservableObject {
 
     /// The window AVPlayer can seek within, or nil when there is none worth offering.
     private var seekableRange: CMTimeRange? {
+        #if DEBUG
+        // The showcase plays a file of silence, which AVPlayer can seek all through. Taken
+        // for a live window, its length read as time behind live, and the player named the
+        // programme of ten minutes ago.
+        if UITestFixtures.isShowcase { return nil }
+        #endif
         guard let range = player?.currentItem?.seekableTimeRanges.last?.timeRangeValue,
               range.isValid, range.duration.seconds > Self.skipInterval * 2 else { return nil }
         return range

@@ -24,14 +24,16 @@ does not ship with DR's content.
 ## 1. Checklist
 
 - [ ] DR's written permission (§ 0, § 9)
-- [ ] Pages live: Settings → Pages → Source **GitHub Actions**, then
+- [x] Pages live: Settings → Pages → Source **GitHub Actions**, then
       <https://emmanuelstroem.github.io/lytter/privacy.html> and `/support.html` load
 - [ ] App record created (§ 2), name reserved
 - [ ] Store text in English and Danish (§ 3)
 - [ ] Age rating (§ 4), App Privacy (§ 5), content rights (§ 6)
 - [ ] Screenshots for all five platforms in both languages (§ 7)
 - [ ] Archives for iOS, tvOS, macOS and visionOS uploaded from Xcode Organizer; build
-      number (`CURRENT_PROJECT_VERSION`) raised before each new upload
+      number (`CURRENT_PROJECT_VERSION`) raised before each new upload. Archive with a
+      release Xcode (`/Applications/Xcode.app`): App Store Connect turns away a build from a
+      beta, and `xcode-select` here points at Xcode-beta
 - [ ] App Review notes and attachment (§ 8)
 - [ ] A Danish speaker has read the Danish (store text and the app's catalog)
 
@@ -145,16 +147,28 @@ and attach it (§ 8).
 
 ## 7. Screenshots
 
-Made from fixture data by `Tools/export-screenshots.sh` (PR 4), into a gitignored
-`screenshots/<locale>/<display type>/NN-<screen>.png`:
+`Tools/export-screenshots.sh` makes them, into a gitignored
+`screenshots/<locale>/<display type>/NN-<screen>.png`. Name the display types to make only
+those (`Tools/export-screenshots.sh iphone-6.9 apple-tv`); with none it makes all four.
 
-| Folder | App Store Connect slot | Simulator | Pixels |
-| --- | --- | --- | --- |
-| `iphone-6.9` | iPhone 6.9" | iPhone 17 Pro Max | 1320×2868 |
-| `ipad-13` | iPad 13" | iPad Pro 13-inch (M5) | 2064×2752 |
-| `apple-tv` | Apple TV | Apple TV 4K (at 1080p) | 1920×1080 |
-| `mac` | Mac | window, padded | 2880×1800 |
-| `vision-pro` | Apple Vision Pro | Apple Vision Pro | 3840×2160 |
+| Folder | App Store Connect slot | Made on | Pixels | Screens |
+| --- | --- | --- | --- | --- |
+| `iphone-6.9` | iPhone 6.9" | iPhone 17 Pro Max | 1320×2868 | Home, player, schedule, For you, Search |
+| `ipad-13` | iPad 13" | iPad Pro 13-inch (M5) | 2064×2752 | the same |
+| `apple-tv` | Apple TV | Apple TV 4K (at 1080p) | 1920×1080 | Home, Now Playing, schedule |
+| `vision-pro` | Apple Vision Pro | Apple Vision Pro | 3840×2160 | Home, player, For you |
+| `mac` | Mac | not made yet | 2880×1800 | |
+
+They show the showcase fixtures (`UITestFixtures+Showcase.swift`): every programme, track
+and artist is invented, generic Danish, so the screenshots claim nothing about what DR
+airs. There is no artwork, so every station is its name on its colour.
+
+The Mac's are still to do. The script drives the screens with a UI test, and the Mac's
+UI tests cannot run yet (ISSUES.md B8). Until then, take them by hand: the app's window at
+1440×900 points on a Retina display is 2880×1800.
+
+The times on screen are the real ones, as the schedule is built around the time the
+script runs: run it in the daytime, or the schedule shows the small hours.
 
 `NN` is the upload order. Locales are `da` and `en-US`; upload each folder to the
 matching localisation.
